@@ -33,13 +33,9 @@ enum ADDRMODE {
 };
 
 enum COMMAND {
-	NOP, LD, INC, XOR, LDD, LDI, PREFIX, JRNZ, LDZPGCA, LDZPGNNA, CALL, PUSHW, POPW, RLA, DEC, DECW
-	/*
-	 * LDX, SEI, TXS, CLD, JSR, LDA, CMP, BNE, RTS, STX, STA, DEX, DEY, INX, INY,
-	 * BEQ, JMP, AND, ORA, TAY, TYA, LDY, STY, INC, TAX, TXA, CLC, BCS, BPL, ADC,
-	 * BCC, CPX, BMI, CLI, SEC, CPY, PHA, PLA, ASL, ROL, SBC, PHP, PLP, BIT, LSR,
-	 * EOR, NOP, TSX, RTI, DEC, BVS, ROR, BRK
-	 */, INCW, RET
+	NOP, LD, INC, XOR, LDD, LDI, PREFIX, JRNZ, LDZPGCA, LDZPGNNA,LDAZPGNN, CALL, PUSHW, POPW, RLA, DEC, DECW, JP, DI, EI
+	, INCW, RET, CP,
+	RST_38H
 };
 
 public enum InstructionDefinition {
@@ -49,6 +45,9 @@ public enum InstructionDefinition {
 	LD_BC_nnnn(0x01, COMMAND.LD, 3, ADDRMODE.BC, ADDRMODE.nnnn), LD_BC_A(0x02, COMMAND.LD, 1, ADDRMODE.__BC,
 			ADDRMODE.A), // 02 LD (BC),A
 	LD_HL_nnnn(0x21, COMMAND.LD, 3, ADDRMODE.HL, ADDRMODE.nnnn), // 21 LD HL,nnnn
+	
+	DI(0xF3, COMMAND.DI, 1, ADDRMODE.NONE, ADDRMODE.NONE), // F3    DI - disable interrupts?
+	EI(0xFB, COMMAND.EI, 1, ADDRMODE.NONE, ADDRMODE.NONE), // FB    EI - enable interrupts?
 
 	INC_BC(0x03, COMMAND.INC, 1, ADDRMODE.BC, ADDRMODE.NONE), // 03 INC BC
 
@@ -82,9 +81,14 @@ public enum InstructionDefinition {
 	LDD_pHL_A(0x32, COMMAND.LDD, 1, ADDRMODE.__HL, ADDRMODE.A), // 32 LDD (HL),A ---- special (old remapped ld (nnnn),a)
 	LDI_pHL_A(0x22, COMMAND.LDI, 1, ADDRMODE.__HL, ADDRMODE.A), // 22    LDI  (HL),A       ---- special (old ld (nnnn),hl)
 	
+	LDI_A_pHL(0x2A, COMMAND.LDI, 1, ADDRMODE.A, ADDRMODE.__HL), // 2A    LDI  A,(HL)       ---- special (old ld hl,(nnnn))
+	
 	PREFIX(0xCB, COMMAND.PREFIX, 2, ADDRMODE.nn, ADDRMODE.NONE), // CB nn ---(see beyond)---
 	JRNZ(0x20, COMMAND.JRNZ, 2, ADDRMODE.nn, ADDRMODE.NONE), // JR NZ,r8
 	RET(0xC9, COMMAND.RET, 1, ADDRMODE.NONE, ADDRMODE.NONE), //C9    RET
+	
+	JP(0xC3, COMMAND.JP, 3, ADDRMODE.nnnn, ADDRMODE.NONE),	// C3    JP   nnnn
+	
 	LD_A_nn(0x3E, COMMAND.LD, 2, ADDRMODE.A, ADDRMODE.nn), // 3E LD A,nn
 	LD_B_nn(0x06, COMMAND.LD, 2, ADDRMODE.B, ADDRMODE.nn), // 06 LD B,nn
 	LD_C_nn(0x0E, COMMAND.LD, 2, ADDRMODE.C, ADDRMODE.nn), // 0E LD C,nn
@@ -101,6 +105,8 @@ public enum InstructionDefinition {
 	LD_pHL_H(0x74, COMMAND.LD, 1, ADDRMODE.__HL, ADDRMODE.H), // 74 LD (HL),H
 	LD_pHL_L(0x75, COMMAND.LD, 1, ADDRMODE.__HL, ADDRMODE.L), // 75 LD (HL),L
 
+	LD_pHL_nn(0x36, COMMAND.LD, 3, ADDRMODE.__HL, ADDRMODE.nn), //36    LD   (HL),nn
+	
 	LD_A_pDE(0x1A, COMMAND.LD, 1, ADDRMODE.A, ADDRMODE.__DE), 	//	1A    LD   A,(DE)
 	LD_A_pBC(0x0A, COMMAND.LD, 1, ADDRMODE.A, ADDRMODE.__BC), 	//	0A    LD   A,(BC)
 	LD_A_pHL(0x7E, COMMAND.LD, 1, ADDRMODE.A, ADDRMODE.__HL), 	//	7E    LD   A,(HL)
@@ -111,7 +117,11 @@ public enum InstructionDefinition {
 
 	LD_ZPG_nn_A(0xE0, COMMAND.LDZPGNNA, 2, ADDRMODE.nn, ADDRMODE.NONE), // E0 LD ($FF00+nn),A ---- special (old ret po)
 
+	LD_A_ZPG_nn(0xF0, COMMAND.LDAZPGNN, 2, ADDRMODE.nn, ADDRMODE.NONE), // F0    LD   A,($FF00+nn) ---- special (old ret p)
+	
 	LD_CALL_nnnn(0xCD, COMMAND.CALL, 3, ADDRMODE.nnnn, ADDRMODE.NONE), // CD    CALL nnnn
+	
+	LD_pnnnn_A(0xEA, COMMAND.LD, 1, ADDRMODE.__nnnn, ADDRMODE.A), // EA    LD   (nnnn),A     ---- special (old jp pe,nnnn)
 	
 	LD_B_B(0x40, COMMAND.LD, 1, ADDRMODE.B, ADDRMODE.B), //	40    LD   B,B                          
 	LD_B_C(0x41, COMMAND.LD, 1, ADDRMODE.B, ADDRMODE.C), //	41    LD   B,C                          
@@ -182,7 +192,12 @@ public enum InstructionDefinition {
 
 	
 
-	RLA(0x17, COMMAND.RLA, 1, ADDRMODE.NONE, ADDRMODE.NONE), // 17    RLA
+	RLA(0x17, COMMAND.RLA, 1, ADDRMODE.NONE, ADDRMODE.NONE),	// 17    RLA
+	
+	CP(0xFE, COMMAND.CP, 1, ADDRMODE.nn, ADDRMODE.NONE),	// FE    CP   nn
+	
+	RST_38H(0xFF, COMMAND.RST_38H, 1, ADDRMODE.NONE, ADDRMODE.NONE),	// FF    RST  38H
+	
 	
 	/*
 	 * BRK(0x00, COMMAND.BRK, 1, ADDRMODE.IMPL), // 0x78 SEI impl

@@ -16,3 +16,9 @@ http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-Memory
 
 Boot process and blog discussing the system.
 https://realboyemulator.wordpress.com/2013/01/03/a-look-at-the-game-boy-bootstrap-let-the-fun-begin/
+
+Javascript emulator
+http://thaum.net/jge/
+
+CPU opcode reference
+https://rednex.github.io/rgbds/gbz80.7.html#JR_e8

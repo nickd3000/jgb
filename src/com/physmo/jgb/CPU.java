@@ -62,6 +62,16 @@ public class CPU {
 			wrk = popW();
 			PC = wrk;
 			break;
+		case JP:
+			PC = ac1.val;
+			break;
+			
+		case DI:
+			// disable interrupts?
+			break;
+		case EI:
+			// enable interrupts?
+			break;
 		case INC:
 			wrk = ac1.val + 1;
 			if (wrk>0xff) wrk=0;
@@ -149,6 +159,9 @@ public class CPU {
 		case LDZPGNNA:
 			mem.poke(0xff00+ac1.val, A);
 			break;
+		case LDAZPGNN:
+			A = mem.peek(0xff00+ac1.val);
+			break;
 		case CALL:
 			pushW(entryPC+1);
 			PC = ac1.val;
@@ -168,6 +181,17 @@ public class CPU {
 			if (A>0xff) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			A = A&0xff;
+			break;
+		case CP:
+			wrk = A - ac1.val;
+			if (A==0) setFlag(FLAG_ZERO);
+			else unsetFlag(FLAG_ZERO);
+			if (A>0xff) setFlag(FLAG_CARRY);
+			else unsetFlag(FLAG_CARRY);
+			break;
+		case RST_38H:
+			pushW(entryPC+1);
+			PC = 0x0038;
 			break;
 		default:
 			System.out.println("Unhandled instruction at "+Utils.toHex4(entryPC)+" : "+Utils.toHex2(currentInstruction));
@@ -285,6 +309,15 @@ public class CPU {
 			ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = getDE();
 			break;
+			
+		case __nnnn:
+			peeked = getNextWord();
+			ac.val = mem.peek(peeked);
+			ac.bytesRead += " " + Utils.toHex2(peeked);
+			ac.addr = peeked;
+			break;
+			
+			
 		default:
 			System.out.println("Address mode not recognised in processAddressMode : "+mode.toString());
 			break;
