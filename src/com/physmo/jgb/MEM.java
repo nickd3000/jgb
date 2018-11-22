@@ -34,8 +34,22 @@ public class MEM {
 		this.cpu = cpu;
 	}
 
+	public void writeBigMessage(String msg, int count) {
+		for (int i=0;i<count;i++) {
+			System.out.println(msg);
+		}
+	}
+	
 	public void poke(int addr, int val) {
 
+		// Writing 1 to this address switches the bios out.
+		if (addr==0xFF50 && val==1) {
+			RAM[0xFF50]=1;
+			biosActive=false;
+			writeBigMessage("Switched bios!!!", 1000);
+		}
+		
+		
 		if (addr == CPU.ADDR_A) {
 			cpu.A = val;
 			return;
@@ -80,6 +94,17 @@ public class MEM {
 			cpu.setBC(val);
 			return;
 		}
+		if (addr == CPU.ADDR_AF) {
+			cpu.setAF(val);
+			return;
+		}
+		
+		if (inRange(addr,0x0000,0x7FFF)) {
+			
+			for (int i=0;i<10;i++) {
+				System.out.println(" bank switch attempt [0x"+Utils.toHex4(addr)+"] --------------------");
+			}
+		}
 
 		RAM[addr] = val;
 	}
@@ -121,7 +146,11 @@ public class MEM {
 		if (addr == CPU.ADDR_BC) {
 			return cpu.getBC();
 		}
-
+		if (addr == CPU.ADDR_AF) {
+			return cpu.getAF();
+		}
+		
+		
 		// Boot rom.
 		if (inRange(addr, 0, 0xff)) {
 			if (biosActive) {

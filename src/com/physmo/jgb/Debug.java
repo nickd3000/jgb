@@ -51,6 +51,30 @@ public class Debug {
 		return str;
 	}
 	
+	public static String getStackData(CPU cpu, int numItems) {
+		int stackSize = ((0xFFFE-cpu.SP)/2);
+		String str = "  STK:("+stackSize+")";
+		int ptr = cpu.SP;
+		if (ptr<10) return "invalid stack";
+		if (numItems>stackSize) numItems=stackSize;
+		int b1,b2;
+		for (int i=0;i<numItems;i++) {
+			//if (ptr<=0xff-1)
+			b1=cpu.mem.RAM[++ptr];
+			b2=cpu.mem.RAM[++ptr];
+			str+=" "+Utils.toHex4(cpu.combineBytes(b2,b1));
+		}
+		return str;
+	}
+	
+	public static String getInterruptFlags(CPU cpu) {
+		int if1 = cpu.mem.RAM[0xFFFF];
+		int if2 = cpu.mem.RAM[0xFF0F];
+		
+		String str = "INT:"+if1+"|"+if2+" ie:"+cpu.interruptEnabled;
+		return str;
+	}
+	
 	// Print section of memory as if it is being peeked.
 	public static void printMem(CPU cpu, int start, int length) {
 		String line = "";
@@ -62,4 +86,28 @@ public class Debug {
 		System.out.println(line);
 	}
 	
+	
+	public static void checkInstructionDefs() {
+		for (InstructionDefinition id : InstructionDefinition.values()) {
+			ADDRMODE am1 = id.getAddressMode1();
+			ADDRMODE am2 = id.getAddressMode2();
+			
+			int total = getAddressModeBytes(am1)+getAddressModeBytes(am2);
+			int numBytes = id.getNumBytes();
+			
+		}
+		
+	}
+	
+	public static int getAddressModeBytes(ADDRMODE a) {
+		switch (a) {
+		
+		case __nnnn: return 2;
+		case nnnn: return 2;
+		case nn: return 1;
+		
+		default: return 0;
+		}
+		
+	}
 }

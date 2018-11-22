@@ -11,7 +11,7 @@ http://www.devrs.com/gb/files/opcodes.html
 Memory map
 http://gbdev.gg8.se/wiki/articles/Memory_Map
 
-
+* Tutorial of emu development, going through various stages.
 http://imrannazar.com/GameBoy-Emulation-in-JavaScript:-Memory
 
 Boot process and blog discussing the system.
@@ -22,3 +22,6 @@ http://thaum.net/jge/
 
 CPU opcode reference
 https://rednex.github.io/rgbds/gbz80.7.html#JR_e8
+
+// Good instruction overview, useful for flags etc.
+http://www.chrisantonellis.com/files/gameboy/gb-instructions.txt

@@ -3,20 +3,27 @@ package com.physmo.jgb;
 public class CPUPrefix {
 
 	public static void processPrefixCommand(CPU cpu, int instr) {
-		System.out.println("Prefix command: " + Utils.toHex2(instr));
+		
 
 		int bit = getBitForOperation(instr);
 		int bitMask = (1 << bit);
 		int value = getValueForOperation(cpu, instr);
 		int wrk=0; // Work value.
-
+		boolean operationSupported = false;
+		
+		if (cpu.displayInstruction)
+			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:"+value+"   bit:"+bit);
+		
 		// BIT operation
 		if (instr >= 0x40 && instr <= 0x7F) {
 			if ((value & bitMask) > 0) {
 				cpu.unsetFlag(CPU.FLAG_ZERO);
+				//System.out.println("unset zero");
 			} else {
 				cpu.setFlag(CPU.FLAG_ZERO);
+				//System.out.println("set zero");
 			}
+			operationSupported=true;
 		}
 
 		// RES - unset?
@@ -25,6 +32,7 @@ public class CPUPrefix {
 			tmp &= ~(bitMask);
 			setValueForOperation(cpu, instr, tmp);
 			// FL &= ~(flag);
+			operationSupported=true;
 		}
 
 		// SET
@@ -33,13 +41,26 @@ public class CPUPrefix {
 			wrk = getValueForOperation(cpu, instr);
 			wrk |= bitMask;
 			setValueForOperation(cpu, instr, wrk);
+			operationSupported=true;
 		}
 
 		// RL shift left?
 		if (instr >= 0x10 && instr <= 0x17) {
 			wrk = getValueForOperation(cpu, instr);
 			wrk = wrk << 1;
+			
+			if (cpu.testFlag(CPU.FLAG_CARRY)) wrk|=1;
+			
+			if (wrk>0xff) cpu.setFlag(CPU.FLAG_CARRY);
+			else cpu.unsetFlag(CPU.FLAG_CARRY);
+			
 			setValueForOperation(cpu, instr, wrk);
+			operationSupported=true;
+		}
+		
+		if (operationSupported==false) {
+			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:"+value+"   bit:"+bit);
+			cpu.mem.poke(0xffff+10, 1);
 		}
 	}
 
@@ -90,28 +111,28 @@ public class CPUPrefix {
 
 		switch (stripped & 7) {
 		case 0:
-			cpu.B = val;
+			cpu.B = val&0xff;
 			break;
 		case 1:
-			cpu.C = val;
+			cpu.C = val&0xff;
 			break;
 		case 2:
-			cpu.D = val;
+			cpu.D = val&0xff;
 			break;
 		case 3:
-			cpu.E = val;
+			cpu.E = val&0xff;
 			break;
 		case 4:
-			cpu.H = val;
+			cpu.H = val&0xff;
 			break;
 		case 5:
-			cpu.L = val;
+			cpu.L = val&0xff;
 			break;
 		case 6:
 			cpu.mem.poke(cpu.getHL(), val);
 			break;
 		case 7:
-			cpu.A = val;
+			cpu.A = val&0xff;
 			break;
 		}
 
