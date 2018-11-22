@@ -35,7 +35,9 @@ public class CPU {
 
 	public void tick() {
 		tickCount++;
-		if (tickCount>30000000) displayInstruction=true;
+		//if (tickCount>30000000) displayInstruction=true;
+		//if (tickCount>2000000) displayInstruction=true;
+		//if (PC==0x001D) displayInstruction=true;
 		
 		// Handle interrupts before checking current instruction.
 		checkInterrupts();
@@ -46,7 +48,7 @@ public class CPU {
 		//
 //		fakeVerticalBlank++;
 //		mem.RAM[0xFF44]=(fakeVerticalBlank/12)&0xff;
-		
+//		
 		
 		
 		// TODO: Don't create these objects every time, make them static and just clear
@@ -238,7 +240,7 @@ public class CPU {
 			
 			if (wrk>0xff) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
-			handleZeroFlag(wrk);
+			handleZeroFlag(wrk&0xff);
 			
 			unsetFlag(FLAG_ADDSUB);
 			
@@ -455,6 +457,10 @@ public class CPU {
 		case RST_28H:
 			processInterrupt(0x0028);
 			break;
+		case RST_00H:
+			processInterrupt(0x0000);
+			break;
+			
 		default:
 			System.out.println("Unhandled instruction at "+Utils.toHex4(entryPC)+" : "+Utils.toHex2(currentInstruction));
 			mem.poke(0xffff+10, 1);
@@ -485,21 +491,39 @@ public class CPU {
 		int intEnabled = mem.RAM[0xFFFF];
 		int intFlags = mem.RAM[0xFF0F];
 		int masked = intEnabled&intFlags; 
-		
+		/*
+		 * 
+              Bit 4: New Value on Selected Joypad Keyline(s) (rst 60)
+              Bit 3: Serial I/O transfer end                 (rst 58)
+              Bit 2: Timer Overflow                          (rst 50)
+              Bit 1: LCD (see STAT)                          (rst 48)
+              Bit 0: V-Blank                                 (rst 40)
+		 */
+		if ((masked&INT_JOYPAD)>0) {
+			System.out.println("Detected interrupt INT_JOYPAD");
+			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+			processInterrupt(0x0060);
+		}
+		if ((masked&INT_SERIAL)>0) {
+			System.out.println("Detected interrupt INT_SERIAL");
+			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+			processInterrupt(0x0058);
+		}		
+		if ((masked&INT_TIMER)>0) {
+			System.out.println("Detected interrupt INT_TIMER");
+			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+			processInterrupt(0x0050);
+		}
+		if ((masked&INT_LCDSTAT)>0) {
+			System.out.println("Detected interrupt INT_LCDSTAT");
+			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+			processInterrupt(0x0048);
+		}
 		if ((masked&INT_VBLANK)>0) {
 			System.out.println("Detected interrupt VBLANK");
 			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0040); // VBLANK handler.
 		}
-		
 	}
 	
 	public void processInterrupt(int addr) {
@@ -610,12 +634,12 @@ public class CPU {
 			ac.val = peeked;
 			//ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = getHL();
-			System.out.println("pHL="+Utils.toHex2(peeked));
+			//System.out.println("pHL="+Utils.toHex2(peeked));
 			break;
 		case __BC:
 			peeked = mem.peek(getBC());
 			ac.val = peeked;
-			//ac.bytesRead += " " + Utils.toHex2(peeked);
+			//ac.bytesRead += " " + Utils.toHex2(peeked)
 			ac.addr = getBC();
 			break;
 		case __DE:
@@ -717,7 +741,7 @@ public class CPU {
 	}
 	
 	public void handleZeroFlag(int val) {
-		if (val==0) setFlag(FLAG_ZERO);
+		if ((val&0xff)==0) setFlag(FLAG_ZERO);
 		else unsetFlag(FLAG_ZERO);
 	}
 	

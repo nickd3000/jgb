@@ -13,6 +13,9 @@ public class Emulator {
 	//private static final String gameFileName = "resource/spaceinvaders.gb";
 	//private static final String gameFileName = "resource/klax.gb";
 	//private static final String gameFileName = "resource/mario.gb";
+	//private static final String gameFileName = "resource/bombjack.gb";
+	//private static final String gameFileName = "resource/centipede.gb";
+	//private static final String gameFileName = "resource/drmario.gb";
 	
 	public static void main(String[] args) {
 		
@@ -34,13 +37,14 @@ public class Emulator {
 	}
 	
 	public void run() {
-		cpu.mem.biosActive=false;
-		cpu.PC=0x0100;
-		//cpu.PC=0x0000;
-		
-		for (int i=0;i<64000000;i++) {
+		cpu.mem.biosActive=true;
+		//cpu.PC=0x0100;
+		cpu.PC=0x0000;
+		boolean run = true;
+		int tick=0;
+		while(run) {
 			tick();
-			if (i%500==0) DisplayStub.render(cpu, basicDisplay);
+			if ((tick++)%500==0) DisplayStub.render(cpu, basicDisplay);
 		}
 	}
 	

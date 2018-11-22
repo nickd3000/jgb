@@ -14,6 +14,22 @@ public class CPUPrefix {
 		if (cpu.displayInstruction)
 			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:"+value+"   bit:"+bit);
 		
+		// SWAP operation
+		if (instr >= 0x30 && instr <= 0x37) {
+			int upper=(value>>4)&0b0000_1111;
+			int lower=(value<<4)&0b1111_0000;
+			value = upper|lower;
+			setValueForOperation(cpu, instr, value);
+			
+			if (value ==0) {
+				cpu.setFlag(CPU.FLAG_ZERO);
+			} else {
+				cpu.unsetFlag(CPU.FLAG_ZERO);
+			}
+			
+			operationSupported=true;
+		}
+		
 		// BIT operation
 		if (instr >= 0x40 && instr <= 0x7F) {
 			if ((value & bitMask) > 0) {
@@ -59,7 +75,7 @@ public class CPUPrefix {
 		}
 		
 		if (operationSupported==false) {
-			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:"+value+"   bit:"+bit);
+			System.out.println("Unsupported Prefix command: 0x" + Utils.toHex2(instr) + "   val:"+value+"   bit:"+bit);
 			cpu.mem.poke(0xffff+10, 1);
 		}
 	}
