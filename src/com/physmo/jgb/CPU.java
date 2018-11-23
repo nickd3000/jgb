@@ -38,6 +38,15 @@ public class CPU {
 		//if (tickCount>30000000) displayInstruction=true;
 		//if (tickCount>2000000) displayInstruction=true;
 		//if (PC==0x001D) displayInstruction=true;
+		//if (PC>0x00FF) displayInstruction=true;
+		
+		
+		// fake a timer interrupt:
+//		if (tickCount%10000==0) {
+//			mem.RAM[0xFF0F] |= CPU.INT_TIMER;
+//		}
+		
+		Debug.checkRegisters(this);
 		
 		// Handle interrupts before checking current instruction.
 		checkInterrupts();
@@ -84,6 +93,10 @@ public class CPU {
 		
 		switch (command) {
 		case NOP:
+			break;
+		case HALT:
+			PC--;
+			enableInterrupts();
 			break;
 		case RET:
 			wrk = popW();
@@ -133,8 +146,8 @@ public class CPU {
 			wrk = ac1.val+1;
 			if (wrk>0xffff) wrk-=0xffff;
 			mem.poke(ac1.addr, wrk);
-			handleZeroFlag(wrk);
-			unsetFlag(FLAG_ADDSUB);
+//			handleZeroFlag(wrk);
+//			unsetFlag(FLAG_ADDSUB);
 			break;
 		case DEC:
 			wrk = ac1.val-1;
@@ -156,6 +169,7 @@ public class CPU {
 			break;
 		case LD:
 			wrk = ac2.val;
+			if (displayInstruction) System.out.println("addr2:"+Utils.toHex4(ac2.addr)+" val2:"+ac2.val);
 			mem.poke(ac1.addr, ac2.val);
 			handleZeroFlag(wrk);
 			unsetFlag(FLAG_ADDSUB);
@@ -250,6 +264,9 @@ public class CPU {
 		case ADDHL:
 			wrk = getHL() + ac2.val;
 			
+			if (wrk>0xffff) setFlag(FLAG_CARRY); 
+			else unsetFlag(FLAG_CARRY);
+				
 			setHL(wrk&0xffff);
 			unsetFlag(FLAG_ADDSUB);
 			
@@ -354,6 +371,12 @@ public class CPU {
 				PC=wrk;
 			}
 			break;
+		case JPC:
+			if (testFlag(FLAG_CARRY)==true) {
+				wrk = ac1.val;
+				PC=wrk;
+			}
+			break;
 		case LDZPGCA:
 			mem.poke(0xff00+C, A);
 			break;
@@ -369,6 +392,15 @@ public class CPU {
 			setHL(wrk);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_ZERO);
+			break;
+		case RR:
+			wrk = ac1.val;
+			
+			if ((wrk&1)>0) setFlag(FLAG_CARRY);
+			else unsetFlag(FLAG_CARRY);
+			wrk = wrk>>1;
+			mem.poke(ac1.addr, wrk&0xff);
+			
 			break;
 		case RRCA:
 			wrk = ac1.val;
@@ -484,6 +516,7 @@ public class CPU {
 	public static final int ADDR_DE = -13;
 	public static final int ADDR_AF = -14;
 	
+
 
 	public void checkInterrupts() {
 		if (interruptEnabled==0) return;

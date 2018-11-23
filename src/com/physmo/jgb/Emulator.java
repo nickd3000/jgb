@@ -8,14 +8,18 @@ public class Emulator {
 	MEM mem = null;
 	static BasicDisplay basicDisplay = null;
 	
-	private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/othello.gb";
 	//private static final String gameFileName = "resource/spaceinvaders.gb";
 	//private static final String gameFileName = "resource/klax.gb";
 	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/bombjack.gb";
 	//private static final String gameFileName = "resource/centipede.gb";
-	//private static final String gameFileName = "resource/drmario.gb";
+	private static final String gameFileName = "resource/drmario.gb";
+	//private static final String gameFileName = "resource/tennis.gb";
+	//private static final String gameFileName = "resource/bghost.gb";
+	//private static final String gameFileName = "resource/motocross.gb";
+	
 	
 	public static void main(String[] args) {
 		

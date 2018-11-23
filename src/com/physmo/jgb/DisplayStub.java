@@ -95,7 +95,7 @@ public class DisplayStub {
 		int vram = 0x8010;
 		//int vram = 0x9800; // Tilemap 0
 		//int vram = 0x9C00; // Tilemap 1
-		
+		boolean signedTileIndices = false;
 		int lcdControl = cpu.mem.RAM[0xFF40];
 		
 		// Bit 3 - BG Tile Map Display Select     (0=9800-9BFF, 1=9C00-9FFF)
@@ -104,21 +104,33 @@ public class DisplayStub {
 		
 		// Set tile data pointer.
 		// Bit 4 - BG & Window Tile Data Select   (0=8800-97FF, 1=8000-8FFF)
-		if ((lcdControl&(1<<4))==0) tileDataPtr = 0x8800;
-		else tileDataPtr = 0x8000;
+		if ((lcdControl&(1<<4))==0) {
+			tileDataPtr = 0x8800;
+			signedTileIndices = true;
+		}
+		else {
+			tileDataPtr = 0x8000;
+			signedTileIndices = false;
+		}
 		
+		// if(GPU._bgtile == 1 && tile < 128) tile += 256;
+		//int tileNum = signedTileNumbers ? ((int)bTileNum + 128) : (bTileNum & 0xff);
 		
 		int scrolly = cpu.mem.RAM[0xFF42];
 		int scrollx = cpu.mem.RAM[0xFF43];
 		int xx,yy;
-		int currentTile = 3;
+
 		yy = y+scrolly;
 		int subx=0,suby=yy%8;
 		
 		for (int x=0;x<160;x++) {
 			xx = x+scrollx;
 			int charOffset = (xx / 8) + ((yy / 8) * 32);
-			int charIndex = cpu.mem.RAM[vram + charOffset];
+			int charIndex = (byte)cpu.mem.RAM[vram + charOffset];
+			
+			if (signedTileIndices) charIndex+=128;
+			else charIndex=charIndex&0xff;
+			
 			subx=xx%8;
 			
 			int tp = getTilePixel2(cpu,charIndex,subx,suby);

@@ -110,4 +110,21 @@ public class Debug {
 		}
 		
 	}
+	
+	public static void checkRegisters(CPU cpu) {
+		checkRegister8Bit(cpu, cpu.A,"A");
+		checkRegister8Bit(cpu, cpu.B,"B");
+		checkRegister8Bit(cpu, cpu.C,"C");
+		checkRegister8Bit(cpu, cpu.D,"D");
+		checkRegister8Bit(cpu, cpu.E,"E");
+		checkRegister8Bit(cpu, cpu.H,"H");
+		checkRegister8Bit(cpu, cpu.L,"L");
+	}
+	
+	public static void checkRegister8Bit(CPU cpu, int val, String name) {
+		if (val<0 || val>0xff) {
+			System.out.println("Register overflow: "+name+"="+val);
+			cpu.mem.poke(0xffff+10, 1);
+		}
+	}
 }

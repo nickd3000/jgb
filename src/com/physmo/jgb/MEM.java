@@ -42,6 +42,10 @@ public class MEM {
 	
 	public void poke(int addr, int val) {
 
+		if (addr==val) {
+			writeBigMessage("poke addr==val!!", 100000);
+		}
+		
 		// Writing 1 to this address switches the bios out.
 		if (addr==0xFF50 && val==1) {
 			RAM[0xFF50]=1;
