@@ -5,6 +5,9 @@ Links
 Instruction set diagram:
 http://www.pastraiser.com/cpu/gameboy/gameboy_opcodes.html
 
+Blog
+http://bgb.bircd.org/pandocs.txt
+
 Some explanation of instructions - rolls etc
 http://www.devrs.com/gb/files/opcodes.html
 
@@ -25,3 +28,18 @@ https://rednex.github.io/rgbds/gbz80.7.html#JR_e8
 
 // Good instruction overview, useful for flags etc.
 http://www.chrisantonellis.com/files/gameboy/gb-instructions.txt
+
+// Useful explanatin of LCD status register bits
+http://bgb.bircd.org/pandocs.htm
+http://bgb.bircd.org/pandocs.txt
+
+http://gameboy.mongenel.com/dmg/asmmemmap.html
+
+http://bgb.bircd.org/pandocs.htm#lcdstatusregister
+
+http://www.codeslinger.co.uk/pages/projects/gameboy/hardware.html
+
+Code Projects
+=============
+Good javascript version, helped with interrupts
+https://github.com/psykad/nagbe-js

@@ -8,6 +8,12 @@ class AddressContainer {
 
 public class CPU {
 
+   public static int ADDR_FF01_SERIAL_DATA = 0xFF01;
+   public static int ADDR_FF46_DMA_TRANSFER = 0xFF46;// // FF46 (w) DM Transfer & Start Address
+   public static int ADDR_FF45_Y_COMPARE = 0xFF45;   // lyc:  0, // $FF45 (r/w) LY Compare
+   public static int ADDR_FF44_Y_SCANLINE = 0xFF44;   // 0xFF44
+   public static int ADDR_FF41_LCD_STAT = 0xFF41;   // LCD status register FF41
+   
 	public static int INT_VBLANK = 1; //   Vblank off	Vblank on
 	public static int INT_LCDSTAT = 1<<1; //	LCD stat off	LCD stat on
 	public static int INT_TIMER = 1<<2; //	Timer off	Timer on
@@ -25,7 +31,7 @@ public class CPU {
 	int FL;
 	int cycles = 0;
 	int tickCount = 0;
-	int interruptEnabled = 1;
+	int interruptEnabled = 0;
 	
 	int fakeVerticalBlank = 0;
 	
@@ -36,10 +42,14 @@ public class CPU {
 	public void tick() {
 		tickCount++;
 		//if (tickCount>30000000) displayInstruction=true;
-		//if (tickCount>2000000) displayInstruction=true;
+		//if (tickCount>3284003-200) displayInstruction=true;
 		//if (PC==0x001D) displayInstruction=true;
 		//if (PC>0x00FF) displayInstruction=true;
+		//displayInstruction=true;
+		//if (PC==0x0100) displayInstruction=true;
+		//if (PC==0x02A0) displayInstruction=true;
 		
+		//System.out.println(""+(char)mem.peek(ADDR_FF01_SERIAL_DATA));
 		
 		// fake a timer interrupt:
 //		if (tickCount%10000==0) {
@@ -58,7 +68,7 @@ public class CPU {
 //		fakeVerticalBlank++;
 //		mem.RAM[0xFF44]=(fakeVerticalBlank/12)&0xff;
 //		
-		
+
 		
 		// TODO: Don't create these objects every time, make them static and just clear
 		// them.
@@ -69,7 +79,7 @@ public class CPU {
 		InstructionDefinition def = InstructionDefinition.getEnumFromId(currentInstruction);
 
 		if (def==null) {
-			System.out.println("No InstructionDefinition at "+Utils.toHex4(entryPC)+" : "+Utils.toHex2(currentInstruction) + "   ");
+			System.out.println("No InstructionDefinition at "+Utils.toHex4(entryPC)+" : "+Utils.toHex2(currentInstruction) + "   " + "tick:"+tickCount);
 		}
 		
 		COMMAND command = def.getCommand();
@@ -95,8 +105,9 @@ public class CPU {
 		case NOP:
 			break;
 		case HALT:
-			PC--;
-			enableInterrupts();
+			//PC--;
+			PC=PC;
+			//enableInterrupts();
 			break;
 		case RET:
 			wrk = popW();
@@ -125,6 +136,12 @@ public class CPU {
 				PC = wrk;
 			}
 			break;
+		case RETC:
+			if (testFlag(FLAG_CARRY)) {
+				wrk = popW();
+				PC = wrk;
+			}
+			break;
 		case JP:
 			PC = ac1.val;
 			break;
@@ -144,36 +161,28 @@ public class CPU {
 			break;
 		case INCW:
 			wrk = ac1.val+1;
-			if (wrk>0xffff) wrk-=0xffff;
+			if (wrk>0xffff) wrk=0;
 			mem.poke(ac1.addr, wrk);
-//			handleZeroFlag(wrk);
-//			unsetFlag(FLAG_ADDSUB);
+			// NO FLAGS AFFECTED
 			break;
 		case DEC:
 			wrk = ac1.val-1;
-			if (wrk==-1) wrk=0xff;
-			//if (val<0) val+=0xff;
+			if (wrk<0) wrk=0xff;
 			mem.poke(ac1.addr, wrk);
 			handleZeroFlag(wrk);
 			setFlag(FLAG_ADDSUB);
-			
 			break;
 		case DECW:
 			wrk = ac1.val-1;
-			if (wrk<0) wrk+=0xffff+1;
-			//if (val<0) val+=0xff;
+			if (wrk<0) wrk=0xffff;
 			mem.poke(ac1.addr, wrk);
-
 			// NO FLAGS AFFECTED
-			
 			break;
 		case LD:
 			wrk = ac2.val;
 			if (displayInstruction) System.out.println("addr2:"+Utils.toHex4(ac2.addr)+" val2:"+ac2.val);
 			mem.poke(ac1.addr, ac2.val);
-			handleZeroFlag(wrk);
-			unsetFlag(FLAG_ADDSUB);
-			
+			// NO FLAGS AFFECTED
 			break;
 		case LDD: // Load and decrement?
 			wrk = ac2.val;
@@ -185,10 +194,12 @@ public class CPU {
 				//System.out.println("get HL:"+getHL()+"  0x"+Utils.toHex4(getHL()));
 				setHL(getHL()-1);
 			}
-			
-			handleZeroFlag(wrk);
-			unsetFlag(FLAG_ADDSUB);
-			
+			if (def.getAddressMode2() == ADDRMODE.__HL) {
+				//System.out.println("get HL:"+getHL()+"  0x"+Utils.toHex4(getHL()));
+				setHL(getHL()-1);
+			}
+			if (getHL()<0) setHL(0xffff);
+			// NO FLAGS AFFECTED
 			break;
 		case LDI: // Load and decrement?
 			wrk=ac2.val;
@@ -200,28 +211,24 @@ public class CPU {
 			if (def.getAddressMode2() == ADDRMODE.__HL) {
 				setHL(getHL()+1);
 			}
-			//handleZeroFlag(wrk);
-			//unsetFlag(FLAG_ADDSUB);
+			if (getHL()>0xffff) setHL(0x0);
+			// NO FLAGS AFFECTED
 			break;
 		case XOR:
 			wrk = A ^ ac1.val;
-			A = wrk&0xff;
-			
-			handleZeroFlag(wrk);
+			handleZeroFlag(wrk&0xff);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_CARRY);
 			unsetFlag(FLAG_HALFCARRY);
-			
+			A = wrk&0xff;
 			break;
 		case OR:
 			wrk = A | ac1.val;
-			A = wrk & 0xff;
-			
-			handleZeroFlag(wrk);
+			handleZeroFlag(wrk&0xff);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_CARRY);
 			unsetFlag(FLAG_HALFCARRY);
-			
+			A = wrk & 0xff;
 			break;
 		case AND:
 			wrk = A & ac1.val;
@@ -231,21 +238,19 @@ public class CPU {
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_CARRY);
 			unsetFlag(FLAG_HALFCARRY);
-			
+			if (displayInstruction) System.out.println("and val:"+Utils.toHex2(ac1.val));
 			break;
 		case SUB:
 			wrk = A - ac1.val;
-			A = wrk&0xff;
 			
-			if (wrk<0) setFlag(FLAG_CARRY);
+			if (ac1.val>A) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			
 			handleZeroFlag(wrk);
-			
-			
 			setFlag(FLAG_ADDSUB);
-			
 			unsetFlag(FLAG_HALFCARRY);
+			
+			A = wrk&0xff;
 			
 			break;
 		case ADD:
@@ -261,28 +266,60 @@ public class CPU {
 			unsetFlag(FLAG_HALFCARRY);
 			
 			break;
+		case DAA:
+			// TODO: !!
+	        int correction = 0;
+	        boolean flagN = testFlag(FLAG_ADDSUB);
+	        boolean flagH = testFlag(FLAG_HALFCARRY);
+	        boolean flagC = testFlag(FLAG_CARRY);
+	        
+	        if (flagH || (!flagN && (A & 0xF) > 9))
+	            correction = 6;
+
+	        if (flagC || (!flagN && A > 0x99)) {
+	            correction |= 0x60;
+	            setFlag(FLAG_CARRY);
+	        }
+	        
+	        wrk = A;
+	        wrk += flagN ? -correction : correction;
+	        wrk &= 0xFF;
+	        
+	        unsetFlag(FLAG_HALFCARRY);
+
+	        handleZeroFlag(wrk);
+	        
+			A=wrk;
+			
+			break;
 		case ADDHL:
 			wrk = getHL() + ac2.val;
 			
 			if (wrk>0xffff) setFlag(FLAG_CARRY); 
 			else unsetFlag(FLAG_CARRY);
-				
-			setHL(wrk&0xffff);
+			
 			unsetFlag(FLAG_ADDSUB);
+			//if (((hl&0xFFF)+(value&0xFFF))&0x1000) this.setH(); else this.clearH();
+			if ((( (getHL()&0xFFF)+(ac2.val&0xFFF) ) &0x1000)>0) setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
+			setHL(wrk&0xffff);
 			
 			break;
 		case ADC:
 			wrk = A + ac1.val + (testFlag(FLAG_CARRY)?1:0);
-			A = wrk&0xff;
-			
-			handleZeroFlag(wrk);
+
+			handleZeroFlag(wrk&0xff);
 			
 			if (wrk>0xff) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			
 			unsetFlag(FLAG_ADDSUB);
 			
-			unsetFlag(FLAG_HALFCARRY);
+			if (((A^ac1.val^wrk)&0x10)>0) setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
+			A = wrk&0xff;
 			
 			break;
 		case SBC:
@@ -306,52 +343,34 @@ public class CPU {
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_HALFCARRY);
 			break;
+		case CCF:
+			unsetFlag(FLAG_CARRY);
+			unsetFlag(FLAG_ADDSUB);
+			unsetFlag(FLAG_HALFCARRY);
+			break;
 		case JRNZ:
 			if (testFlag(FLAG_ZERO)==false) {
 				jumpRelative(ac1.val);
-//				int tc = ac1.val&0xff;
-//				tc = convertSignedByte(tc);
-//				PC=PC+tc;
 			}
 			break;
 		case JRZ:
 			if (testFlag(FLAG_ZERO)==true) {
 				jumpRelative(ac1.val);
-//				int tc = ac1.val;
-//				tc = convertSignedByte(tc);
-//				System.out.println("Helper: "+ac1.val+"   tc:"+tc);
-//				PC=PC+tc;
 			}
 			break;
 		case JRNC:
 			if (testFlag(FLAG_CARRY)==false) {
 				jumpRelative(ac1.val);
-//				int tc = ac1.val;
-//				tc = convertSignedByte(tc);
-//				System.out.println("Jump relative: "+ac1.val+"   tc:"+tc);
-//				PC=PC+tc;
 			}
 			break;
 		case JRC:
 			if (testFlag(FLAG_CARRY)==true) {
 				jumpRelative(ac1.val);
-//				int tc = ac1.val;
-//				
-//				tc = convertSignedByte(tc);
-//				
-//				System.out.println("Jump relative: "+ac1.val+"   tc:"+tc);
-//				
-//				PC=PC+tc;
 			}
 			break;
 		case JR:
 			jumpRelative(ac1.val);
-//			
-//				int tc = ac1.val;
-//				tc = convertSignedByte(tc);
-//				System.out.println("Jump relative: "+ac1.val+"   tc:"+tc);
-//				PC=PC+tc;
-			
+
 			break;
 		case JPZ:
 			if (testFlag(FLAG_ZERO)==true) {
@@ -385,6 +404,7 @@ public class CPU {
 			break;
 		case LDAZPGNN:
 			A = mem.peek(0xff00+ac1.val)&0xff;
+			if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
 		case LDHLSPN:
 			int ptr = SP+convertSignedByte(ac1.val&0xff);
@@ -465,20 +485,45 @@ public class CPU {
 		case CP:
 			wrk = A - ac1.val;
 			
-			handleZeroFlag(wrk);
+			handleZeroFlag(wrk&0xff);
 			
 			setFlag(FLAG_ADDSUB);
 			if (A < ac1.val) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			
+			if ((A&0xF) < (ac1.val&0xF)) setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
+			/*
+			 * const result = this.register.a - value;
+	        if ((result&0xFF) === 0) this.setZ(); else this.clearZ();
+	        this.setN();
+	        if (this.register.a < value) this.setC(); else this.clearC();
+	        if ((this.register.a&0xF) < (value&0xF)) this.setH(); else this.clearH();
+			 */
 			break;
 		case CPL:
-			wrk = (~A)&0xff;
+			// wrk = (~A)&0xff;
+			//			// this.register.a ^= 0xFF;
+			wrk = A^0xFF;
 			
 			setFlag(FLAG_ADDSUB);
 			setFlag(FLAG_HALFCARRY);
 			
 			A = wrk;
+			break;
+			
+		case RST_18H:
+			processInterrupt(0x0018);
+			break;
+		case RST_10H:
+			processInterrupt(0x0010);
+			break;
+		case RST_20H:
+			processInterrupt(0x0020);
+			break;
+		case RST_30H:
+			processInterrupt(0x0030);
 			break;
 		case RST_38H:
 			processInterrupt(0x0038);
@@ -494,14 +539,16 @@ public class CPU {
 			break;
 			
 		default:
-			System.out.println("Unhandled instruction at "+Utils.toHex4(entryPC)+" : "+Utils.toHex2(currentInstruction));
+			System.out.println("Unhandled instruction at "+Utils.toHex4(entryPC)+
+					" : "+Utils.toHex2(currentInstruction)+ 
+					" tick:"+tickCount);
 			mem.poke(0xffff+10, 1);
 			break;
 		}
 
 	}
 //int A,B,C,D,E,H,L;
-	public static final int ADDR_INVALID = -10; // Operand address that shouldn't be written to.
+	public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.
 	public static final int ADDR_A = -1;
 	public static final int ADDR_B = -2;
 	public static final int ADDR_C = -3;
@@ -517,9 +564,15 @@ public class CPU {
 	public static final int ADDR_AF = -14;
 	
 
+	// Set a flag on the interrupt register.
+	public void requestInterrupt(int val) {
+		this.mem.RAM[0xFF0F] |= val;
+		//this.mmu.writeByte(0xFF0F, this.mmu.readByte(0xFF0F)|(1<<id));
+	}
 
 	public void checkInterrupts() {
 		if (interruptEnabled==0) return;
+		//interruptEnabled=0;
 		
 		int intEnabled = mem.RAM[0xFFFF];
 		int intFlags = mem.RAM[0xFF0F];
@@ -533,26 +586,31 @@ public class CPU {
               Bit 0: V-Blank                                 (rst 40)
 		 */
 		if ((masked&INT_JOYPAD)>0) {
+			mem.RAM[0xFF0F] &= ~(INT_JOYPAD); // Reset interrupt flag.
 			System.out.println("Detected interrupt INT_JOYPAD");
 			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0060);
 		}
 		if ((masked&INT_SERIAL)>0) {
+			mem.RAM[0xFF0F] &= ~(INT_SERIAL); // Reset interrupt flag.
 			System.out.println("Detected interrupt INT_SERIAL");
 			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0058);
 		}		
 		if ((masked&INT_TIMER)>0) {
+			mem.RAM[0xFF0F] &= ~(INT_TIMER); // Reset interrupt flag.
 			System.out.println("Detected interrupt INT_TIMER");
 			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0050);
 		}
 		if ((masked&INT_LCDSTAT)>0) {
+			mem.RAM[0xFF0F] &= ~(INT_LCDSTAT); // Reset interrupt flag.
 			System.out.println("Detected interrupt INT_LCDSTAT");
 			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0048);
 		}
 		if ((masked&INT_VBLANK)>0) {
+			mem.RAM[0xFF0F] &= ~(INT_VBLANK); // Reset interrupt flag.
 			System.out.println("Detected interrupt VBLANK");
 			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0040); // VBLANK handler.
@@ -560,7 +618,7 @@ public class CPU {
 	}
 	
 	public void processInterrupt(int addr) {
-		disableInterrupts();
+		//disableInterrupts();
 		pushW(PC);
 		PC = addr;
 	}

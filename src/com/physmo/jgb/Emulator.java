@@ -8,18 +8,25 @@ public class Emulator {
 	MEM mem = null;
 	static BasicDisplay basicDisplay = null;
 	
-	//private static final String gameFileName = "resource/tetris.gb";
+	private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/drmario.gb";
 	//private static final String gameFileName = "resource/othello.gb";
 	//private static final String gameFileName = "resource/spaceinvaders.gb";
 	//private static final String gameFileName = "resource/klax.gb";
 	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/bombjack.gb";
 	//private static final String gameFileName = "resource/centipede.gb";
-	private static final String gameFileName = "resource/drmario.gb";
 	//private static final String gameFileName = "resource/tennis.gb";
 	//private static final String gameFileName = "resource/bghost.gb";
 	//private static final String gameFileName = "resource/motocross.gb";
+	//private static final String gameFileName = "resource/asteroids.gb";
+	//private static final String gameFileName = "resource/bowling.gb";
+	//private static final String gameFileName = "resource/loderunner.gb";
+	//private static final String gameFileName = "resource/pipedream.gb";
+	//private static final String gameFileName = "resource/spot.gb";
+	//private static final String gameFileName = "resource/alleyway.gb";
 	
+	//private static final String gameFileName = "resource/cpu_instrs.gb";
 	
 	public static void main(String[] args) {
 		
@@ -41,14 +48,14 @@ public class Emulator {
 	}
 	
 	public void run() {
-		cpu.mem.biosActive=true;
-		//cpu.PC=0x0100;
-		cpu.PC=0x0000;
+		cpu.mem.biosActive=false;
+		cpu.PC=0x0100;
+		//cpu.PC=0x0000;
 		boolean run = true;
 		int tick=0;
 		while(run) {
 			tick();
-			if ((tick++)%500==0) DisplayStub.render(cpu, basicDisplay);
+			if ((tick++)%100==0) DisplayStub.tick(cpu, basicDisplay,10);
 		}
 	}
 	

@@ -3,18 +3,28 @@ package com.physmo.jgb;
 public class Debug {
 	
 	public static String dissasemble(CPU cpu, int addr) {
+		
 		String str = "> ";
 		int instr = cpu.mem.peek(addr);
-		str += "0x"+Utils.toHex4(addr); // Address
-		
 		InstructionDefinition def = InstructionDefinition.getEnumFromId(instr);
-		str+= "   "+def.toString();
+		
+		String strBytes="";
+		int numBytes = def.getNumBytes();
+		for (int i=0;i<numBytes;i++) {
+			strBytes += " "+Utils.toHex2(cpu.mem.peek(addr+i));
+		}
+		strBytes = Utils.padToLength(strBytes, 10);
+		
+		
+		str += "0x"+Utils.toHex4(addr); // Address
+		str+= "  "+strBytes;
+		str+= "  "+def.toString();
+		
+		str = Utils.padToLength(str, 40-6);
 		
 		return str;
 	}
 	
-
-
 	  
 	public static String getFlags(CPU cpu) {
 		String str = "";

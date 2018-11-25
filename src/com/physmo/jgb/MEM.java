@@ -48,11 +48,25 @@ public class MEM {
 		
 		// Writing 1 to this address switches the bios out.
 		if (addr==0xFF50 && val==1) {
-			RAM[0xFF50]=1;
+			//RAM[0xFF50]=1;
 			biosActive=false;
-			writeBigMessage("Switched bios!!!", 1000);
+			writeBigMessage("Switched bios!!!", 10);
 		}
 		
+		if (addr==0x0151) {
+			writeBigMessage("wrote to 0x0150!!!", 1000);
+		}
+		
+		if (addr==CPU.ADDR_FF46_DMA_TRANSFER) {
+			RAM[addr] = val;
+			transferDMA();
+			return;
+		}
+		
+		if (addr == CPU.ADDR_FF44_Y_SCANLINE) {
+			RAM[addr]=1;
+			return;
+		}
 		
 		if (addr == CPU.ADDR_A) {
 			cpu.A = val;
@@ -117,6 +131,13 @@ public class MEM {
 
 	public int peek(int addr) {
 
+		// test possible tetris bug
+		if (addr == 0xFF00) { 
+			//(P1) return 0x00
+			return 10;
+		}
+				
+				
 		if (addr == CPU.ADDR_A) {
 			return cpu.A;
 		}
@@ -221,4 +242,18 @@ public class MEM {
 			return true;
 		return false;
 	}
+	
+	public void transferDMA() {
+		int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
+		for (int i=0;i<160;i++) {
+			poke(0xFE00+i, peek(addr+i));
+		}
+	}
+//	 transferDMA() {
+//	        let address = this.register.dma << 8;
+//
+//	        for (let i = 0; i < 160; i++) {
+//	            this.system.mmu.writeByte(0xFE00+i, this.system.mmu.readByte(address+i));
+//	        }
+//	    }
 }

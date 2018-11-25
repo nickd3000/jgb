@@ -15,7 +15,12 @@ public class Utils {
             int c;
             int count=0;
 
+            
             while ((c = in.read()) != -1) {
+//            	if (count>=0x0150 && count<=0x0160) {
+//                	System.out.println("LOAD 0x" + Utils.toHex4(count) + "  " + Utils.toHex2(c) );
+//                }
+            	
             	memoryDevice[targetLocation+count++] = c;
             }
         } catch (FileNotFoundException e) {
