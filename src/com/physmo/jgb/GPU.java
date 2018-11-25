@@ -22,10 +22,10 @@ import com.physmo.toolbox.BasicDisplay;
 	 Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 	 Bit 0 - BG/Window Display/Priority     (0=Off, 1=On)
  */
-public class DisplayStub {
-	public static final int scale = 2;
-	public static int clock = 0;
-	public static int currentMode = 0;
+public class GPU {
+	public  final int scale = 2;
+	public  int clock = 0;
+	public  int currentMode = 0;
 
 	public static final Color c1 = new Color(0, 0, 0);
 	public static final Color c2 = new Color(70, 70, 70);
@@ -33,9 +33,17 @@ public class DisplayStub {
 	public static final Color c4 = new Color(255, 255, 255);
 
 	// public static int scanline = 0;
-	public static int lastLineRendered = 0;
+	public  int lastLineRendered = 0;
+	
+	public  Sprite [] sprites = new Sprite[40];
+	
+	public GPU() {
+		for (int i=0;i<40;i++) {
+			sprites[i]=new Sprite();
+		}
+	}
 
-	public static void setLCDRegisterMode(CPU cpu, int mode) {
+	public  void setLCDRegisterMode(CPU cpu, int mode) {
 		// 0: During H-Blank
 		// 1: During V-Blank
 		// 2: During Searching OAM-RAM
@@ -46,7 +54,7 @@ public class DisplayStub {
 		cpu.mem.RAM[0xFF41] = val;
 	}
 
-	public static void tick(CPU cpu, BasicDisplay bd, int cycles) {
+	public void tick(CPU cpu, BasicDisplay bd, int cycles) {
 
 		clock = (clock + cycles) & 0xFFFFFFFF;
 
@@ -127,7 +135,7 @@ public class DisplayStub {
 
 	static int tileDataPtr = 0x8800;
 
-	public static int getTilePixel(CPU cpu, int tileId, int subx, int suby) {
+	public  int getTilePixel(CPU cpu, int tileId, int subx, int suby) {
 		int byteOffset = (suby * 2) + (subx / 4);
 		int data = cpu.mem.RAM[tileDataPtr + byteOffset];
 		int nibble = (subx / 2) & 3;
@@ -145,7 +153,7 @@ public class DisplayStub {
 		return 0;
 	}
 
-	public static int getTilePixel2(CPU cpu, int tileId, int subx, int suby) {
+	public  int getTilePixel2(CPU cpu, int tileId, int subx, int suby) {
 		int byteOffset = (suby * 2);
 		;
 
@@ -161,10 +169,12 @@ public class DisplayStub {
 		return color;
 	}
 
-	public static void renderLine(CPU cpu, BasicDisplay bd, int y) {
+	public  void renderLine(CPU cpu, BasicDisplay bd, int y) {
 
 		int vram = 0x8010;
-
+		
+		getSprites(cpu);
+		
 		boolean signedTileIndices = false;
 		int lcdControl = cpu.mem.RAM[0xFF40];
 
@@ -208,7 +218,7 @@ public class DisplayStub {
 
 			int tp = getTilePixel2(cpu, charIndex, subx, suby);
 
-			int pix = tp; // +charIndex;
+			int pix = tp; //+charIndex;
 
 			if ((pix & 3) == 0)
 				bd.setDrawColor(c4);
@@ -219,7 +229,38 @@ public class DisplayStub {
 			else if ((pix & 3) == 3)
 				bd.setDrawColor(c1);
 
+			// Sprites
+			for (int i=0;i<40;i++) {
+				if (x>sprites[i].x && x<sprites[i].x+8) {
+					if (y>sprites[i].y && y<sprites[i].y+8) {
+						bd.setDrawColor(Color.GREEN);
+					}
+				}
+			}
+			
 			bd.drawFilledRect(x * scale, y * scale, scale, scale);
 		}
 	}
+	
+	
+	
+	public  void getSprites(CPU cpu) {
+		for (int i=0;i<40;i++) {
+			getSprite(cpu,i);
+		}
+	}
+	
+	public  void getSprite(CPU cpu, int id) {
+        int spriteAddress = 0xFE00 + (id * 4);
+        sprites[id].y = cpu.mem.RAM[spriteAddress] - 16; // Offset for display window.
+        sprites[id].x = cpu.mem.RAM[spriteAddress+1] - 8; // Offset for display window.
+        sprites[id].tileId = cpu.mem.RAM[spriteAddress+2];
+        sprites[id].attributes = cpu.mem.RAM[spriteAddress]+3;
+	}
+        
 }
+
+class Sprite {
+	int x,y,tileId,attributes;
+}
+

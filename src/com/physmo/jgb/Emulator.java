@@ -5,7 +5,10 @@ import com.physmo.toolbox.BasicDisplay;
 public class Emulator {
 
 	CPU cpu = null;
+	GPU gpu = null;
 	MEM mem = null;
+	INPUT input = null;
+	
 	static BasicDisplay basicDisplay = null;
 	
 	private static final String gameFileName = "resource/tetris.gb";
@@ -37,8 +40,11 @@ public class Emulator {
 	
 	public Emulator() {
 		cpu = new CPU();
+		gpu = new GPU();
 		mem = new MEM(cpu);
-		cpu.attachHardware(mem);
+		input = new INPUT(cpu);
+		
+		cpu.attachHardware(mem, input, gpu);
 		basicDisplay = new BasicDisplay(320*2, 240*2);
 		
 		Utils.ReadFileBytesToMemoryLocation("resource/dmg_boot.bin", mem.ROM, 0);
@@ -55,12 +61,20 @@ public class Emulator {
 		int tick=0;
 		while(run) {
 			tick();
-			if ((tick++)%100==0) DisplayStub.tick(cpu, basicDisplay,10);
+			if ((tick++)%100==0) gpu.tick(cpu, basicDisplay,10);
 		}
 	}
 	
 	public void tick() {
 		cpu.tick();
+		input.tick(basicDisplay);
 	}
 	
+	public void keyboardStub() {
+		// z=90 x=88 up:38 down:40 left:37 right:39
+		// space:32 return:10
+		if (basicDisplay.getKeyState()[65]>0) {
+			
+		}
+	}
 }

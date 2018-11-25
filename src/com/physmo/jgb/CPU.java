@@ -23,6 +23,8 @@ public class CPU {
 	public static boolean displayInstruction = false;
 
 	MEM mem = null;
+	GPU gpu = null;
+	INPUT input = null;
 
 	// Registers.
 	int A,B,C,D,E,H,L;
@@ -35,8 +37,10 @@ public class CPU {
 	
 	int fakeVerticalBlank = 0;
 	
-	public void attachHardware(MEM mem) {
+	public void attachHardware(MEM mem, INPUT input, GPU gpu) {
 		this.mem = mem;
+		this.input = input;
+		this.gpu = gpu;
 	}
 
 	public void tick() {
@@ -406,6 +410,10 @@ public class CPU {
 			A = mem.peek(0xff00+ac1.val)&0xff;
 			if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
+		case LDAZPGC:
+			A = mem.peek(0xff00+C)&0xff;
+			//if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
+			break;
 		case LDHLSPN:
 			int ptr = SP+convertSignedByte(ac1.val&0xff);
 			wrk = combineBytes(mem.RAM[ptr],mem.RAM[ptr+1]);
@@ -578,7 +586,6 @@ public class CPU {
 		int intFlags = mem.RAM[0xFF0F];
 		int masked = intEnabled&intFlags; 
 		/*
-		 * 
               Bit 4: New Value on Selected Joypad Keyline(s) (rst 60)
               Bit 3: Serial I/O transfer end                 (rst 58)
               Bit 2: Timer Overflow                          (rst 50)
@@ -587,32 +594,32 @@ public class CPU {
 		 */
 		if ((masked&INT_JOYPAD)>0) {
 			mem.RAM[0xFF0F] &= ~(INT_JOYPAD); // Reset interrupt flag.
-			System.out.println("Detected interrupt INT_JOYPAD");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//			System.out.println("Detected interrupt INT_JOYPAD");
+//			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0060);
 		}
 		if ((masked&INT_SERIAL)>0) {
 			mem.RAM[0xFF0F] &= ~(INT_SERIAL); // Reset interrupt flag.
-			System.out.println("Detected interrupt INT_SERIAL");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//			System.out.println("Detected interrupt INT_SERIAL");
+//			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0058);
 		}		
 		if ((masked&INT_TIMER)>0) {
 			mem.RAM[0xFF0F] &= ~(INT_TIMER); // Reset interrupt flag.
-			System.out.println("Detected interrupt INT_TIMER");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//			System.out.println("Detected interrupt INT_TIMER");
+//			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0050);
 		}
 		if ((masked&INT_LCDSTAT)>0) {
 			mem.RAM[0xFF0F] &= ~(INT_LCDSTAT); // Reset interrupt flag.
-			System.out.println("Detected interrupt INT_LCDSTAT");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//			System.out.println("Detected interrupt INT_LCDSTAT");
+//			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0048);
 		}
 		if ((masked&INT_VBLANK)>0) {
 			mem.RAM[0xFF0F] &= ~(INT_VBLANK); // Reset interrupt flag.
-			System.out.println("Detected interrupt VBLANK");
-			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
+//			System.out.println("Detected interrupt VBLANK");
+//			System.out.println("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx");
 			processInterrupt(0x0040); // VBLANK handler.
 		}
 	}

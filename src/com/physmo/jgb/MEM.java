@@ -46,6 +46,11 @@ public class MEM {
 			writeBigMessage("poke addr==val!!", 100000);
 		}
 		
+		if (addr==0xFF00) { 
+			cpu.input.pokeFF00(val);
+			return;
+		}
+			
 		// Writing 1 to this address switches the bios out.
 		if (addr==0xFF50 && val==1) {
 			//RAM[0xFF50]=1;
@@ -132,12 +137,16 @@ public class MEM {
 	public int peek(int addr) {
 
 		// test possible tetris bug
-		if (addr == 0xFF00) { 
-			//(P1) return 0x00
-			return 10;
+//		if (addr == 0xFF00) {  // is this to do with the hardware buttons?
+//			//(P1) return 0x00
+//			return 0xff;
+//		}
+		
+		// INPUT
+		if (addr==0xFF00) { 
+			return cpu.input.peekFF00();
 		}
-				
-				
+		
 		if (addr == CPU.ADDR_A) {
 			return cpu.A;
 		}
