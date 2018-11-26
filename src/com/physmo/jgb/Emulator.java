@@ -32,9 +32,9 @@ public class Emulator {
 	//private static final String gameFileName = "resource/cpu_instrs.gb";
 	
 	public static void main(String[] args) {
+		Debug.checkInstructionDefs();
 		
 		Emulator emulator = new Emulator();
-		
 		emulator.run();
 	}
 	

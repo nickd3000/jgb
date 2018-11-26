@@ -123,6 +123,7 @@ public enum InstructionDefinition {
 	RETNC(0xD0, COMMAND.RETNC, 1, ADDRMODE.NONE, ADDRMODE.NONE), // D0    RET  NC
 	RETC(0xD8, COMMAND.RETC, 1, ADDRMODE.NONE, ADDRMODE.NONE), // D8    RET  C
 	
+	
 	JP_nnnn(0xC3, COMMAND.JP, 3, ADDRMODE.nnnn, ADDRMODE.NONE),	// C3    JP   nnnn
 	JPNC(0xD2, COMMAND.JPNC, 3, ADDRMODE.nnnn, ADDRMODE.NONE),	// D2    JP   NC,nnnn
 	JPC(0xDA, COMMAND.JPC, 3, ADDRMODE.nnnn, ADDRMODE.NONE),	// DA    JP   C,nnnn
@@ -368,6 +369,9 @@ public enum InstructionDefinition {
 
 	// register, cycles
 	InstructionDefinition(int opcode, COMMAND name, int numBytes, ADDRMODE am1, ADDRMODE am2) {
+		if (opcode==0xDB) {
+			System.out.println("contruscted DB");
+		}
 		this.opcode = opcode;
 		this.command = name;
 		this.numBytes = numBytes;
@@ -401,6 +405,7 @@ public enum InstructionDefinition {
 	}
 	
 	public static InstructionDefinition getEnumFromId(int id) {
+		
 		for (InstructionDefinition ir : InstructionDefinition.values()) {
 			if (id == ir.opcode) {
 				return ir;

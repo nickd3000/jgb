@@ -63,8 +63,8 @@ public class MEM {
 		}
 		
 		if (addr==CPU.ADDR_FF46_DMA_TRANSFER) {
-			RAM[addr] = val;
-			transferDMA();
+			//RAM[addr] = val;
+			transferDMA(val);
 			return;
 		}
 		
@@ -252,9 +252,10 @@ public class MEM {
 		return false;
 	}
 	
-	public void transferDMA() {
-		int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
-		for (int i=0;i<160;i++) {
+	public void transferDMA(int val) {
+		//int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
+		int addr = val << 8;
+		for (int i=0;i<0xA0;i++) {
 			poke(0xFE00+i, peek(addr+i));
 		}
 	}

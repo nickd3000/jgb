@@ -1,5 +1,8 @@
 package com.physmo.jgb;
 
+// Some explanation of instructions - rolls etc
+// http://www.devrs.com/gb/files/opcodes.html
+	
 public class CPUPrefix {
 
 	public static void processPrefixCommand(CPU cpu, int instr) {
@@ -8,42 +11,48 @@ public class CPUPrefix {
 		int bitMask = (1 << bit);
 		int value = getValueForOperation(cpu, instr);
 		int wrk = 0; // Work value.
+		int carry = 0;
 		boolean operationSupported = false;
 
 		if (cpu.displayInstruction)
 			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:" + value + "   bit:" + bit);
 
 		// RLC - rotate left with carry? (guess)
+		// bit cycles over to other side
+		// checked
 		if (instr >= 0x00 && instr <= 0x07) {
 			wrk = getValueForOperation(cpu, instr);
 
-			if ((wrk & 0b1000_0000) > 0)
+			if ((wrk & 0b1000_0000) > 0) {
+				carry=1;
 				cpu.setFlag(CPU.FLAG_CARRY);
+				}
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
 
 			wrk = wrk << 1;
+			if (carry==1) wrk|=1;
 			cpu.handleZeroFlag(wrk);
 
 			setValueForOperation(cpu, instr, wrk);
 			operationSupported = true;
-
 		}
 
 		// RRC
+		// checked
 		if (instr >= 0x08 && instr <= 0x0F) {
 			wrk = getValueForOperation(cpu, instr);
-
-			if (cpu.testFlag(CPU.FLAG_CARRY)) {
-				wrk|=0x100;
-			}
 			
-			if ((wrk & 1) > 0)
+			if ((wrk&1)==1) carry=1;
+			
+			if (carry==1)
 				cpu.setFlag(CPU.FLAG_CARRY);
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
 			
 			wrk = wrk >> 1;
+			if (carry==1) wrk|=0x80;
+			
 			cpu.handleZeroFlag(wrk);
 
 			setValueForOperation(cpu, instr, wrk&0xff);
@@ -51,6 +60,8 @@ public class CPUPrefix {
 		}
 
 		// RL shift left?
+		// rotate through carry
+		// checked
 		if (instr >= 0x10 && instr <= 0x17) {
 			wrk = getValueForOperation(cpu, instr);
 			wrk = wrk << 1;
@@ -63,21 +74,29 @@ public class CPUPrefix {
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
 
+			wrk&=0xff;
+			
+			cpu.handleZeroFlag(wrk);
+			
 			setValueForOperation(cpu, instr, wrk);
 			operationSupported = true;
 		}
 
 		// RR
+		// checked
 		if (instr >= 0x18 && instr <= 0x1F) {
 			wrk = getValueForOperation(cpu, instr);
 
+			if (cpu.testFlag(CPU.FLAG_CARRY))
+				wrk |= 0x100;
+			
 			if ((wrk & 1) > 0)
 				cpu.setFlag(CPU.FLAG_CARRY);
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
 
 			wrk = wrk >> 1;
-			cpu.handleZeroFlag(wrk);
+			cpu.handleZeroFlag(wrk&0xff);
 			cpu.unsetFlag(CPU.FLAG_ADDSUB);
 			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
 
@@ -88,6 +107,7 @@ public class CPUPrefix {
 		
 		
 		// SLA
+		// checked
 		if (instr >= 0x20 && instr <= 0x27) {
 			wrk = getValueForOperation(cpu, instr);
 
@@ -98,7 +118,6 @@ public class CPUPrefix {
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
 
-			wrk = wrk >> 1;
 			cpu.handleZeroFlag(wrk & 0xff);
 
 			setValueForOperation(cpu, instr, wrk & 0xff);
@@ -126,6 +145,7 @@ public class CPUPrefix {
 
 
 		// SRL
+		// checked
 		if (instr >= 0x38 && instr <= 0x3F) {
 			wrk = getValueForOperation(cpu, instr);
 
@@ -153,13 +173,15 @@ public class CPUPrefix {
 				cpu.setFlag(CPU.FLAG_ZERO);
 				// System.out.println("set zero");
 			}
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			cpu.setFlag(CPU.FLAG_HALFCARRY);
 			operationSupported = true;
 		}
 
 		// RES - unset?
 		if (instr >= 0x80 && instr <= 0xBF) {
 			int tmp = getValueForOperation(cpu, instr);
-			tmp &= ~(bitMask);
+			tmp &= (~(bitMask)&0xff);
 			setValueForOperation(cpu, instr, tmp);
 			// FL &= ~(flag);
 			operationSupported = true;

@@ -123,6 +123,7 @@ public class GPU {
 			if (y == 144) {
 				// this.system.requestInterrupt(0);
 				cpu.requestInterrupt(CPU.INT_VBLANK);
+				cpu.requestInterrupt(CPU.INT_LCDSTAT);
 			} else if (y > 153 + 10) {
 				y = 0;
 				// this.drawScreen();

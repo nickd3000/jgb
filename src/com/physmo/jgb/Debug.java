@@ -98,13 +98,13 @@ public class Debug {
 	
 	
 	public static void checkInstructionDefs() {
+		
 		for (InstructionDefinition id : InstructionDefinition.values()) {
 			ADDRMODE am1 = id.getAddressMode1();
 			ADDRMODE am2 = id.getAddressMode2();
 			
 			int total = getAddressModeBytes(am1)+getAddressModeBytes(am2);
 			int numBytes = id.getNumBytes();
-			
 		}
 		
 	}

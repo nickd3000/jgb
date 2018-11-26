@@ -43,9 +43,19 @@ public class INPUT {
 
 		// Handle interrupts.
 		for (int i = 0; i < keyMap.length; i++) {
-			if (keyPrevious[i]!=keyState[i]) {
-				System.out.println("jp int");
-				cpu.requestInterrupt(CPU.INT_JOYPAD);
+			if (keyPrevious[i]==10 && keyState[i]==1) {
+				
+				// Should we only respond to the signals the cpu is looking for?
+				if (i<=3 && (cpu.mem.RAM[0xFF00]&0x10)>0) {
+					System.out.println("jp int");
+					cpu.requestInterrupt(CPU.INT_JOYPAD);
+				}
+				
+				if (i>=4 && (cpu.mem.RAM[0xFF00]&0x20)>0) {
+					System.out.println("jp int");
+					cpu.requestInterrupt(CPU.INT_JOYPAD);
+				}
+				
 			}
 		}
 		
@@ -83,7 +93,7 @@ public class INPUT {
 		int controlFlags = cpu.mem.RAM[0xFF00]&0x30;
 		
         if ((status&0x10)>0)
-            return ((buttonsCombined)&0xF)|controlFlags;
+            return ((buttonsCombined)&0x0F)|controlFlags;
         if ((status&0x20)>0)
             return ((directionCombined)&0x0F)|controlFlags;
             
