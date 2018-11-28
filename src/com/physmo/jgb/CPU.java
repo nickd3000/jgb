@@ -45,17 +45,24 @@ public class CPU {
 		this.gpu = gpu;
 	}
 
+	int serialBit = 0;
+	
 	public void tick() {
 		tickCount++;
 		//if (tickCount>30000000) displayInstruction=true;
-		//if (tickCount>30543316) displayInstruction=true;
+		//if (tickCount>1401785-50000) displayInstruction=true;
 		//if (PC==0x001D) displayInstruction=true;
 		//if (PC>0x00FF) displayInstruction=true;
 		//displayInstruction=true;
 		//if (PC==0x0100) displayInstruction=true;
 		//if (PC==0x02A0) displayInstruction=true;
 		
-		//System.out.println(""+(char)mem.peek(ADDR_FF01_SERIAL_DATA));
+		int serialBitOld = serialBit;
+		if ((mem.peek(0xFF02)&0x10)>0) serialBit = 1;
+		else serialBit=0;
+		
+		if (serialBitOld!= serialBit)
+			System.out.println(""+(char)mem.peek(ADDR_FF01_SERIAL_DATA));
 		
 		// fake a timer interrupt:
 //		if (tickCount%10000==0) {
@@ -129,8 +136,12 @@ public class CPU {
 			break;
 		case HALT:
 			//PC--;
-			halt=1;
-			enableInterrupts();
+			if (interruptEnabled==1)
+				halt=1;
+			else
+				PC++;
+			
+			//enableInterrupts();
 			System.out.println("HALT !!!!!!!!!!!!!!!!!!!!!");
 			break;
 		case RET:
@@ -289,6 +300,11 @@ public class CPU {
 			
 			unsetFlag(FLAG_HALFCARRY);
 			
+			break;
+		case ADDSPNN:
+			// TODO: add flags.
+			wrk = SP+convertSignedByte(ac1.val&0xff);
+			SP = wrk;
 			break;
 		case DAA:
 			// TODO: !!
@@ -859,7 +875,7 @@ public class CPU {
 	}
 	public void setAF(int val) {
 		this.A = getHighByte(val);
-		this.FL = getLowByte(val);
+		this.FL = getLowByte(val)&0xF0;
 	}
 	
 	public void enableInterrupts() {

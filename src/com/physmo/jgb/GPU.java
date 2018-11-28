@@ -207,6 +207,11 @@ public class GPU {
 
 		for (int x = 0; x < 160; x++) {
 			xx = x + scrollx;
+			
+			// Wrap xx and yy
+			xx=xx&(0xff);
+			yy=yy&(0xff);
+			
 			int charOffset = (xx / 8) + ((yy / 8) * 32);
 			int charIndex = (byte) cpu.mem.RAM[vram + charOffset];
 

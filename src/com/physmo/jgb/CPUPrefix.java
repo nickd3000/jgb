@@ -125,6 +125,28 @@ public class CPUPrefix {
 
 		}
 		
+		// SRA
+		// 
+		if (instr >= 0x28 && instr <= 0x2F) {
+			wrk = getValueForOperation(cpu, instr);
+
+			if ((wrk&1) > 0)
+				cpu.setFlag(CPU.FLAG_CARRY);
+			else
+				cpu.unsetFlag(CPU.FLAG_CARRY);
+
+			if ((wrk&0x80)>0) {
+				wrk|=0x100;
+			}
+			
+			wrk = wrk >> 1;
+			
+			cpu.handleZeroFlag(wrk & 0xff);
+
+			setValueForOperation(cpu, instr, wrk & 0xff);
+			operationSupported = true;
+
+		}
 
 		// SWAP operation
 		if (instr >= 0x30 && instr <= 0x37) {
