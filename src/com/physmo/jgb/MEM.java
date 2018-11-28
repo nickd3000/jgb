@@ -51,6 +51,15 @@ public class MEM {
 			return;
 		}
 		
+		if (isSwitchableddress(addr)) {
+			romBank.poke(addr, val);
+			return;
+		}
+		
+		if (addr == 0xFF43) {
+			writeBigMessage("DEBUG: Poked "+Utils.toHex4(addr)+"  val="+val, 1);
+		}
+		
 		if (addr == val) {
 			writeBigMessage("poke addr==val!!", 100000);
 		}
@@ -108,6 +117,19 @@ public class MEM {
 		RAM[addr] = val;
 	}
 
+	// Return true if this is a memor address handled by the memory controller.
+	public boolean isSwitchableddress(int address) {
+		// 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n 
+		// 0xA000 - 0xBFFF (8,192 bytes) External RAM
+		if (address>=0x4000 && address<=0x7FFF) {
+			return true;
+		}
+		if (address>=0xA000 && address<=0xBFFF) {
+			return true;
+		}	
+		return false;
+	}
+	
 	public int peek(int addr) {
 
 		// INPUT
@@ -120,6 +142,10 @@ public class MEM {
 			return peekSpecial(addr);
 		}
 
+		if (isSwitchableddress(addr)) {
+			return romBank.peek(addr);
+		}
+		
 		// Boot rom.
 		if (inRange(addr, 0, 0xff)) {
 			if (biosActive) {

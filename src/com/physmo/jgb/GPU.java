@@ -103,13 +103,7 @@ public class GPU {
 			cpu.requestInterrupt(CPU.INT_LCDSTAT);
 		}
 
-		// Handle y coincidence check.
-		int ycompare = cpu.mem.peek(CPU.ADDR_FF45_Y_COMPARE);
-		if (y == ycompare) {
-			cpu.mem.RAM[0xFF0F] |= 0x04;
-		} else {
-			cpu.mem.RAM[0xFF0F] &= ~0x04;
-		}
+
 
 		if (clock >= 456) {
 			if (y < 144 && lastLineRendered != y) {
@@ -131,6 +125,32 @@ public class GPU {
 			}
 		}
 
+		
+		   // check the conincidence flag
+//		   if (ly == ReadMemory(0xFF45))
+//		   {
+//		     status = BitSet(status,2) ;
+//		     if (TestBit(status,6))
+//		       RequestInterupt(1) ;
+//		   }
+//		   else
+//		   {
+//		     status = BitReset(status,2) ;
+//		   }
+//		   WriteMemory(0xFF41,status) ; 
+//		   
+		// Handle y coincidence check.
+		int ycompare = cpu.mem.peek(CPU.ADDR_FF45_Y_COMPARE);
+		if (y == ycompare) {
+			cpu.mem.RAM[0xFF0F] |= 0x04;
+			if ((cpu.mem.RAM[0xFF0F] & (1<<6))>0) {
+				cpu.requestInterrupt(CPU.INT_LCDSTAT);
+			}
+		} else {
+			cpu.mem.RAM[0xFF0F] &= ~0x04;
+		}
+		
+		
 		cpu.mem.RAM[0xFF44] = y;
 	}
 
@@ -232,8 +252,12 @@ public class GPU {
 				bd.setDrawColor(c3);
 			else if ((pix & 3) == 2)
 				bd.setDrawColor(c2);
-			else if ((pix & 3) == 3)
-				bd.setDrawColor(c1);
+			else if ((pix & 3) == 3) {
+				//bd.setDrawColor(c1);
+				bd.setDrawColor(new Color(100,0,scrollx&0xff));
+			}
+			
+			
 
 			// Sprites
 			for (int i=0;i<40;i++) {

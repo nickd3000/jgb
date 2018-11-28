@@ -12,7 +12,7 @@ public class Emulator {
 	static BasicDisplay basicDisplay = null;
 	
 	//private static final String gameFileName = "resource/tetris.gb";
-	//private static final String gameFileName = "resource/drmario.gb";
+	private static final String gameFileName = "resource/drmario.gb";
 	//private static final String gameFileName = "resource/othello.gb";
 	//private static final String gameFileName = "resource/spaceinvaders.gb";
 	//private static final String gameFileName = "resource/klax.gb";
@@ -33,7 +33,7 @@ public class Emulator {
 	
 	//
 	//private static final String gameFileName = "resource/xenon2.gb";
-	private static final String gameFileName = "resource/mario.gb";
+	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
 	//private static final String gameFileName = "resource/pokemon_blue.gb";
