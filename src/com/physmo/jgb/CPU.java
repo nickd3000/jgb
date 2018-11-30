@@ -38,7 +38,7 @@ public class CPU {
 	int pendingEnableInterrupt=0;
 	int pendingDisableInterrupt=0;
 	int fakeVerticalBlank = 0;
-	int topOfSTack=0; // used for debugging.
+	int topOfSTack=0xFFFE; // used for debugging.
 	
 	public void attachHardware(MEM mem, INPUT input, GPU gpu) {
 		this.mem = mem;
@@ -53,7 +53,7 @@ public class CPU {
 		
 		tickCount++;
 		//if (tickCount>30000000) displayInstruction=true;
-		//if (tickCount>1401788-10000) displayInstruction=true;
+		//if (tickCount>1401788-50000) displayInstruction=true;
 		//if (PC==0x001D) displayInstruction=true;
 		//if (PC>0x00FF) displayInstruction=true;
 		//displayInstruction=true;
@@ -71,6 +71,10 @@ public class CPU {
 //		if (tickCount%10000==0) {
 //			mem.RAM[0xFF0F] |= CPU.INT_TIMER;
 //		}
+		
+		if ((SP >= 0xA000) && (SP <= 0xBFFF)) {
+			System.out.println("Stack pointing to paged memory???S");
+		}
 		
 		Debug.checkRegisters(this);
 		
@@ -474,20 +478,26 @@ public class CPU {
 				PC=wrk;
 			}
 			break;
+			
 		case LDZPGCA:
-			mem.poke(0xff00+(C&0xff), A&0xff);
+			//mem.poke(0xff00+(C&0xff), A&0xff);
+			mem.RAM[0xff00+(C&0xff)] = A&0xff;
 			break;
 		case LDZPGNNA:
-			mem.poke(0xff00+(ac1.val&0xff), A&0xff);
+			//mem.poke(0xff00+(ac1.val&0xff), A&0xff);
+			mem.RAM[0xff00+(ac1.val&0xff)] =  A&0xff;
 			break;
 		case LDAZPGNN:
-			A = mem.peek(0xff00+(ac1.val&0xff))&0xff;
+			//A = mem.peek(0xff00+(ac1.val&0xff))&0xff;
+			A = mem.RAM[(0xff00+(ac1.val&0xff))]&0xff;
 			if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
 		case LDAZPGC:
-			A = mem.peek(0xff00+(C&0xff))&0xff;
+			//A = mem.peek(0xff00+(C&0xff))&0xff;
+			A = mem.RAM[(0xff00+(C&0xff))]&0xff;
 			//if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
+			
 		case LDHLSPN:
 			int signedByte = convertSignedByte(ac1.val&0xff);
 			int ptr = SP+signedByte;

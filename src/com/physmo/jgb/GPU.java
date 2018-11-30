@@ -144,14 +144,14 @@ public class GPU {
 //		   WriteMemory(0xFF41,status) ; 
 //		   
 		// Handle y coincidence check.
-		int ycompare = cpu.mem.peek(CPU.ADDR_FF45_Y_COMPARE);
+		int ycompare = cpu.mem.RAM[CPU.ADDR_FF45_Y_COMPARE];
 		if (y == ycompare) {
 			cpu.mem.RAM[0xFF0F] |= 0x04;
 			if ((cpu.mem.RAM[0xFF0F] & (1<<6))>0) {
 				cpu.requestInterrupt(CPU.INT_LCDSTAT);
 			}
 		} else {
-			cpu.mem.RAM[0xFF0F] &= ~0x04;
+			cpu.mem.RAM[0xFF0F] &= (~0x04)&0xff;
 		}
 		
 		

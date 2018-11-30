@@ -188,6 +188,7 @@ public class CPUPrefix {
 
 		// BIT operation
 		if (instr >= 0x40 && instr <= 0x7F) {
+			
 			if ((value & bitMask) > 0) {
 				cpu.unsetFlag(CPU.FLAG_ZERO);
 				// System.out.println("unset zero");
@@ -203,7 +204,7 @@ public class CPUPrefix {
 		// RES - unset?
 		if (instr >= 0x80 && instr <= 0xBF) {
 			int tmp = getValueForOperation(cpu, instr);
-			tmp &= (~(bitMask)&0xff);
+			tmp &= ((~(bitMask))&0xff);
 			setValueForOperation(cpu, instr, tmp);
 			// FL &= ~(flag);
 			operationSupported = true;
