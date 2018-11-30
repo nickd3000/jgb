@@ -38,6 +38,7 @@ public class CPU {
 	int pendingEnableInterrupt=0;
 	int pendingDisableInterrupt=0;
 	int fakeVerticalBlank = 0;
+	int topOfSTack=0; // used for debugging.
 	
 	public void attachHardware(MEM mem, INPUT input, GPU gpu) {
 		this.mem = mem;
@@ -48,9 +49,11 @@ public class CPU {
 	int serialBit = 0;
 	
 	public void tick() {
+		//mem.poke(0xC000,0x69);
+		
 		tickCount++;
 		//if (tickCount>30000000) displayInstruction=true;
-		//if (tickCount>1401785-50000) displayInstruction=true;
+		//if (tickCount>1401788-10000) displayInstruction=true;
 		//if (PC==0x001D) displayInstruction=true;
 		//if (PC>0x00FF) displayInstruction=true;
 		//displayInstruction=true;
@@ -71,7 +74,8 @@ public class CPU {
 		
 		Debug.checkRegisters(this);
 		
-		// Handle interrupts before checking current instruction.
+		FL = FL & 0xF0;
+//		// Handle interrupts before checking current instruction.
 		checkInterrupts();
 		
 		if (halt==1) return;
@@ -190,28 +194,44 @@ public class CPU {
 		case INC:
 			wrk = ac1.val + 1;
 			if (wrk>0xff) wrk=0;
-			mem.poke(ac1.addr, wrk);
-			handleZeroFlag(wrk);
+			
+			handleZeroFlag(wrk&0xff);
 			unsetFlag(FLAG_ADDSUB);
+			
+			if ((ac1.val&0xF)+1>0xF) setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
+			mem.poke(ac1.addr, wrk&0xff);
+			
 			break;
 		case INCW:
 			wrk = ac1.val+1;
 			if (wrk>0xffff) wrk=0;
-			mem.poke(ac1.addr, wrk);
+			mem.poke(ac1.addr, wrk&0xffff);
 			// NO FLAGS AFFECTED
 			break;
 		case DEC:
 			wrk = ac1.val-1;
 			if (wrk<0) wrk=0xff;
-			mem.poke(ac1.addr, wrk);
+			
 			handleZeroFlag(wrk);
 			setFlag(FLAG_ADDSUB);
+			if ((ac1.val&0xF)-1<0) setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
+			mem.poke(ac1.addr, wrk&0xff);
+			
 			break;
 		case DECW:
 			wrk = ac1.val-1;
 			if (wrk<0) wrk=0xffff;
 			mem.poke(ac1.addr, wrk);
 			// NO FLAGS AFFECTED
+			break;
+		case LDSPHL:
+			// TODO: this is new
+			SP = getHL();
+			//SP = ((H&0xff)<<8)|(L&0xff);
 			break;
 		case LD:
 			wrk = ac2.val;
@@ -228,11 +248,12 @@ public class CPU {
 			if (def.getAddressMode1() == ADDRMODE.__HL) {
 				//System.out.println("get HL:"+getHL()+"  0x"+Utils.toHex4(getHL()));
 				setHL(getHL()-1);
-			}
-			if (def.getAddressMode2() == ADDRMODE.__HL) {
+			} else  if (def.getAddressMode2() == ADDRMODE.__HL) {
 				//System.out.println("get HL:"+getHL()+"  0x"+Utils.toHex4(getHL()));
 				setHL(getHL()-1);
-			}
+			}  else {
+				System.out.println("ERROR LDD");
+		}
 			if (getHL()<0) setHL(0xffff);
 			// NO FLAGS AFFECTED
 			break;
@@ -242,10 +263,12 @@ public class CPU {
 
 			if (def.getAddressMode1() == ADDRMODE.__HL) {
 				setHL(getHL()+1);
-			}
-			if (def.getAddressMode2() == ADDRMODE.__HL) {
+			} else if (def.getAddressMode2() == ADDRMODE.__HL) {
 				setHL(getHL()+1);
+			} else {
+				System.out.println("ERROR LDI");
 			}
+			
 			if (getHL()>0xffff) setHL(0x0);
 			// NO FLAGS AFFECTED
 			break;
@@ -272,7 +295,7 @@ public class CPU {
 			handleZeroFlag(wrk);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_CARRY);
-			unsetFlag(FLAG_HALFCARRY);
+			setFlag(FLAG_HALFCARRY);
 			if (displayInstruction) System.out.println("and val:"+Utils.toHex2(ac1.val));
 			break;
 		case SUB:
@@ -281,9 +304,13 @@ public class CPU {
 			if (ac1.val>A) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			
-			handleZeroFlag(wrk);
+			handleZeroFlag(wrk&0xff);
 			setFlag(FLAG_ADDSUB);
-			unsetFlag(FLAG_HALFCARRY);
+			//unsetFlag(FLAG_HALFCARRY);
+			
+			if (((A^ac1.val^wrk) & 0x10)>0) setFlag(FLAG_HALFCARRY); 
+			else unsetFlag(FLAG_HALFCARRY);
+				
 			
 			A = wrk&0xff;
 			
@@ -298,13 +325,24 @@ public class CPU {
 			
 			unsetFlag(FLAG_ADDSUB);
 			
-			unsetFlag(FLAG_HALFCARRY);
+			if (((A&0xF)+(ac1.val&0xF))>0xF) setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
 			
 			break;
 		case ADDSPNN:
 			// TODO: add flags.
 			wrk = SP+convertSignedByte(ac1.val&0xff);
+			
+			//if ((this.register.sp^n^result)&0x100) this.setC(); else this.clearC();
+			if ((( SP^convertSignedByte(ac1.val&0xff)^wrk)&0x100)>0) setFlag(FLAG_CARRY);
+			else unsetFlag(FLAG_CARRY);
+			
+			unsetFlag(FLAG_ZERO);
+			unsetFlag(FLAG_ADDSUB);
+			
 			SP = wrk;
+			
 			break;
 		case DAA:
 			// TODO: !!
@@ -451,18 +489,34 @@ public class CPU {
 			//if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
 		case LDHLSPN:
-			int ptr = SP+convertSignedByte(ac1.val&0xff);
-			wrk = combineBytes(mem.RAM[ptr],mem.RAM[ptr+1]);
-			setHL(wrk);
+			int signedByte = convertSignedByte(ac1.val&0xff);
+			int ptr = SP+signedByte;
+			
+			wrk = combineBytes(mem.peek(ptr),mem.peek(ptr+1));
+			
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_ZERO);
+			
+			 if (((SP^signedByte^wrk)&0x100)==0x100) setFlag(FLAG_CARRY);
+			 else unsetFlag(FLAG_CARRY);
+			 
+		     if (((SP^signedByte^wrk)&0x10)==0x10) setFlag(FLAG_HALFCARRY);
+		     unsetFlag(FLAG_HALFCARRY);
+		        
+			setHL(wrk);
+			
 			break;
 		case RR:
 			wrk = ac1.val;
 			
 			if ((wrk&1)>0) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
+			unsetFlag(FLAG_ADDSUB);
+			unsetFlag(FLAG_HALFCARRY);
+			
 			wrk = wrk>>1;
+			handleZeroFlag(wrk&0xFF);
+			
 			mem.poke(ac1.addr, wrk&0xff);
 			
 			break;
@@ -473,8 +527,24 @@ public class CPU {
 			if ((wrk&1)>0) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			
+			unsetFlag(FLAG_ZERO);
+			unsetFlag(FLAG_ADDSUB);
+			unsetFlag(FLAG_HALFCARRY);
+			
 			wrk = wrk>>1;
 			mem.poke(ac1.addr, wrk&0xff);
+			
+			break;
+		case RLA:
+			A = A << 1;
+			if (testFlag(FLAG_CARRY)) A|=1;
+			if (A>0xff) setFlag(FLAG_CARRY);
+			else unsetFlag(FLAG_CARRY);
+			A = A&0xff;
+			
+			unsetFlag(FLAG_ZERO);
+			unsetFlag(FLAG_ADDSUB);
+			unsetFlag(FLAG_HALFCARRY);
 			
 			break;
 		case RLCA:
@@ -484,30 +554,35 @@ public class CPU {
 			if (wrk>0xff) setFlag(FLAG_CARRY);
 			else  unsetFlag(FLAG_CARRY);
 			
+			unsetFlag(FLAG_ZERO);
+			unsetFlag(FLAG_ADDSUB);
+			unsetFlag(FLAG_HALFCARRY);
+			
 			mem.poke(ac1.addr, wrk&0xff);
 			break;
 		case CALL:
 			//pushW(entryPC+1);
-			pushW(PC);
-			PC = ac1.val;
+			call(ac1.val);
 			break;
 		case CALLNZ:
 			//pushW(entryPC+1);
 			if (testFlag(FLAG_ZERO)==false) {
-				pushW(PC);
-				PC = ac1.val;
+				call(ac1.val);
 			}
 			break;
 		case CALLZ:
 			if (testFlag(FLAG_ZERO)==true) {
-				pushW(PC);
-				PC = ac1.val;
+				call(ac1.val);
 			}
 			break;
 		case CALLC:
 			if (testFlag(FLAG_CARRY)==true) {
-				pushW(PC);
-				PC = ac1.val;
+				call(ac1.val);
+			}
+			break;
+		case CALLNC:
+			if (testFlag(FLAG_CARRY)!=true) {
+				call(ac1.val);
 			}
 			break;
 		case PUSHW:
@@ -519,13 +594,7 @@ public class CPU {
 
 			mem.poke(ac1.addr, wrk);
 			break;
-		case RLA:
-			A = A << 1;
-			if (testFlag(FLAG_CARRY)) A|=1;
-			if (A>0xff) setFlag(FLAG_CARRY);
-			else unsetFlag(FLAG_CARRY);
-			A = A&0xff;
-			break;
+
 		case CP:
 			wrk = A - ac1.val;
 			
@@ -590,6 +659,9 @@ public class CPU {
 			break;
 		}
 
+		// Handle interrupts before checking current instruction.
+		//checkInterrupts();
+		
 	}
 //int A,B,C,D,E,H,L;
 	public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.
@@ -608,6 +680,11 @@ public class CPU {
 	public static final int ADDR_AF = -14;
 	
 
+	public void call(int addr) {
+		pushW(PC);
+		PC = addr;
+	}
+	
 	// Set a flag on the interrupt register.
 	public void requestInterrupt(int val) {
 		this.mem.RAM[0xFF0F] |= val;
@@ -845,7 +922,7 @@ public class CPU {
 	}
 	
 	public int getAF() {
-		return combineBytes(A, FL);
+		return combineBytes(A, FL&0xF0);
 	}
 	public int getBC() {
 		return combineBytes(B, C);
@@ -933,13 +1010,19 @@ public class CPU {
 	
 	// STACK
 	public void pushW(int val) {
-		mem.poke(SP--, getHighByte(val));
-		mem.poke(SP--, getLowByte(val));
+		//mem.poke(SP--, getHighByte(val));
+		//mem.poke(SP--, getLowByte(val));
+		mem.RAM[SP--] = getHighByte(val);
+		mem.RAM[SP--] = getLowByte(val);
 	}
 
 	public int popW() {
-		int lb = mem.peek(++SP);
-		int hb = mem.peek(++SP);
+		// int lb = mem.peek(++SP);
+		// int hb = mem.peek(++SP);
+		int lb = mem.RAM[++SP];
+		int hb = mem.RAM[++SP];
+
+		
 		return combineBytes(hb, lb);
 	}
 }

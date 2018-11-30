@@ -31,7 +31,11 @@ public class GPU {
 	public static final Color c2 = new Color(70, 70, 70);
 	public static final Color c3 = new Color(180, 180, 180);
 	public static final Color c4 = new Color(255, 255, 255);
-
+	public static final Color sc1 = new Color(30, 0, 0);
+	public static final Color sc2 = new Color(80, 70, 70);
+	public static final Color sc3 = new Color(200, 180, 180);
+	public static final Color sc4 = new Color(255, 235, 225);
+	
 	// public static int scanline = 0;
 	public  int lastLineRendered = 0;
 	
@@ -156,24 +160,40 @@ public class GPU {
 
 	static int tileDataPtr = 0x8800;
 
-	public  int getTilePixel(CPU cpu, int tileId, int subx, int suby) {
-		int byteOffset = (suby * 2) + (subx / 4);
-		int data = cpu.mem.RAM[tileDataPtr + byteOffset];
-		int nibble = (subx / 2) & 3;
-		switch (nibble) {
-		case 0:
-			return data & 3;
-		case 1:
-			return (data >> 2) & 3;
-		case 2:
-			return (data >> 4) & 3;
-		case 3:
-			return (data >> 6) & 3;
-		}
+//	public  int getTilePixel(CPU cpu, int tileId, int subx, int suby) {
+//		int byteOffset = (suby * 2) + (subx / 4);
+//		int data = cpu.mem.RAM[tileDataPtr + byteOffset];
+//		int nibble = (subx / 2) & 3;
+//		switch (nibble) {
+//		case 0:
+//			return data & 3;
+//		case 1:
+//			return (data >> 2) & 3;
+//		case 2:
+//			return (data >> 4) & 3;
+//		case 3:
+//			return (data >> 6) & 3;
+//		}
+//
+//		return 0;
+//	}
 
-		return 0;
+	static int spriteDataPtr = 0x8000;
+	public  int getSpritePixel2(CPU cpu, int tileId, int subx, int suby) {
+		int byteOffset = (suby * 2);
+
+		int data1 = cpu.mem.RAM[spriteDataPtr + (tileId * 16) + byteOffset];
+		int data2 = cpu.mem.RAM[spriteDataPtr + (tileId * 16) + byteOffset + 1];
+		int mask = 1 << (7 - subx);
+		int color = 0;
+		if ((data1 & mask) > 0)
+			color += 0b0001;
+		if ((data2 & mask) > 0)
+			color += 0b0010;
+
+		return color;
 	}
-
+	
 	public  int getTilePixel2(CPU cpu, int tileId, int subx, int suby) {
 		int byteOffset = (suby * 2);
 		;
@@ -260,10 +280,20 @@ public class GPU {
 			
 
 			// Sprites
+			// Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
+			// Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
 			for (int i=0;i<40;i++) {
-				if (x>sprites[i].x && x<sprites[i].x+8) {
-					if (y>sprites[i].y && y<sprites[i].y+8) {
-						bd.setDrawColor(Color.GREEN);
+				if (x>=sprites[i].x && x<sprites[i].x+8) {
+					if (y>=sprites[i].y && y<sprites[i].y+8) {
+						//bd.setDrawColor(Color.GREEN);
+						int sprsubx = (x-sprites[i].x)&7;
+						int sprsuby = (y-sprites[i].y)&7;
+						if (((sprites[i].attributes)&(1<<5))>0) sprsubx=7-sprsubx;
+						if (((sprites[i].attributes)&(1<<6))>0) sprsuby=7-sprsuby;
+						int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
+						
+						if (sprPixel>0)
+							bd.setDrawColor(getSpriteCol(sprPixel));
 					}
 				}
 			}
@@ -272,7 +302,15 @@ public class GPU {
 		}
 	}
 	
-	
+	public Color getSpriteCol(int i) {
+		switch(i&3) {
+		case 0: return sc1;
+		case 1: return sc2;
+		case 2: return sc3;
+		case 3: return sc4;
+		}
+		return null;
+	}
 	
 	public  void getSprites(CPU cpu) {
 		for (int i=0;i<40;i++) {

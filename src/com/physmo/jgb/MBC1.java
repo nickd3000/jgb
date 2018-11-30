@@ -19,14 +19,13 @@ public class MBC1 implements ROMBank {
 
 	@Override
 	public void poke(int address, int data) {
-		if (address < 0x8000) {
+		if (address <= 0x7FFF) {
 			handleBankChange(address, data);
 		}
 
-		else if ((address >= 0xA000) && (address < 0xC000)) {
+		else if ((address >= 0xA000) && (address <= 0xBFFF)) {
 			if (enableRam) {
 				int newAddress = address - 0xA000;
-				// TODO: implement the below bit
 				cpu.mem.RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data;
 			}
 		}
@@ -34,6 +33,8 @@ public class MBC1 implements ROMBank {
 
 	@Override
 	public int peek(int address) {
+		// 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n 
+		// 0xA000 - 0xBFFF (8,192 bytes) External RAM
 		// int newAddress = addr - 0x4000;
 		// return cpu.mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
 

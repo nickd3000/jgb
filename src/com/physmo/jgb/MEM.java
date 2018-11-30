@@ -21,7 +21,7 @@ package com.physmo.jgb;
 
 public class MEM {
 
-	ROMBank romBank = null;
+	ROMBank memoryBank = null;
 
 	public int RAM[] = new int[0x10000]; // 64k
 	public int RAM_BANKS[] = new int[0x10000]; // 64k
@@ -35,7 +35,7 @@ public class MEM {
 
 	public MEM(CPU cpu) {
 		this.cpu = cpu;
-		romBank = new MBC1(cpu);
+		memoryBank = new MBC1(cpu);
 	}
 
 	public void writeBigMessage(String msg, int count) {
@@ -45,19 +45,24 @@ public class MEM {
 	}
 
 	public void poke(int addr, int val) {
-
+		
 		if (addr < 0) {
 			pokeSpecial(addr, val);
 			return;
 		}
 		
 		if (isSwitchableddress(addr)) {
-			romBank.poke(addr, val);
+			memoryBank.poke(addr, val);
 			return;
 		}
 		
+		// Rough serial output.
+		if (addr == 0xFF02 && val == 0x81) {
+			System.out.println("SERIAL:  "+(char)RAM[0xFF01]);
+		}
+		
 		if (addr == 0xFF43) {
-			writeBigMessage("DEBUG: Poked "+Utils.toHex4(addr)+"  val="+val, 1);
+			//writeBigMessage("DEBUG: Poked "+Utils.toHex4(addr)+"  val="+val, 1);
 		}
 		
 		if (addr == val) {
@@ -65,7 +70,7 @@ public class MEM {
 		}
 
 		if (addr < 0x8000) {
-			romBank.poke(addr, val);
+			memoryBank.poke(addr, val);
 		}
 
 		if (addr == 0xFF00) {
@@ -118,9 +123,10 @@ public class MEM {
 	}
 
 	// Return true if this is a memor address handled by the memory controller.
+	// Switchable address range:
+	// 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n 
+	// 0xA000 - 0xBFFF (8,192 bytes) External RAM
 	public boolean isSwitchableddress(int address) {
-		// 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n 
-		// 0xA000 - 0xBFFF (8,192 bytes) External RAM
 		if (address>=0x4000 && address<=0x7FFF) {
 			return true;
 		}
@@ -143,7 +149,7 @@ public class MEM {
 		}
 
 		if (isSwitchableddress(addr)) {
-			return romBank.peek(addr);
+			return memoryBank.peek(addr);
 		}
 		
 		// Boot rom.
@@ -162,15 +168,16 @@ public class MEM {
 
 		// Scanline returns 0 if LCD is off
 		if (addr == 0xFF44) {
-			if ((RAM[0xFF40] & 0x80) == 0) {
-				return 0;
-			}
+			// TODO:
+//			if ((RAM[0xFF40] & 0x80) == 0) {
+//				return 0;
+//			}
 			return RAM[0xFF44];
 		}
 
 		// Are we reading from the switchable ROM memory bank?
 		if (inRange(addr, 0x4000, 0x7FFF)) {
-			return romBank.peek(addr);
+			return memoryBank.peek(addr);
 		}
 
 		// 0000 3FFF 16KB ROM bank 00 From cartridge, fixed bank
@@ -268,6 +275,7 @@ public class MEM {
 		}
 		if (addr == CPU.ADDR_SP) {
 			cpu.SP = val;
+			cpu.topOfSTack=val;
 			return;
 		}
 		if (addr == CPU.ADDR_HL) {
