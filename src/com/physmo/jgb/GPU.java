@@ -334,7 +334,7 @@ public class GPU {
         sprites[id].y = cpu.mem.RAM[spriteAddress] - 16; // Offset for display window.
         sprites[id].x = cpu.mem.RAM[spriteAddress+1] - 8; // Offset for display window.
         sprites[id].tileId = cpu.mem.RAM[spriteAddress+2];
-        sprites[id].attributes = cpu.mem.RAM[spriteAddress]+3;
+        sprites[id].attributes = cpu.mem.RAM[spriteAddress+3];
 	}
         
 }

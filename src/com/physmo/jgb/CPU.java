@@ -168,7 +168,7 @@ public class CPU {
 				PC++;
 			
 			//enableInterrupts();
-			System.out.println("HALT !!!!!!!!!!!!!!!!!!!!!");
+			//System.out.println("HALT !!!!!!!!!!!!!!!!!!!!!");
 			break;
 		case RET:
 			wrk = popW();
@@ -439,12 +439,12 @@ public class CPU {
 			
 			break;
 		case SBC:
-			wrk = A - ac1.val - (testFlag(FLAG_CARRY)?1:0);			
+			wrk = A - ((ac1.val&0xff)+ (testFlag(FLAG_CARRY)?1:0));			
 			
 			if (wrk>0xff) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
-			
-			handleZeroFlag(wrk);
+
+			handleZeroFlag(wrk&0xff);
 			
 			setFlag(FLAG_ADDSUB);
 
@@ -543,10 +543,11 @@ public class CPU {
 			break;
 			
 		case LDHLSPN:
-			int signedByte = convertSignedByte(ac1.val&0xff);
+			// FAILS TESTS
+			int signedByte = convertSignedByte(ac2.val&0xff);
 			int ptr = SP+signedByte;
 			
-			//wrk = combineBytes(mem.peek((ptr+1)&0xffff),mem.peek((ptr)&0xffff));
+			//wrk = combineBytes(mem.peek((ptr)&0xffff),mem.peek((ptr+1)&0xffff));
 			wrk = ptr & 0xffff;
 			
 			unsetFlag(FLAG_ADDSUB);
@@ -829,7 +830,6 @@ public class CPU {
 		case nn:
 			peeked = getNextByte();
 			ac.val = peeked;//&0xff;
-			//ac.bytesRead += " " + Utils.toHex2(peeked);
 			break;
 		case nnnn:
 			peeked = getNextWord();
@@ -946,9 +946,12 @@ public class CPU {
 	}
 	
 	public void jumpRelative(int val) {
+		
 		int tc = convertSignedByte(val&0xff);
+		
 		if (displayInstruction) System.out.println("Jump relative by "+tc+" to "+Utils.toHex4(PC+tc));
-		PC=PC+tc;
+		PC=(PC+tc);
+		
 	}
 	
 	/*
@@ -1076,6 +1079,7 @@ public class CPU {
 		//mem.poke(SP--, getLowByte(val));
 		mem.RAM[SP--] = getHighByte(val)&0xff;
 		mem.RAM[SP--] = getLowByte(val)&0xff;
+		
 	}
 
 	public int popW() {

@@ -36,8 +36,8 @@ public class MEM {
 	public MEM(CPU cpu) {
 		this.cpu = cpu;
 		
-		//memoryBank = new MBC1(cpu);
-		memoryBank = new ROM_ONLY(cpu);
+		memoryBank = new MBC1(cpu);
+		//memoryBank = new ROM_ONLY(cpu);
 	}
 
 	public void writeBigMessage(String msg, int count) {

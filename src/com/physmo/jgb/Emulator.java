@@ -13,7 +13,7 @@ public class Emulator {
 
 	boolean useBios = false;
 	
-	private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/drmario.gb";
 	//private static final String gameFileName = "resource/othello.gb";
 	//private static final String gameFileName = "resource/spaceinvaders.gb";
@@ -35,7 +35,7 @@ public class Emulator {
 
 	//
 	//private static final String gameFileName = "resource/xenon2.gb";
-	// private static final String gameFileName = "resource/mario.gb";
+	private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
@@ -48,7 +48,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/tests/opus5.gb";
 	//private static final String gameFileName = "resource/tests/01-special.gb"; // DAA FAIL
 	//private static final String gameFileName = "resource/tests/02-interrupts.gb"; // FAIL
-	// private static final String gameFileName = "resource/tests/03-op sp,hl.gb"; // FAIL
+	//private static final String gameFileName = "resource/tests/03-op sp,hl.gb"; // FAIL
 	//private static final String gameFileName = "resource/tests/04-op r,imm.gb"; // FAIL
 	//private static final String gameFileName = "resource/tests/05-op rp.gb"; // PASSED
 	//private static final String gameFileName = "resource/tests/06-ld r,r.gb"; // PASSED

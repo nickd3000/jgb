@@ -14,7 +14,7 @@ public class CPUPrefix {
 		int carry = 0;
 		boolean operationSupported = false;
 
-		if (cpu.displayInstruction)
+		//if (cpu.displayInstruction)
 			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:" + value + "   bit:" + bit);
 
 		// RLC - rotate left with carry? (guess)
@@ -107,11 +107,9 @@ public class CPUPrefix {
 		
 		
 		// SLA
-		// checked
+		// 27 is failing
 		if (instr >= 0x20 && instr <= 0x27) {
 			wrk = getValueForOperation(cpu, instr);
-
-			
 
 			if ((wrk &0x80)>0)
 				cpu.setFlag(CPU.FLAG_CARRY);
@@ -213,14 +211,19 @@ public class CPUPrefix {
 		}
 
 		// RES - unset?
+		// failing blarg test
 		if (instr >= 0x80 && instr <= 0xBF) {
+			System.out.println("RES command");
 			int tmp = getValueForOperation(cpu, instr);
-
-			tmp &= (~(bitMask)&0xff);
-
+			
+			System.out.println("   INST="+Utils.toHex2(instr)+"  VAL="+Utils.toHex2(tmp)+"  MASK="+Utils.toHex2(bitMask));
+			
+			//tmp &= (~(bitMask)&0xff);
+			tmp &= 0xff-bitMask;
+			System.out.println("   result:"+tmp);
 			//tmp &= ((~(bitMask))&0xff);
 			
-			setValueForOperation(cpu, instr, tmp);
+			setValueForOperation(cpu, instr, tmp&0xff);
 			// FL &= ~(flag);
 			operationSupported = true;
 		}
