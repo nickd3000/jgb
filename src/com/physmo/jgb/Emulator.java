@@ -13,17 +13,17 @@ public class Emulator {
 
 	boolean useBios = false;
 	
-	//private static final String gameFileName = "resource/tetris.gb";
-	// private static final String gameFileName = "resource/drmario.gb";
+	private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/drmario.gb";
 	//private static final String gameFileName = "resource/othello.gb";
-	// private static final String gameFileName = "resource/spaceinvaders.gb";
+	//private static final String gameFileName = "resource/spaceinvaders.gb";
 	// private static final String gameFileName = "resource/klax.gb";
 	//private static final String gameFileName = "resource/bombjack.gb";
 	// private static final String gameFileName = "resource/centipede.gb";
 	//private static final String gameFileName = "resource/tennis.gb";
 	// private static final String gameFileName = "resource/bghost.gb";
 	// private static final String gameFileName = "resource/motocross.gb";
-	// private static final String gameFileName = "resource/asteroids.gb";
+	//private static final String gameFileName = "resource/asteroids.gb";
 	// private static final String gameFileName = "resource/bowling.gb";
 	// private static final String gameFileName = "resource/loderunner.gb";
 	// private static final String gameFileName = "resource/pipedream.gb";
@@ -31,7 +31,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/alleyway.gb";
 
 	// private static final String gameFileName = "resource/tesserae.gb";
-	 private static final String gameFileName = "resource/serpent.gb";
+//	 private static final String gameFileName = "resource/serpent.gb";
 
 	//
 	//private static final String gameFileName = "resource/xenon2.gb";
@@ -39,21 +39,23 @@ public class Emulator {
 	//private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
-	// private static final String gameFileName = "resource/nemesis2.gb";
+	//private static final String gameFileName = "resource/nemesis2.gb";
 	// private static final String gameFileName = "resource/mario2.gb";
 	// private static final String gameFileName = "resource/bomberman.gb";
 	// private static final String gameFileName = "resource/gargoyle.gb";
 
 	// private static final String gameFileName = "resource/cpu_instrs.gb";
-	// private static final String gameFileName = "resource/tests/opus5.gb";
-	//private static final String gameFileName = "resource/tests/01-special.gb";
-	// private static final String gameFileName = "resource/tests/02-interrupts.gb";
-	// private static final String gameFileName = "resource/tests/03-op sp,hl.gb";
-	//private static final String gameFileName = "resource/tests/04-op r,imm.gb";
-	// private static final String gameFileName = "resource/tests/05-op rp.gb";
-	// private static final String gameFileName = "resource/tests/06-ld r,r.gb";
-	// private static final String gameFileName = "resource/tests/09-op r,r.gb";
-	// private static final String gameFileName = "resource/tests/11-op a,(hl).gb";
+	//private static final String gameFileName = "resource/tests/opus5.gb";
+	//private static final String gameFileName = "resource/tests/01-special.gb"; // DAA FAIL
+	//private static final String gameFileName = "resource/tests/02-interrupts.gb"; // FAIL
+	// private static final String gameFileName = "resource/tests/03-op sp,hl.gb"; // FAIL
+	//private static final String gameFileName = "resource/tests/04-op r,imm.gb"; // FAIL
+	//private static final String gameFileName = "resource/tests/05-op rp.gb"; // PASSED
+	//private static final String gameFileName = "resource/tests/06-ld r,r.gb"; // PASSED
+	//private static final String gameFileName = "resource/tests/07-jr,jp,call,ret,rst.gb"; // FAIL
+	//private static final String gameFileName = "resource/tests/09-op r,r.gb"; // FAIL
+	//private static final String gameFileName = "resource/tests/10-bit ops.gb"; // PASS
+	 //private static final String gameFileName = "resource/tests/11-op a,(hl).gb"; // fail
 
 	public static void main(String[] args) {
 		Debug.checkInstructionDefs();

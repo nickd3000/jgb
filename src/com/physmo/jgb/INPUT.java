@@ -68,6 +68,7 @@ public class INPUT {
 	
 	public void pokeFF00(int val) {
 		cpu.mem.RAM[0xFF00] = val&0x30;
+		
 		//this.register.p1 = byte&0x30;
 	}
 	

@@ -136,7 +136,7 @@ public class Debug {
 
 	public static void checkRegister8Bit(CPU cpu, int val, String name) {
 		if (val < 0 || val > 0xff) {
-			System.out.println("Register overflow: " + name + "=" + val);
+			System.out.println("Register overflow: " + name + "=" + val + "  PC=" + Utils.toHex4(cpu.PC)+ "  tick:"+cpu.tickCount);
 			cpu.mem.poke(0xffff + 10, 1);
 		}
 	}

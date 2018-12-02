@@ -46,3 +46,8 @@ Code Projects
 =============
 Good javascript version, helped with interrupts
 https://github.com/psykad/nagbe-js
+
+
+BUGS
+====
+if 0xFF00 returns 0 all the time it causes tetris to fail startup with garbage graphics.

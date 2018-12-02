@@ -1,7 +1,7 @@
 package com.physmo.jgb;
 
 public interface ROMBank {
-	public void poke(int addr, int val);
-	public int peek(int addr);
+	public void poke(int address, int data);
+	public int peek(int address);
 }
 

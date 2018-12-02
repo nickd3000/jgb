@@ -58,13 +58,22 @@ public class GPU {
 		cpu.mem.RAM[0xFF41] = val;
 	}
 
+	public void debug(CPU cpu, BasicDisplay bd) {
+		bd.setDrawColor(Color.GREEN);
+		bd.drawText("FL: "+Utils.toHex2(cpu.FL), 350-100, 50);
+	}
+	
 	public void tick(CPU cpu, BasicDisplay bd, int cycles) {
 
+		//debug(cpu, bd);
+		
 		clock = (clock + cycles) & 0xFFFFFFFF;
 
 		int y = cpu.mem.RAM[0xFF44]; // Scanline register
 		int lcdStat = cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT];
-
+		//int y = cpu.mem.peek(0xFF44); // Scanline register
+		//int lcdStat = cpu.mem.peek(CPU.ADDR_FF41_LCD_STAT);
+		
 		if (y < 144) {
 			renderLine(cpu, bd, y);
 		}
@@ -108,7 +117,6 @@ public class GPU {
 		}
 
 
-
 		if (clock >= 456) {
 			if (y < 144 && lastLineRendered != y) {
 				lastLineRendered = y;
@@ -143,19 +151,22 @@ public class GPU {
 //		   }
 //		   WriteMemory(0xFF41,status) ; 
 //		   
+
 		// Handle y coincidence check.
+		//int ycompare = cpu.mem.peek(CPU.ADDR_FF45_Y_COMPARE);
 		int ycompare = cpu.mem.RAM[CPU.ADDR_FF45_Y_COMPARE];
 		if (y == ycompare) {
-			cpu.mem.RAM[0xFF0F] |= 0x04;
-			if ((cpu.mem.RAM[0xFF0F] & (1<<6))>0) {
+			cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT] |= 0x04;
+			if ((cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT] & (1<<6))>0) {
 				cpu.requestInterrupt(CPU.INT_LCDSTAT);
 			}
 		} else {
-			cpu.mem.RAM[0xFF0F] &= (~0x04)&0xff;
+			cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT] &= ~0x04;
 		}
 		
 		
 		cpu.mem.RAM[0xFF44] = y;
+		//cpu.mem.poke(0xFF44,y);
 	}
 
 	static int tileDataPtr = 0x8800;

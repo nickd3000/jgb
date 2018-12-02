@@ -35,7 +35,9 @@ public class MEM {
 
 	public MEM(CPU cpu) {
 		this.cpu = cpu;
-		memoryBank = new MBC1(cpu);
+		
+		//memoryBank = new MBC1(cpu);
+		memoryBank = new ROM_ONLY(cpu);
 	}
 
 	public void writeBigMessage(String msg, int count) {
@@ -51,10 +53,18 @@ public class MEM {
 			return;
 		}
 		
-		if (isSwitchableddress(addr)) {
-			memoryBank.poke(addr, val);
+		// Input.
+		if (addr == 0xFF00) {
+			cpu.input.pokeFF00(val);
 			return;
 		}
+		
+		if (isSwitchableddress(addr)) {
+			memoryBank.poke(addr, val);
+			//return;
+		}
+		
+
 		
 		// Rough serial output.
 		if (addr == 0xFF02 && val == 0x81) {
@@ -65,23 +75,17 @@ public class MEM {
 			//writeBigMessage("DEBUG: Poked "+Utils.toHex4(addr)+"  val="+val, 1);
 		}
 		
-		if (addr == val) {
-			writeBigMessage("poke addr==val!!", 100000);
-		}
+//		if (addr == val) {
+//			writeBigMessage("poke addr==val!!", 100000);
+//		}
 
 		if (addr < 0x8000) {
 			memoryBank.poke(addr, val);
 		}
 
-		if (addr == 0xFF00) {
-			cpu.input.pokeFF00(val);
-			return;
-		}
 
-		// Writing anything to the scanline register resets it.
-		if (addr == 0xFF44) {
-			RAM[0xFF44] = 0;
-		}
+
+
 
 		// Writing 1 to this address switches the bios out.
 		if (addr == 0xFF50 && val == 1) {
@@ -100,8 +104,9 @@ public class MEM {
 			return;
 		}
 
+		// Writing anything to the scanline register resets it.
 		if (addr == CPU.ADDR_FF44_Y_SCANLINE) {
-			RAM[addr] = 1;
+			RAM[addr] = 0;
 			return;
 		}
 
@@ -137,9 +142,11 @@ public class MEM {
 	}
 	
 	public int peek(int addr) {
-
+		
 		// INPUT
 		if (addr == 0xFF00) {
+			//System.out.println("Peeked 0xff00 at "+cpu.tickCount);
+			//return 0xff;
 			return cpu.input.peekFF00();
 		}
 
@@ -175,10 +182,6 @@ public class MEM {
 			return RAM[0xFF44];
 		}
 
-		// Are we reading from the switchable ROM memory bank?
-		if (inRange(addr, 0x4000, 0x7FFF)) {
-			return memoryBank.peek(addr);
-		}
 
 		// 0000 3FFF 16KB ROM bank 00 From cartridge, fixed bank
 		if (inRange(addr, 0x0000, 0x3FFF)) {
@@ -191,10 +194,6 @@ public class MEM {
 			return RAM[addr];
 		}
 
-		// * A000 BFFF 8KB External RAM In cartridge, switchable bank if any
-		if (inRange(addr, 0xA000, 0xBFFF)) {
-			return CARTRIDGE[addr];
-		}
 
 		// * C000 CFFF 4KB Work RAM (WRAM) bank 0
 		if (inRange(addr, 0xC000, 0xCFFF)) {

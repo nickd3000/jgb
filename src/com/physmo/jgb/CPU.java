@@ -53,7 +53,7 @@ public class CPU {
 		
 		tickCount++;
 		//if (tickCount>30000000) displayInstruction=true;
-		//if (tickCount>1401788-50000) displayInstruction=true;
+		//if (tickCount>2780424 - 10000) displayInstruction=true;
 		//if (PC==0x001D) displayInstruction=true;
 		//if (PC>0x00FF) displayInstruction=true;
 		//displayInstruction=true;
@@ -68,18 +68,33 @@ public class CPU {
 			System.out.println(""+(char)mem.peek(ADDR_FF01_SERIAL_DATA));
 		
 		// fake a timer interrupt:
-//		if (tickCount%10000==0) {
-//			mem.RAM[0xFF0F] |= CPU.INT_TIMER;
+		if (tickCount%100000==0) {
+			mem.RAM[0xFF0F] |= CPU.INT_TIMER;
+		}
+		
+		// Detect when timer interrupt gets set
+//		if ((mem.RAM[0xFF0F] &(INT_TIMER))>0) {
+//			System.out.println("timer interrupt detected. 0xFF0F = "+Utils.toHex2(mem.RAM[0xFF0F]));
 //		}
 		
+		 //System.out.println("0xFF00 (input) "+mem.peek(0xff00));
+		//System.out.println("0xFF44 (scanline) "+mem.peek(0xFF44));
+		
+		//System.out.println("LCD Stat " + Utils.toHex2(mem.RAM[CPU.ADDR_FF41_LCD_STAT]));
+				
+		if (mem.peek(0xdef6)>0xff) {
+			System.out.println("overflow detected at tick pc:"+Utils.toHex4(PC)+"  tick:"+tickCount); 
+		}
+		
 		if ((SP >= 0xA000) && (SP <= 0xBFFF)) {
-			System.out.println("Stack pointing to paged memory???S");
+			System.out.println("Stack pointing to paged memory??");
 		}
 		
 		Debug.checkRegisters(this);
 		
-		FL = FL & 0xF0;
-//		// Handle interrupts before checking current instruction.
+		//FL = FL & 0xF0;
+		
+		// Handle interrupts before checking current instruction.
 		checkInterrupts();
 		
 		if (halt==1) return;
@@ -92,6 +107,9 @@ public class CPU {
 //		mem.RAM[0xFF44]=(fakeVerticalBlank/12)&0xff;
 //		
 
+		if (mem.peek(0xf6de)>0xff) {
+			System.out.println("0xf6de is overflow!!! val:"+Utils.toHex4(mem.peek(0xf6de)));
+		}
 		
 		// TODO: Don't create these objects every time, make them static and just clear
 		// them.
@@ -243,6 +261,18 @@ public class CPU {
 			mem.poke(ac1.addr, ac2.val);
 			// NO FLAGS AFFECTED
 			break;
+		case LDW: // LD Word
+			wrk = ac2.val;
+			
+			// TODO: the order of these two is not known or tested yet...
+			if (ac1.mode==ADDRMODE.__nnnn) {
+				mem.poke(ac1.addr, getLowByte(wrk));
+				mem.poke(ac1.addr+1, getHighByte(wrk));
+			}
+			
+			
+			// NO FLAGS AFFECTED
+			break;
 		case LDD: // Load and decrement?
 			wrk = ac2.val;
 			mem.poke(ac1.addr, ac2.val);
@@ -321,7 +351,7 @@ public class CPU {
 			break;
 		case ADD:
 			wrk = A + ac1.val;
-			A = wrk&0xff;
+			
 			
 			if (wrk>0xff) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
@@ -332,13 +362,17 @@ public class CPU {
 			if (((A&0xF)+(ac1.val&0xF))>0xF) setFlag(FLAG_HALFCARRY);
 			else unsetFlag(FLAG_HALFCARRY);
 			
+			A = wrk&0xff;
 			
 			break;
 		case ADDSPNN:
 			// TODO: add flags.
 			wrk = SP+convertSignedByte(ac1.val&0xff);
 			
-			//if ((this.register.sp^n^result)&0x100) this.setC(); else this.clearC();
+			
+			if ((( SP^convertSignedByte(ac1.val&0xff)^wrk)&0x10)>0)  setFlag(FLAG_HALFCARRY);
+			else unsetFlag(FLAG_HALFCARRY);
+			
 			if ((( SP^convertSignedByte(ac1.val&0xff)^wrk)&0x100)>0) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
 			
@@ -405,30 +439,40 @@ public class CPU {
 			
 			break;
 		case SBC:
-			wrk = A - ac1.val - (testFlag(FLAG_CARRY)?1:0);
-			A = wrk&0xff;
+			wrk = A - ac1.val - (testFlag(FLAG_CARRY)?1:0);			
 			
 			if (wrk>0xff) setFlag(FLAG_CARRY);
 			else unsetFlag(FLAG_CARRY);
-			if (wrk==0) setFlag(FLAG_ZERO);
-			else unsetFlag(FLAG_ZERO);
-			unsetFlag(FLAG_ADDSUB);
 			
-			unsetFlag(FLAG_HALFCARRY);
+			handleZeroFlag(wrk);
 			
+			setFlag(FLAG_ADDSUB);
+
+			if (((A^ac1.val^wrk)&0x10)!=0) setFlag(FLAG_HALFCARRY); 
+			else unsetFlag(FLAG_HALFCARRY);
+			
+			A = wrk&0xff;
 			break;
 		case PREFIX:
 				CPUPrefix.processPrefixCommand(this, ac1.val);
 			break;
 		case SCF:
+			//System.out.println("DEBUG SCF before : FL="+Utils.toHex2(FL));
 			setFlag(FLAG_CARRY);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_HALFCARRY);
+			//System.out.println("DEBUG SCF after : FL="+Utils.toHex2(FL));
 			break;
 		case CCF:
-			unsetFlag(FLAG_CARRY);
+//			unsetFlag(FLAG_CARRY);
+//			unsetFlag(FLAG_ADDSUB);
+//			unsetFlag(FLAG_HALFCARRY);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_HALFCARRY);
+			//this.clearN(); this.clearH();
+	        if ((FL&0x10)>0) unsetFlag(FLAG_CARRY);
+	        else setFlag(FLAG_CARRY);;
+	        
 			break;
 		case JRNZ:
 			if (testFlag(FLAG_ZERO)==false) {
@@ -480,21 +524,21 @@ public class CPU {
 			break;
 			
 		case LDZPGCA:
-			//mem.poke(0xff00+(C&0xff), A&0xff);
-			mem.RAM[0xff00+(C&0xff)] = A&0xff;
+			mem.poke(0xff00+(C&0xff), A&0xff);
+			//mem.RAM[0xff00+(C&0xff)] = A&0xff;
 			break;
 		case LDZPGNNA:
-			//mem.poke(0xff00+(ac1.val&0xff), A&0xff);
-			mem.RAM[0xff00+(ac1.val&0xff)] =  A&0xff;
+			mem.poke(0xff00+(ac1.val&0xff), A&0xff);
+			//mem.RAM[0xff00+(ac1.val&0xff)] =  A&0xff;
 			break;
 		case LDAZPGNN:
-			//A = mem.peek(0xff00+(ac1.val&0xff))&0xff;
-			A = mem.RAM[(0xff00+(ac1.val&0xff))]&0xff;
+			A = mem.peek(0xff00+(ac1.val&0xff))&0xff;
+			//A = mem.RAM[(0xff00+(ac1.val&0xff))]&0xff;
 			if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
 		case LDAZPGC:
-			//A = mem.peek(0xff00+(C&0xff))&0xff;
-			A = mem.RAM[(0xff00+(C&0xff))]&0xff;
+			A = mem.peek(0xff00+(C&0xff))&0xff;
+			//A = mem.RAM[(0xff00+(C&0xff))]&0xff;
 			//if (displayInstruction) System.out.println("zpg addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
 			
@@ -502,7 +546,8 @@ public class CPU {
 			int signedByte = convertSignedByte(ac1.val&0xff);
 			int ptr = SP+signedByte;
 			
-			wrk = combineBytes(mem.peek(ptr),mem.peek(ptr+1));
+			//wrk = combineBytes(mem.peek((ptr+1)&0xffff),mem.peek((ptr)&0xffff));
+			wrk = ptr & 0xffff;
 			
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_ZERO);
@@ -600,9 +645,12 @@ public class CPU {
 			
 			break;
 		case POPW:
+			// TODO: SHould this not handle words?
 			wrk = popW();
 
 			mem.poke(ac1.addr, wrk);
+			
+			
 			break;
 
 		case CP:
@@ -633,7 +681,7 @@ public class CPU {
 			setFlag(FLAG_ADDSUB);
 			setFlag(FLAG_HALFCARRY);
 			
-			A = wrk;
+			A = wrk&0xff;
 			break;
 			
 		case RST_18H:
@@ -780,14 +828,14 @@ public class CPU {
 			break;
 		case nn:
 			peeked = getNextByte();
-			ac.val = peeked;
+			ac.val = peeked;//&0xff;
 			//ac.bytesRead += " " + Utils.toHex2(peeked);
 			break;
 		case nnnn:
 			peeked = getNextWord();
 			ac.val = peeked;
 			//ac.bytesRead += " " + Utils.toHex2(peeked);
-			ac.addr = peeked;
+			//ac.addr = peeked;
 			break;
 		case A:
 			peeked = A;
@@ -884,7 +932,7 @@ public class CPU {
 			
 		case __nnnn:
 			peeked = getNextWord();
-			ac.val = mem.peek(peeked);
+			ac.val = mem.peek(peeked);//&0xff;
 			//ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = peeked;
 			break;
@@ -898,7 +946,7 @@ public class CPU {
 	}
 	
 	public void jumpRelative(int val) {
-		int tc = convertSignedByte(val);
+		int tc = convertSignedByte(val&0xff);
 		if (displayInstruction) System.out.println("Jump relative by "+tc+" to "+Utils.toHex4(PC+tc));
 		PC=PC+tc;
 	}
@@ -914,8 +962,8 @@ public class CPU {
 	 */
 	
 	// Combine two bytes into one 16 bit value.
-	public int combineBytes(int a, int b) {
-		return ((a&0xff)<<8)+(b&0xff);
+	public int combineBytes(int h, int l) {
+		return ((h&0xff)<<8)+(l&0xff);
 	}
 	public int getHighByte(int val) {
 		return (val>>8)&0xff;
@@ -945,8 +993,8 @@ public class CPU {
 	}
 	
 	public void setHL(int _h, int _l) {
-		this.H = _h;
-		this.L = _l;
+		this.H = _h&0xff;
+		this.L = _l&0xff;
 	}
 	public void setHL(int val) {
 		this.H = getHighByte(val);
@@ -966,17 +1014,18 @@ public class CPU {
 	}
 	
 	public void enableInterrupts() {
-		pendingEnableInterrupt = 2;
+		pendingEnableInterrupt = 1;
 		//interruptEnabled=1; 
 	}
 	
 	public void disableInterrupts() {
-		pendingDisableInterrupt = 2;
+		pendingDisableInterrupt = 1;
 		//interruptEnabled=0;
 	}
 	
 	public void handleZeroFlag(int val) {
-		if ((val&0xff)==0) setFlag(FLAG_ZERO);
+		//if ((val&0xff)==0) setFlag(FLAG_ZERO);
+		if ((val&0xffff)==0) setFlag(FLAG_ZERO);
 		else unsetFlag(FLAG_ZERO);
 	}
 	
@@ -1009,11 +1058,14 @@ public class CPU {
 	
 	public void setFlag(int flag) {
 		FL |= flag;
+		//FL = FL & 0xF0;
 	}
 	public void unsetFlag(int flag) {
 		FL &= ~(flag);
+		//FL = FL & 0xF0;
 	}
 	public boolean testFlag(int flag) {
+		//FL = FL & 0xF0;
 		if ((FL&flag)>0) return true;
 		return false;
 	}
@@ -1022,15 +1074,15 @@ public class CPU {
 	public void pushW(int val) {
 		//mem.poke(SP--, getHighByte(val));
 		//mem.poke(SP--, getLowByte(val));
-		mem.RAM[SP--] = getHighByte(val);
-		mem.RAM[SP--] = getLowByte(val);
+		mem.RAM[SP--] = getHighByte(val)&0xff;
+		mem.RAM[SP--] = getLowByte(val)&0xff;
 	}
 
 	public int popW() {
 		// int lb = mem.peek(++SP);
 		// int hb = mem.peek(++SP);
-		int lb = mem.RAM[++SP];
-		int hb = mem.RAM[++SP];
+		int lb = mem.RAM[++SP]&0xff;
+		int hb = mem.RAM[++SP]&0xff;
 
 		
 		return combineBytes(hb, lb);

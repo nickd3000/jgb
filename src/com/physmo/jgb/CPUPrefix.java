@@ -34,7 +34,7 @@ public class CPUPrefix {
 			if (carry==1) wrk|=1;
 			cpu.handleZeroFlag(wrk);
 
-			setValueForOperation(cpu, instr, wrk);
+			setValueForOperation(cpu, instr, wrk&0xff);
 			operationSupported = true;
 		}
 
@@ -111,13 +111,15 @@ public class CPUPrefix {
 		if (instr >= 0x20 && instr <= 0x27) {
 			wrk = getValueForOperation(cpu, instr);
 
-			wrk = wrk << 1;
+			
 
-			if (wrk > 0xff)
+			if ((wrk &0x80)>0)
 				cpu.setFlag(CPU.FLAG_CARRY);
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
 
+			wrk = wrk << 1;
+			
 			cpu.handleZeroFlag(wrk & 0xff);
 
 			setValueForOperation(cpu, instr, wrk & 0xff);
@@ -145,7 +147,11 @@ public class CPUPrefix {
 
 			setValueForOperation(cpu, instr, wrk & 0xff);
 			operationSupported = true;
-
+			
+			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			//this.clearN(); this.clearH();
+			
 		}
 
 		// SWAP operation
@@ -160,7 +166,12 @@ public class CPUPrefix {
 			} else {
 				cpu.unsetFlag(CPU.FLAG_ZERO);
 			}
-
+			
+			//this.clearN(); this.clearH(); this.clearC();
+			cpu.unsetFlag(CPU.FLAG_CARRY);
+			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			
 			operationSupported = true;
 		}
 
@@ -204,7 +215,11 @@ public class CPUPrefix {
 		// RES - unset?
 		if (instr >= 0x80 && instr <= 0xBF) {
 			int tmp = getValueForOperation(cpu, instr);
-			tmp &= ((~(bitMask))&0xff);
+
+			tmp &= (~(bitMask)&0xff);
+
+			//tmp &= ((~(bitMask))&0xff);
+			
 			setValueForOperation(cpu, instr, tmp);
 			// FL &= ~(flag);
 			operationSupported = true;
