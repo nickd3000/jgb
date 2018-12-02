@@ -21,12 +21,18 @@ import com.physmo.toolbox.BasicDisplay;
 	 Bit 2 - OBJ (Sprite) Size              (0=8x8, 1=8x16)
 	 Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
 	 Bit 0 - BG/Window Display/Priority     (0=Off, 1=On)
+	 
+	 0xFF47 background palette
+	 0xFF48 spr palette 1 
+	 0xFF49 spr palette 2
  */
 public class GPU {
 	public  final int scale = 2;
 	public  int clock = 0;
 	public  int currentMode = 0;
 
+	public static final int ADDR_0xFF47_BGPALETTE = 0xFF47;
+	
 	public static final Color c1 = new Color(0, 0, 0);
 	public static final Color c2 = new Color(70, 70, 70);
 	public static final Color c3 = new Color(180, 180, 180);
@@ -47,6 +53,48 @@ public class GPU {
 		}
 	}
 
+	Color backgroundPaletteMaster [] = {
+			new Color(0, 0, 0),
+			new Color(70, 70, 70),
+			new Color(180, 180, 180),
+			new Color(255, 255, 255)
+	};
+	Color sprite1PaletteMaster [] = {
+			new Color(20, 0, 0),
+			new Color(80, 70, 70),
+			new Color(200, 180, 180),
+			new Color(255, 245, 245)
+	};
+	Color sprite2PaletteMaster [] = {
+			new Color(0, 20, 0),
+			new Color(70, 80, 70),
+			new Color(180, 200, 180),
+			new Color(245, 255, 245)
+	};
+	Color backgroundPaletteMap [] = new Color[4];
+	Color sprite1PaletteMap [] = new Color[4];
+	Color sprite2PaletteMap [] = new Color[4];
+	
+	public void processPalettes(CPU cpu) {
+		int bgPalette = cpu.mem.RAM[ADDR_0xFF47_BGPALETTE];
+		backgroundPaletteMap[3] = backgroundPaletteMaster[(bgPalette&3)];
+		backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette>>2)&3)];
+		backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette>>4)&3)];
+		backgroundPaletteMap[0] = backgroundPaletteMaster[((bgPalette>>6)&3)];
+		
+		int sprPalette1 = cpu.mem.RAM[0xFF48];
+		sprite1PaletteMap[3] = sprite1PaletteMaster[(sprPalette1&3)];
+		sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1>>2)&3)];
+		sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1>>4)&3)];
+		sprite1PaletteMap[0] = sprite1PaletteMaster[((sprPalette1>>6)&3)];
+		
+		int sprPalette2 = cpu.mem.RAM[0xFF49];
+		sprite2PaletteMap[3] = sprite2PaletteMaster[(sprPalette2&3)];
+		sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2>>2)&3)];
+		sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2>>4)&3)];
+		sprite2PaletteMap[0] = sprite2PaletteMaster[((sprPalette2>>6)&3)];
+	}
+	
 	public  void setLCDRegisterMode(CPU cpu, int mode) {
 		// 0: During H-Blank
 		// 1: During V-Blank
@@ -69,6 +117,9 @@ public class GPU {
 		
 		clock = (clock + cycles) & 0xFFFFFFFF;
 
+		processPalettes(cpu);
+		
+		
 		int y = cpu.mem.RAM[0xFF44]; // Scanline register
 		int lcdStat = cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT];
 		//int y = cpu.mem.peek(0xFF44); // Scanline register
@@ -277,22 +328,14 @@ public class GPU {
 
 			int pix = tp; //+charIndex;
 
-			if ((pix & 3) == 0)
-				bd.setDrawColor(c4);
-			else if ((pix & 3) == 1)
-				bd.setDrawColor(c3);
-			else if ((pix & 3) == 2)
-				bd.setDrawColor(c2);
-			else if ((pix & 3) == 3) {
-				//bd.setDrawColor(c1);
-				bd.setDrawColor(new Color(100,0,scrollx&0xff));
-			}
-			
+			// Set draw colour from pixel data.
+			bd.setDrawColor(backgroundPaletteMap[pix&3]);
 			
 
 			// Sprites
 			// Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
 			// Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
+			int sprPalette = 0;
 			for (int i=0;i<40;i++) {
 				if (x>=sprites[i].x && x<sprites[i].x+8) {
 					if (y>=sprites[i].y && y<sprites[i].y+8) {
@@ -301,10 +344,12 @@ public class GPU {
 						int sprsuby = (y-sprites[i].y)&7;
 						if (((sprites[i].attributes)&(1<<5))>0) sprsubx=7-sprsubx;
 						if (((sprites[i].attributes)&(1<<6))>0) sprsuby=7-sprsuby;
+						if (((sprites[i].attributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
+						
 						int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
 						
 						if (sprPixel>0)
-							bd.setDrawColor(getSpriteCol(sprPixel));
+							bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
 					}
 				}
 			}
@@ -313,7 +358,15 @@ public class GPU {
 		}
 	}
 	
-	public Color getSpriteCol(int i) {
+	public Color getSpriteCol(int i, int pal) {
+		
+		if (pal==0) {
+			return sprite1PaletteMap[i&3];
+		} else {
+			return sprite2PaletteMap[i&3];
+		}
+		
+		/*
 		switch(i&3) {
 		case 0: return sc1;
 		case 1: return sc2;
@@ -321,6 +374,7 @@ public class GPU {
 		case 3: return sc4;
 		}
 		return null;
+		*/
 	}
 	
 	public  void getSprites(CPU cpu) {
