@@ -21,7 +21,7 @@ public class CPUPrefix {
 
 		// RLC - rotate left with carry? (guess)
 		// bit cycles over to other side
-		// checked
+		// checked - nneded addsub and halfcarry cleared.
 		if (instr >= 0x00 && instr <= 0x07) {
 //			const carryOut = register&0x80?1:0;
 //	        if (carryOut) this.setC(); else this.clearC();
@@ -38,6 +38,9 @@ public class CPUPrefix {
 			wrk = ((value<<1)+carryOut)&0xff;
 			cpu.handleZeroFlag(wrk);
 				
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
+			
 			setValueForOperation(cpu, instr, wrk&0xff);
 			operationSupported = true;
 		}
@@ -58,6 +61,8 @@ public class CPUPrefix {
 			if (carry==1) wrk|=0x80;
 			
 			cpu.handleZeroFlag(wrk);
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
 
 			setValueForOperation(cpu, instr, wrk&0xff);
 			operationSupported = true;
@@ -81,6 +86,9 @@ public class CPUPrefix {
 			wrk&=0xff;
 			
 			cpu.handleZeroFlag(wrk);
+			
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
 			
 			setValueForOperation(cpu, instr, wrk);
 			operationSupported = true;
@@ -125,14 +133,9 @@ public class CPUPrefix {
 			
 			cpu.handleZeroFlag(wrk & 0xff);
 
-//			System.out.println("SLA  "+
-//					"   instr:"+Utils.toHex2(instr) + 
-//					"   val:"+Utils.toHex2(getValueForOperation(cpu, instr)) + 
-//					"   wrk:"+Utils.toHex2(wrk)+
-//					"   wrk&0xff:"+Utils.toHex2(wrk&0xff)+
-//					"  carry:"+cpu.testFlag(CPU.FLAG_CARRY) + 
-//					"   "+ Debug.getRegisters(cpu));
-//			System.out.println(">BEFORE  :"+Utils.toHex2(getValueForOperation(cpu, instr)));
+			cpu.unsetFlag(CPU.FLAG_ADDSUB);
+			cpu.unsetFlag(CPU.FLAG_HALFCARRY);
+			
 			setValueForOperation(cpu, instr, wrk & 0xff);
 			operationSupported = true;
 //			System.out.println(">AFTER   :"+Utils.toHex2(getValueForOperation(cpu, instr)));

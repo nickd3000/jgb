@@ -32,6 +32,8 @@ public class MEM {
 	public boolean biosActive = true;
 
 	CPU cpu = null;
+	
+	int forceMemoryBankType = 0;
 
 	public MEM(CPU cpu) {
 		this.cpu = cpu;
@@ -43,11 +45,15 @@ public class MEM {
 
 	public void createMBCForHeaderType() {
 		int mbcType = HEADER.getMemoryBankControllerType(cpu);
+		
+		if (forceMemoryBankType!=-1) mbcType=forceMemoryBankType;
+		
 		if (mbcType==0)
 			memoryBank = new ROM_ONLY(cpu);
 		else if (mbcType==1)
 			memoryBank = new MBC1(cpu);
-		//
+		else 
+			memoryBank = new MBC1(cpu);
 	}
 	
 	public void writeBigMessage(String msg, int count) {

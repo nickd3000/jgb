@@ -77,10 +77,10 @@ public class TIMER {
 
 
 	public void doDividerRegister(int cycles) {
-		dividerRegister += cycles;
+		dividerCounter += cycles;
 		if (dividerCounter >= 255) {
 			dividerCounter = 0;
-			cpu.mem.RAM[0xFF04]++;
+			cpu.mem.RAM[0xFF04]=(cpu.mem.RAM[0xFF04]+1)&0xff;
 		}
 	}
 }

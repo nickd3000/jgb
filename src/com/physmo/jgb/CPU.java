@@ -40,10 +40,8 @@ public class CPU {
 	int fakeVerticalBlank = 0;
 	int topOfSTack = 0xFFFE; // used for debugging.
 
-	// TODO: Don't create these objects every time, make them static and just clear
-			// them.
-			AddressContainer ac1 = new AddressContainer();
-			AddressContainer ac2 = new AddressContainer();
+	AddressContainer ac1 = new AddressContainer();
+	AddressContainer ac2 = new AddressContainer();
 			
 	public void attachHardware(MEM mem, INPUT input, GPU gpu) {
 		this.mem = mem;
@@ -58,7 +56,7 @@ public class CPU {
 
 		tickCount++;
 		// if (tickCount>30000000) displayInstruction=true;
-		// if (tickCount>2780424 - 10000) displayInstruction=true;
+		//if (tickCount>21634816 - 10000) displayInstruction=true;
 		// if (tickCount>455623-1000) displayInstruction=true;
 		// if (PC==0x001D) displayInstruction=true;
 		// if (PC>0x00FF) displayInstruction=true;
@@ -1031,8 +1029,9 @@ int carryIn = 0;
 //				"  val:" + val +
 //				"  signed:" + tc +
 //				"  move:" + move +
-//				"  PC " + PC +
-//				"  PC+tc " + (PC + tc));
+//				"  PC " + Utils.toHex4(PC) +
+//				"  PC+tc " + Utils.toHex4((PC + tc)) +
+//				"  "+Debug.getRegisters(this));
 		
 		//PC = (PC + tc);
 		PC = (PC + move)&0xffff;
@@ -1046,7 +1045,7 @@ int carryIn = 0;
 
 	// Combine two bytes into one 16 bit value.
 	public int combineBytes(int h, int l) {
-		return ((h & 0xff) << 8) + (l & 0xff);
+		return ((h & 0xff) << 8) | (l & 0xff);
 	}
 
 	public int getHighByte(int val) {
@@ -1165,19 +1164,15 @@ int carryIn = 0;
 
 	// STACK
 	public void pushW(int val) {
-		// mem.poke(SP--, getHighByte(val));
-		// mem.poke(SP--, getLowByte(val));
-		mem.RAM[(SP--)&0xffff] = getHighByte(val) & 0xff;
-		mem.RAM[(SP--)&0xffff] = getLowByte(val) & 0xff;
-
+		 mem.poke(--SP, getHighByte(val));
+		 mem.poke(--SP, getLowByte(val));
 	}
 
 	public int popW() {
-		// int lb = mem.peek(++SP);
-		// int hb = mem.peek(++SP);
-		int lb = mem.RAM[++SP] & 0xff;
-		int hb = mem.RAM[++SP] & 0xff;
 
+		 int lb = mem.peek(SP++);
+		 int hb = mem.peek(SP++);
+		 
 		return combineBytes(hb, lb);
 	}
 }
