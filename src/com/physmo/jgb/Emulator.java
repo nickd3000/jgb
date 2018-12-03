@@ -8,16 +8,17 @@ public class Emulator {
 	GPU gpu = null;
 	MEM mem = null;
 	INPUT input = null;
+	TIMER timer = null;
 
 	static BasicDisplay basicDisplay = null;
 
-	boolean useBios = false;
+	boolean useBios = true;
 	
 	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/drmario.gb";
 	//private static final String gameFileName = "resource/othello.gb";
-	//private static final String gameFileName = "resource/spaceinvaders.gb";
-	// private static final String gameFileName = "resource/klax.gb";
+	//private static final String gameFileName = "resource/spaceinvaders.gb"; // Uses timer
+	 //private static final String gameFileName = "resource/klax.gb"; // Uses timer
 	//private static final String gameFileName = "resource/bombjack.gb";
 	// private static final String gameFileName = "resource/centipede.gb";
 	//private static final String gameFileName = "resource/tennis.gb";
@@ -73,6 +74,7 @@ public class Emulator {
 		gpu = new GPU();
 		mem = new MEM(cpu);
 		input = new INPUT(cpu);
+		timer = new TIMER(cpu);
 
 		cpu.attachHardware(mem, input, gpu);
 		basicDisplay = new BasicDisplay(320 * 2, 240 * 2);
@@ -99,13 +101,16 @@ public class Emulator {
 		int tick = 0;
 		while (run) {
 			tick();
-			if ((tick++) % 100 == 0)
+			if ((tick++) % 100 == 0) {
 				gpu.tick(cpu, basicDisplay, 10);
+			}
+			
 		}
 	}
 
 	public void tick() {
 		cpu.tick();
+		timer.tick(5); // random number.
 		input.tick(basicDisplay);
 	}
 

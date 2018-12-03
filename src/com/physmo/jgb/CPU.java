@@ -81,9 +81,9 @@ public class CPU {
 			System.out.println("" + (char) mem.peek(ADDR_FF01_SERIAL_DATA));
 
 		// fake a timer interrupt:
-		if (tickCount % 100000 == 0) {
-			mem.RAM[0xFF0F] |= CPU.INT_TIMER;
-		}
+//		if (tickCount % 100000 == 0) {
+//			mem.RAM[0xFF0F] |= CPU.INT_TIMER;
+//		}
 
 		// Detect when timer interrupt gets set
 		// if ((mem.RAM[0xFF0F] &(INT_TIMER))>0) {

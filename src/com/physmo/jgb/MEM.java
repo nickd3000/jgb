@@ -63,6 +63,11 @@ public class MEM {
 			return;
 		}
 		
+		// Writing to the divider register sets it to zero.
+		if (addr == 0xFF04) {
+		   RAM[0xFF04] = 0 ;
+		}
+		
 		// Input.
 		if (addr == 0xFF00) {
 			cpu.input.pokeFF00(val);

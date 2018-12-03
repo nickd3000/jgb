@@ -226,14 +226,14 @@ public class CPUPrefix {
 		// RES - unset?
 		// failing blarg test
 		if (instr >= 0x80 && instr <= 0xBF) {
-			System.out.println("RES command");
+			//System.out.println("RES command");
 			int tmp = getValueForOperation(cpu, instr);
 			
-			System.out.println("   INST="+Utils.toHex2(instr)+"  VAL="+Utils.toHex2(tmp)+"  MASK="+Utils.toHex2(bitMask));
+			//System.out.println("   INST="+Utils.toHex2(instr)+"  VAL="+Utils.toHex2(tmp)+"  MASK="+Utils.toHex2(bitMask));
 			
 			//tmp &= (~(bitMask)&0xff);
 			tmp &= 0xff-bitMask;
-			System.out.println("   result:"+Utils.toHex2(tmp));
+			//System.out.println("   result:"+Utils.toHex2(tmp));
 			//tmp &= ((~(bitMask))&0xff);
 			
 			setValueForOperation(cpu, instr, tmp&0xff);
