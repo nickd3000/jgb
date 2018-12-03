@@ -13,27 +13,31 @@ public class CPUPrefix {
 		int wrk = 0; // Work value.
 		int carry = 0;
 		boolean operationSupported = false;
+		int carryOut=0;
+		int carryIn=0;
 
-		//if (cpu.displayInstruction)
+		if (cpu.displayInstruction)
 			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:" + value + "   bit:" + bit);
 
 		// RLC - rotate left with carry? (guess)
 		// bit cycles over to other side
 		// checked
 		if (instr >= 0x00 && instr <= 0x07) {
-			wrk = getValueForOperation(cpu, instr);
+//			const carryOut = register&0x80?1:0;
+//	        if (carryOut) this.setC(); else this.clearC();
+//	        const result = ((register<<1)+carryOut)&0xFF;
+//	        if (result) this.clearZ(); else this.setZ();
+//	        return result;
 
-			if ((wrk & 0b1000_0000) > 0) {
-				carry=1;
+			carryOut = ((value&0x80)>0)?1:0;
+			if (carryOut>0) 
 				cpu.setFlag(CPU.FLAG_CARRY);
-				}
 			else
 				cpu.unsetFlag(CPU.FLAG_CARRY);
-
-			wrk = wrk << 1;
-			if (carry==1) wrk|=1;
+			
+			wrk = ((value<<1)+carryOut)&0xff;
 			cpu.handleZeroFlag(wrk);
-
+				
 			setValueForOperation(cpu, instr, wrk&0xff);
 			operationSupported = true;
 		}
@@ -109,6 +113,7 @@ public class CPUPrefix {
 		// SLA
 		// 27 is failing
 		if (instr >= 0x20 && instr <= 0x27) {
+			
 			wrk = getValueForOperation(cpu, instr);
 
 			if ((wrk &0x80)>0)
@@ -120,9 +125,17 @@ public class CPUPrefix {
 			
 			cpu.handleZeroFlag(wrk & 0xff);
 
+//			System.out.println("SLA  "+
+//					"   instr:"+Utils.toHex2(instr) + 
+//					"   val:"+Utils.toHex2(getValueForOperation(cpu, instr)) + 
+//					"   wrk:"+Utils.toHex2(wrk)+
+//					"   wrk&0xff:"+Utils.toHex2(wrk&0xff)+
+//					"  carry:"+cpu.testFlag(CPU.FLAG_CARRY) + 
+//					"   "+ Debug.getRegisters(cpu));
+//			System.out.println(">BEFORE  :"+Utils.toHex2(getValueForOperation(cpu, instr)));
 			setValueForOperation(cpu, instr, wrk & 0xff);
 			operationSupported = true;
-
+//			System.out.println(">AFTER   :"+Utils.toHex2(getValueForOperation(cpu, instr)));
 		}
 		
 		// SRA
@@ -220,7 +233,7 @@ public class CPUPrefix {
 			
 			//tmp &= (~(bitMask)&0xff);
 			tmp &= 0xff-bitMask;
-			System.out.println("   result:"+tmp);
+			System.out.println("   result:"+Utils.toHex2(tmp));
 			//tmp &= ((~(bitMask))&0xff);
 			
 			setValueForOperation(cpu, instr, tmp&0xff);

@@ -90,7 +90,7 @@ public class MBC1 implements ROMBank {
 				DoChangeROMRAMMode(data);
 		}
 		
-		System.out.println("Active ROM Bank: "+currentRomBank);
+		//System.out.println("Active ROM Bank: "+currentRomBank);
 	}
 
 	void DoRAMBankChange(int data) {
