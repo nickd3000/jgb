@@ -35,11 +35,21 @@ public class MEM {
 
 	public MEM(CPU cpu) {
 		this.cpu = cpu;
-		
-		memoryBank = new MBC1(cpu);
-		//memoryBank = new ROM_ONLY(cpu);
+	}
+	
+	public void init() {
+		createMBCForHeaderType();
 	}
 
+	public void createMBCForHeaderType() {
+		int mbcType = HEADER.getMemoryBankControllerType(cpu);
+		if (mbcType==0)
+			memoryBank = new ROM_ONLY(cpu);
+		else if (mbcType==1)
+			memoryBank = new MBC1(cpu);
+		//
+	}
+	
 	public void writeBigMessage(String msg, int count) {
 		for (int i = 0; i < count; i++) {
 			System.out.println(msg);

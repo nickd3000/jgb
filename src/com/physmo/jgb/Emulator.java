@@ -80,13 +80,13 @@ public class Emulator {
 		Utils.ReadFileBytesToMemoryLocation("resource/dmg_boot.bin", mem.BIOS, 0);
 		Utils.ReadFileBytesToMemoryLocation(gameFileName, mem.CARTRIDGE, 0);
 
-		// Debug.printMem(cpu, 0x104, 64);
+		mem.init(); // Need to load the cartridge before initing memory.
 	}
 
 	
 
 	public void run() {
-		System.out.println("Cartridge type: "+Debug.getCartridgeType(cpu));
+		System.out.println("Cartridge type: "+HEADER.getMemoryBankControllerName(cpu));
 		if (useBios) {
 			cpu.mem.biosActive = true;
 			cpu.PC = 0x0000;

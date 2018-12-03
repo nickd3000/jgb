@@ -33,14 +33,9 @@ public class GPU {
 
 	public static final int ADDR_0xFF47_BGPALETTE = 0xFF47;
 	
-	public static final Color c1 = new Color(0, 0, 0);
-	public static final Color c2 = new Color(70, 70, 70);
-	public static final Color c3 = new Color(180, 180, 180);
-	public static final Color c4 = new Color(255, 255, 255);
-	public static final Color sc1 = new Color(30, 0, 0);
-	public static final Color sc2 = new Color(80, 70, 70);
-	public static final Color sc3 = new Color(200, 180, 180);
-	public static final Color sc4 = new Color(255, 235, 225);
+	static int tileDataPtr = 0x8800;
+	static int spriteDataPtr = 0x8000;
+
 	
 	// public static int scanline = 0;
 	public  int lastLineRendered = 0;
@@ -60,16 +55,16 @@ public class GPU {
 			new Color(255, 255, 255)
 	};
 	Color sprite1PaletteMaster [] = {
-			new Color(20, 0, 0),
-			new Color(80, 70, 70),
-			new Color(200, 180, 180),
-			new Color(255, 245, 245)
+			new Color(40, 0, 0),
+			new Color(100, 70, 70),
+			new Color(220, 180, 180),
+			new Color(255, 225, 225)
 	};
 	Color sprite2PaletteMaster [] = {
-			new Color(0, 20, 0),
-			new Color(70, 80, 70),
-			new Color(180, 200, 180),
-			new Color(245, 255, 245)
+			new Color(0, 40, 0),
+			new Color(70, 100, 70),
+			new Color(180, 220, 180),
+			new Color(225, 255, 225)
 	};
 	Color backgroundPaletteMap [] = new Color[4];
 	Color sprite1PaletteMap [] = new Color[4];
@@ -189,20 +184,6 @@ public class GPU {
 		}
 
 		
-		   // check the conincidence flag
-//		   if (ly == ReadMemory(0xFF45))
-//		   {
-//		     status = BitSet(status,2) ;
-//		     if (TestBit(status,6))
-//		       RequestInterupt(1) ;
-//		   }
-//		   else
-//		   {
-//		     status = BitReset(status,2) ;
-//		   }
-//		   WriteMemory(0xFF41,status) ; 
-//		   
-
 		// Handle y coincidence check.
 		//int ycompare = cpu.mem.peek(CPU.ADDR_FF45_Y_COMPARE);
 		int ycompare = cpu.mem.RAM[CPU.ADDR_FF45_Y_COMPARE];
@@ -220,27 +201,7 @@ public class GPU {
 		//cpu.mem.poke(0xFF44,y);
 	}
 
-	static int tileDataPtr = 0x8800;
-
-//	public  int getTilePixel(CPU cpu, int tileId, int subx, int suby) {
-//		int byteOffset = (suby * 2) + (subx / 4);
-//		int data = cpu.mem.RAM[tileDataPtr + byteOffset];
-//		int nibble = (subx / 2) & 3;
-//		switch (nibble) {
-//		case 0:
-//			return data & 3;
-//		case 1:
-//			return (data >> 2) & 3;
-//		case 2:
-//			return (data >> 4) & 3;
-//		case 3:
-//			return (data >> 6) & 3;
-//		}
-//
-//		return 0;
-//	}
-
-	static int spriteDataPtr = 0x8000;
+	
 	public  int getSpritePixel2(CPU cpu, int tileId, int subx, int suby) {
 		int byteOffset = (suby * 2);
 
@@ -365,16 +326,7 @@ public class GPU {
 		} else {
 			return sprite2PaletteMap[i&3];
 		}
-		
-		/*
-		switch(i&3) {
-		case 0: return sc1;
-		case 1: return sc2;
-		case 2: return sc3;
-		case 3: return sc4;
-		}
-		return null;
-		*/
+
 	}
 	
 	public  void getSprites(CPU cpu) {

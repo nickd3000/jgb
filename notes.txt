@@ -2,9 +2,9 @@
 TASKS
 =======================================
 [ ] Move roms and bios out of project (make safe for public repository)
-[ ] work on colours of tiles and sprites
+[*] work on colours of tiles and sprites
 [ ] improve test rates.
-[ ] auto select some memory types
+[*] auto select some memory types
 
 
 Links

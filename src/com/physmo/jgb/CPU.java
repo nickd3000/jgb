@@ -40,6 +40,11 @@ public class CPU {
 	int fakeVerticalBlank = 0;
 	int topOfSTack = 0xFFFE; // used for debugging.
 
+	// TODO: Don't create these objects every time, make them static and just clear
+			// them.
+			AddressContainer ac1 = new AddressContainer();
+			AddressContainer ac2 = new AddressContainer();
+			
 	public void attachHardware(MEM mem, INPUT input, GPU gpu) {
 		this.mem = mem;
 		this.input = input;
@@ -122,10 +127,7 @@ public class CPU {
 			System.out.println("0xf6de is overflow!!! val:" + Utils.toHex4(mem.peek(0xf6de)));
 		}
 
-		// TODO: Don't create these objects every time, make them static and just clear
-		// them.
-		AddressContainer ac1 = new AddressContainer();
-		AddressContainer ac2 = new AddressContainer();
+		
 
 		// Get this instructions definition.
 		InstructionDefinition def = InstructionDefinition.getEnumFromId(currentInstruction & 0xff);
