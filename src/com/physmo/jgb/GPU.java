@@ -241,6 +241,7 @@ public class GPU {
 		
 		boolean signedTileIndices = false;
 		int lcdControl = cpu.mem.RAM[0xFF40];
+		int spriteHeight=8;
 
 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
 		if ((lcdControl & (1 << 3)) == 0)
@@ -248,6 +249,8 @@ public class GPU {
 		else
 			vram = 0x9C00;
 
+		if ((lcdControl & (1 << 2)) > 0) spriteHeight=16;
+		
 		// Set tile data pointer.
 		// Bit 4 - BG & Window Tile Data Select (0=8800-97FF, 1=8000-8FFF)
 		if ((lcdControl & (1 << 4)) == 0) {
@@ -299,12 +302,12 @@ public class GPU {
 			int sprPalette = 0;
 			for (int i=0;i<40;i++) {
 				if (x>=sprites[i].x && x<sprites[i].x+8) {
-					if (y>=sprites[i].y && y<sprites[i].y+8) {
+					if (y>=sprites[i].y && y<sprites[i].y+spriteHeight) {
 						//bd.setDrawColor(Color.GREEN);
 						int sprsubx = (x-sprites[i].x)&7;
-						int sprsuby = (y-sprites[i].y)&7;
+						int sprsuby = (y-sprites[i].y)&(spriteHeight-1);
 						if (((sprites[i].attributes)&(1<<5))>0) sprsubx=7-sprsubx;
-						if (((sprites[i].attributes)&(1<<6))>0) sprsuby=7-sprsuby;
+						if (((sprites[i].attributes)&(1<<6))>0) sprsuby=(spriteHeight-1)-sprsuby;
 						if (((sprites[i].attributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
 						
 						int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
