@@ -67,7 +67,7 @@ public class TIMER {
 				if (cpu.mem.RAM[TIMA] == 255) {
 					cpu.mem.RAM[TIMA] = cpu.mem.RAM[TMA];
 					cpu.requestInterrupt(CPU.INT_TIMER);
-					System.out.println("Timwer running TMA:"+cpu.mem.RAM[TMA]);
+					//System.out.println("Timer running TMA:"+cpu.mem.RAM[TMA]);
 				} else {
 					cpu.mem.RAM[TIMA]++;
 				}

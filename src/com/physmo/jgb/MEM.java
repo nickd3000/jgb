@@ -124,11 +124,11 @@ public class MEM {
 		if (addr == 0xFF50 && val == 1) {
 			// RAM[0xFF50]=1;
 			biosActive = false;
-			writeBigMessage("Switched bios!!!", 10);
+			//writeBigMessage("Switched bios!!!", 10);
 		}
 
 		if (addr == 0x0151) {
-			writeBigMessage("wrote to 0x0150!!!", 1000);
+			//writeBigMessage("wrote to 0x0150!!!", 1000);
 		}
 
 		if (addr == ADDR_FF46_DMA_TRANSFER) {

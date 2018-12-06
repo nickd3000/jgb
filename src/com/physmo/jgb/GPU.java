@@ -28,12 +28,9 @@ import com.physmo.toolbox.BasicDisplay;
 	 0xFF49 spr palette 2
  */
 public class GPU {
-	public  final int scale = 3;
-	public  int clock = 0;
-	public  int currentMode = 0;
-
-	//public static final int ADDR_0xFF47_BGPALETTE = 0xFF47;
-	
+	public int scale = 3;
+	public int clock = 0;
+	public int currentMode = 0;
 	static int tileDataPtr = 0x8800;
 	static int spriteDataPtr = 0x8000;
 
@@ -43,13 +40,14 @@ public class GPU {
 	
 	public  Sprite [] sprites = new Sprite[40];
 	
-	public GPU() {
+	public GPU(int scale) {
+		this.scale = scale;
 		for (int i=0;i<40;i++) {
 			sprites[i]=new Sprite();
 		}
 	}
 
-	PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
+	PALETTE_TYPE paletteType = PALETTE_TYPE.SUPER_GAMEBOY;
 	Color backgroundPaletteMaster [] = {
 			PaletteGenerator.get(paletteType, 0),
 			PaletteGenerator.get(paletteType, 1),
@@ -268,6 +266,7 @@ public class GPU {
 		// Set tile data pointer.
 		// Bit 4 - BG & Window Tile Data Select (0=8800-97FF, 1=8000-8FFF)
 		//if ((lcdControl & (1 << 4)) == 0) {
+		
 		if (testBit(lcdControl,4)==false) { 
 			tileDataPtr = 0x8800;
 			signedTileIndices = true;
@@ -325,7 +324,12 @@ public class GPU {
 				int windowInsideY = y-windowYPosition;
 				charOffset = (windowInsideX / 8) + ((windowInsideY / 8) * 32);
 				charIndex = (byte) cpu.mem.RAM[windowTileMapLocation + charOffset];
-				charIndex += 128;
+				
+				if (signedTileIndices)
+					charIndex += 128;
+				else
+					charIndex = charIndex & 0xff;
+				
 				//charIndex = charIndex & 0xff;
 				tp = getTilePixel2(cpu, charIndex, windowInsideX%8, windowInsideY%8);
 				bd.setDrawColor(backgroundPaletteMap[tp&3]);

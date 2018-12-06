@@ -4,6 +4,7 @@ import com.physmo.toolbox.BasicDisplay;
 
 public class Emulator {
 
+	int displayScale = 3;
 	CPU cpu = null;
 	GPU gpu = null;
 	MEM mem = null;
@@ -20,33 +21,35 @@ public class Emulator {
 	// private static final String gameFileName = "resource/spaceinvaders.gb"; //
 	// Uses timer
 	// private static final String gameFileName = "resource/klax.gb"; // Uses timer
-	// private static final String gameFileName = "resource/bombjack.gb";
-	// private static final String gameFileName = "resource/centipede.gb";
 	// private static final String gameFileName = "resource/tennis.gb";
 	// private static final String gameFileName = "resource/bghost.gb";
 	// private static final String gameFileName = "resource/motocross.gb";
 	// private static final String gameFileName = "resource/asteroids.gb";
 	 // private static final String gameFileName = "resource/bowling.gb";
 	// private static final String gameFileName = "resource/loderunner.gb";
-	// private static final String gameFileName = "resource/pipedream.gb";
-	//private static final String gameFileName = "resource/spot.gb";
-	// private static final String gameFileName = "resource/alleyway.gb";
+	//private static final String gameFileName = "resource/pipedream.gb";
+	//private static final String gameFileName = "resource/alleyway.gb"; // control problem.
 
 	// private static final String gameFileName = "resource/tesserae.gb";
 	// private static final String gameFileName = "resource/serpent.gb";
 
-	//private static final String gameFileName = "resource/aladdin.gb";
-	//private static final String gameFileName = "resource/arcade1.gb";
 	//private static final String gameFileName = "resource/batman.gb";
+	
+	// NON WORKING GAMES
+	////private static final String gameFileName = "resource/spot.gb";
+	//private static final String gameFileName = "resource/bombjack.gb";
+	//private static final String gameFileName = "resource/centipede.gb";
+	//private static final String gameFileName = "resource/arcade1.gb";
+	//private static final String gameFileName = "resource/aladdin.gb";
 
 	//
-	private static final String gameFileName = "resource/xenon2.gb";
+	//private static final String gameFileName = "resource/xenon2.gb";
 	// private static final String gameFileName = "resource/mario.gb";
 	// private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
-	// private static final String gameFileName = "resource/nemesis2.gb";
-	// private static final String gameFileName = "resource/mario2.gb";
+	 private static final String gameFileName = "resource/nemesis2.gb";
+	//private static final String gameFileName = "resource/mario2.gb";
 	// private static final String gameFileName = "resource/bomberman.gb";
 	// private static final String gameFileName = "resource/gargoyle.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
@@ -88,13 +91,14 @@ public class Emulator {
 
 	public Emulator() {
 		cpu = new CPU();
-		gpu = new GPU();
+		gpu = new GPU(displayScale);
 		mem = new MEM(cpu);
 		input = new INPUT(cpu);
 		timer = new TIMER(cpu);
 
 		cpu.attachHardware(mem, input, gpu);
-		basicDisplay = new BasicDisplay(320 * 2, 240 * 2);
+		basicDisplay = new BasicDisplay(160*displayScale,144*displayScale);
+		basicDisplay.setTitle("JGB");
 
 		Utils.ReadFileBytesToMemoryLocation("resource/dmg_boot.bin", mem.BIOS, 0);
 		Utils.ReadFileBytesToMemoryLocation(gameFileName, mem.CARTRIDGE, 0);
@@ -117,7 +121,7 @@ public class Emulator {
 		while (run) {
 			tick();
 			if ((tick++) % 100 == 0) {
-				gpu.tick(cpu, basicDisplay, 10);
+				gpu.tick(cpu, basicDisplay, 7);
 			}
 
 		}
@@ -125,7 +129,7 @@ public class Emulator {
 
 	public void tick() {
 		cpu.tick();
-		timer.tick(1); // random number.
+		timer.tick(5); // random number.
 		input.tick(basicDisplay);
 	}
 

@@ -2,14 +2,14 @@
 TASKS
 =======================================
 [ ] Move roms and bios out of project (make safe for public repository)
+[ ] convert some hard-coded addresses to statics
 [*] work on colours of tiles and sprites
 [*] improve test rates.
 [*] auto select some memory types
-[ ] make window size controllable
-[ ] make window sized to display size
-[ ] make window title something better
-[ ] convert some hard-coded addresses to statics
-[ ] add colour generator class
+[*] make window size controllable
+[*] make window sized to display size
+[*] make window title something better
+[*] add colour generator class
 
 Links
 ========================================
