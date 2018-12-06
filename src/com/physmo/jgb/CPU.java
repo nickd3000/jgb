@@ -8,11 +8,6 @@ class AddressContainer {
 
 public class CPU {
 
-	public static int ADDR_FF01_SERIAL_DATA = 0xFF01;
-	public static int ADDR_FF46_DMA_TRANSFER = 0xFF46;// // FF46 (w) DM Transfer & Start Address
-	public static int ADDR_FF45_Y_COMPARE = 0xFF45; // lyc: 0, // $FF45 (r/w) LY Compare
-	public static int ADDR_FF44_Y_SCANLINE = 0xFF44; // 0xFF44
-	public static int ADDR_FF41_LCD_STAT = 0xFF41; // LCD status register FF41
 
 	public static int INT_VBLANK = 1; // Vblank off Vblank on
 	public static int INT_LCDSTAT = 1 << 1; // LCD stat off LCD stat on
@@ -76,7 +71,7 @@ public class CPU {
 			serialBit = 0;
 
 		if (serialBitOld != serialBit)
-			System.out.println("" + (char) mem.peek(ADDR_FF01_SERIAL_DATA));
+			System.out.println("" + (char) mem.peek(MEM.ADDR_FF01_SERIAL_DATA));
 
 		// fake a timer interrupt:
 //		if (tickCount % 100000 == 0) {

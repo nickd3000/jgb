@@ -21,6 +21,18 @@ package com.physmo.jgb;
 
 public class MEM {
 
+	public static final int ADDR_FF01_SERIAL_DATA = 0xFF01;
+	public static final int ADDR_FF46_DMA_TRANSFER = 0xFF46;// // FF46 (w) DM Transfer & Start Address
+	public static final int ADDR_FF45_Y_COMPARE = 0xFF45; // lyc: 0, // $FF45 (r/w) LY Compare
+	public static final int ADDR_FF44_Y_SCANLINE = 0xFF44; // 0xFF44
+	public static final int ADDR_FF41_LCD_STAT = 0xFF41; // LCD status register FF41
+
+	public static final int ADDR_0xFF47_BGPALETTE = 0xFF47;
+	public static final int ADDR_0xFF48_SPRITEPALETTE1 = 0xFF48;
+	public static final int ADDR_0xFF49_SPRITEPALETTE2 = 0xFF49;
+	public static final int ADDR_0xFF44_SCANLINE = 0xFF44;
+	 
+	 
 	ROMBank memoryBank = null;
 
 	public int RAM[] = new int[0x10000]; // 64k
@@ -119,14 +131,14 @@ public class MEM {
 			writeBigMessage("wrote to 0x0150!!!", 1000);
 		}
 
-		if (addr == CPU.ADDR_FF46_DMA_TRANSFER) {
+		if (addr == ADDR_FF46_DMA_TRANSFER) {
 			// RAM[addr] = val;
 			transferDMA(val);
 			return;
 		}
 
 		// Writing anything to the scanline register resets it.
-		if (addr == CPU.ADDR_FF44_Y_SCANLINE) {
+		if (addr == ADDR_FF44_Y_SCANLINE) {
 			RAM[addr] = 0;
 			return;
 		}

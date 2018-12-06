@@ -14,8 +14,8 @@ public class Emulator {
 
 	boolean useBios = true;
 
-	// private static final String gameFileName = "resource/tetris.gb";
-	// private static final String gameFileName = "resource/drmario.gb";
+	//private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/drmario.gb";
 	// private static final String gameFileName = "resource/othello.gb";
 	// private static final String gameFileName = "resource/spaceinvaders.gb"; //
 	// Uses timer
@@ -26,33 +26,33 @@ public class Emulator {
 	// private static final String gameFileName = "resource/bghost.gb";
 	// private static final String gameFileName = "resource/motocross.gb";
 	// private static final String gameFileName = "resource/asteroids.gb";
-	// private static final String gameFileName = "resource/bowling.gb";
+	 // private static final String gameFileName = "resource/bowling.gb";
 	// private static final String gameFileName = "resource/loderunner.gb";
 	// private static final String gameFileName = "resource/pipedream.gb";
-	// private static final String gameFileName = "resource/spot.gb";
+	//private static final String gameFileName = "resource/spot.gb";
 	// private static final String gameFileName = "resource/alleyway.gb";
 
 	// private static final String gameFileName = "resource/tesserae.gb";
 	// private static final String gameFileName = "resource/serpent.gb";
 
 	//private static final String gameFileName = "resource/aladdin.gb";
-	 //private static final String gameFileName = "resource/arcade1.gb";
+	//private static final String gameFileName = "resource/arcade1.gb";
 	//private static final String gameFileName = "resource/batman.gb";
 
 	//
-	// private static final String gameFileName = "resource/xenon2.gb";
+	private static final String gameFileName = "resource/xenon2.gb";
 	// private static final String gameFileName = "resource/mario.gb";
 	// private static final String gameFileName = "resource/qbert.gb";
-	// private static final String gameFileName = "resource/pacman.gb";
+	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
 	// private static final String gameFileName = "resource/nemesis2.gb";
 	// private static final String gameFileName = "resource/mario2.gb";
 	// private static final String gameFileName = "resource/bomberman.gb";
 	// private static final String gameFileName = "resource/gargoyle.gb";
-	private static final String gameFileName = "resource/zelda.gb";
-	// private static final String gameFileName = "resource/garfield.gb";
-	// private static final String gameFileName = "resource/lemmings.gb";
-	// private static final String gameFileName = "resource/hook.gb";
+	//private static final String gameFileName = "resource/zelda.gb";
+	//private static final String gameFileName = "resource/garfield.gb";
+	 //private static final String gameFileName = "resource/lemmings.gb";
+	//private static final String gameFileName = "resource/hook.gb";
 
 	// private static final String gameFileName = "resource/cpu_instrs.gb";
 	// private static final String gameFileName = "resource/tests/opus5.gb";

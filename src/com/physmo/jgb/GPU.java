@@ -2,6 +2,7 @@ package com.physmo.jgb;
 
 import java.awt.Color;
 
+import com.physmo.jgb.PaletteGenerator.PALETTE_TYPE;
 import com.physmo.toolbox.BasicDisplay;
 
 /*
@@ -27,11 +28,11 @@ import com.physmo.toolbox.BasicDisplay;
 	 0xFF49 spr palette 2
  */
 public class GPU {
-	public  final int scale = 2;
+	public  final int scale = 3;
 	public  int clock = 0;
 	public  int currentMode = 0;
 
-	public static final int ADDR_0xFF47_BGPALETTE = 0xFF47;
+	//public static final int ADDR_0xFF47_BGPALETTE = 0xFF47;
 	
 	static int tileDataPtr = 0x8800;
 	static int spriteDataPtr = 0x8000;
@@ -48,42 +49,43 @@ public class GPU {
 		}
 	}
 
+	PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
 	Color backgroundPaletteMaster [] = {
-			new Color(0, 0, 0),
-			new Color(70, 70, 70),
-			new Color(180, 180, 180),
-			new Color(255, 255, 255)
+			PaletteGenerator.get(paletteType, 0),
+			PaletteGenerator.get(paletteType, 1),
+			PaletteGenerator.get(paletteType, 2),
+			PaletteGenerator.get(paletteType, 3)
 	};
 	Color sprite1PaletteMaster [] = {
-			new Color(40, 0, 0),
-			new Color(100, 70, 70),
-			new Color(220, 180, 180),
-			new Color(255, 225, 225)
+			PaletteGenerator.get(paletteType, 0),
+			PaletteGenerator.get(paletteType, 1),
+			PaletteGenerator.get(paletteType, 2),
+			PaletteGenerator.get(paletteType, 3)
 	};
 	Color sprite2PaletteMaster [] = {
-			new Color(0, 40, 0),
-			new Color(70, 100, 70),
-			new Color(180, 220, 180),
-			new Color(225, 255, 225)
+			PaletteGenerator.get(paletteType, 0),
+			PaletteGenerator.get(paletteType, 1),
+			PaletteGenerator.get(paletteType, 2),
+			PaletteGenerator.get(paletteType, 3)
 	};
 	Color backgroundPaletteMap [] = new Color[4];
 	Color sprite1PaletteMap [] = new Color[4];
 	Color sprite2PaletteMap [] = new Color[4];
 	
 	public void processPalettes(CPU cpu) {
-		int bgPalette = cpu.mem.RAM[ADDR_0xFF47_BGPALETTE];
+		int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
 		backgroundPaletteMap[3] = backgroundPaletteMaster[(bgPalette&3)];
 		backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette>>2)&3)];
 		backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette>>4)&3)];
 		backgroundPaletteMap[0] = backgroundPaletteMaster[((bgPalette>>6)&3)];
 		
-		int sprPalette1 = cpu.mem.RAM[0xFF48];
+		int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
 		sprite1PaletteMap[3] = sprite1PaletteMaster[(sprPalette1&3)];
 		sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1>>2)&3)];
 		sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1>>4)&3)];
 		sprite1PaletteMap[0] = sprite1PaletteMaster[((sprPalette1>>6)&3)];
 		
-		int sprPalette2 = cpu.mem.RAM[0xFF49];
+		int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
 		sprite2PaletteMap[3] = sprite2PaletteMaster[(sprPalette2&3)];
 		sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2>>2)&3)];
 		sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2>>4)&3)];
@@ -95,10 +97,10 @@ public class GPU {
 		// 1: During V-Blank
 		// 2: During Searching OAM-RAM
 		// 3: During Transfering Data to LCD Driver
-		int val = cpu.mem.RAM[0xFF41];
+		int val = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
 		val &= 0b1111_1100;
 		val += (mode & 3);
-		cpu.mem.RAM[0xFF41] = val;
+		cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] = val;
 	}
 
 	public void debug(CPU cpu, BasicDisplay bd) {
@@ -115,8 +117,8 @@ public class GPU {
 		processPalettes(cpu);
 		
 		
-		int y = cpu.mem.RAM[0xFF44]; // Scanline register
-		int lcdStat = cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT];
+		int y = cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE]; // Scanline register
+		int lcdStat = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
 		//int y = cpu.mem.peek(0xFF44); // Scanline register
 		//int lcdStat = cpu.mem.peek(CPU.ADDR_FF41_LCD_STAT);
 		
@@ -186,18 +188,18 @@ public class GPU {
 		
 		// Handle y coincidence check.
 		//int ycompare = cpu.mem.peek(CPU.ADDR_FF45_Y_COMPARE);
-		int ycompare = cpu.mem.RAM[CPU.ADDR_FF45_Y_COMPARE];
+		int ycompare = cpu.mem.RAM[MEM.ADDR_FF45_Y_COMPARE];
 		if (y == ycompare) {
-			cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT] |= 0x04;
-			if ((cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT] & (1<<6))>0) {
+			cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] |= 0x04;
+			if ((cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] & (1<<6))>0) {
 				cpu.requestInterrupt(CPU.INT_LCDSTAT);
 			}
 		} else {
-			cpu.mem.RAM[CPU.ADDR_FF41_LCD_STAT] &= ~0x04;
+			cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] &= ~0x04;
 		}
 		
 		
-		cpu.mem.RAM[0xFF44] = y;
+		cpu.mem.RAM[MEM.ADDR_FF44_Y_SCANLINE] = y;
 		//cpu.mem.poke(0xFF44,y);
 	}
 
@@ -233,39 +235,63 @@ public class GPU {
 		return color;
 	}
 
+	public boolean testBit(int value, int bit) {
+		if ((value&(1<<bit))>0) return true;
+		return false;
+	}
+	
 	public  void renderLine(CPU cpu, BasicDisplay bd, int y) {
 
-		int vram = 0x8010;
+		int bgTileMapLocation = 0x8010;
 		
 		getSprites(cpu);
 		
 		boolean signedTileIndices = false;
 		int lcdControl = cpu.mem.RAM[0xFF40];
 		int spriteHeight=8;
+		
+		// Bit 1 - OBJ (Sprite) Display Enable    (0=Off, 1=On)
+		boolean spritesEnabled = testBit(lcdControl,1);
+		
+		// Bit 5 - Window Display Enable          (0=Off, 1=On)
+		boolean windowEnabled = testBit(lcdControl,5);
+		
 
 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
-		if ((lcdControl & (1 << 3)) == 0)
-			vram = 0x9800;
+		if (testBit(lcdControl,3))
+			bgTileMapLocation = 0x9C00;
 		else
-			vram = 0x9C00;
+			bgTileMapLocation = 0x9800;
 
-		if ((lcdControl & (1 << 2)) > 0) spriteHeight=16;
+		if (testBit(lcdControl,2)) spriteHeight=16;
 		
 		// Set tile data pointer.
 		// Bit 4 - BG & Window Tile Data Select (0=8800-97FF, 1=8000-8FFF)
-		if ((lcdControl & (1 << 4)) == 0) {
+		//if ((lcdControl & (1 << 4)) == 0) {
+		if (testBit(lcdControl,4)==false) { 
 			tileDataPtr = 0x8800;
 			signedTileIndices = true;
 		} else {
 			tileDataPtr = 0x8000;
 			signedTileIndices = false;
 		}
+		
+
+        // Bit 6 - Window Screen Display Data Select
+        int windowTileMapLocation = 0;
+		if (testBit(lcdControl,6))
+			windowTileMapLocation = 0x9C00;
+		else
+			windowTileMapLocation = 0x9800;
 
 		// if(GPU._bgtile == 1 && tile < 128) tile += 256;
 		// int tileNum = signedTileNumbers ? ((int)bTileNum + 128) : (bTileNum & 0xff);
 
 		int scrolly = cpu.mem.RAM[0xFF42];
 		int scrollx = cpu.mem.RAM[0xFF43];
+		int windowYPosition = cpu.mem.RAM[0xFF4A];
+		int windowXPosition = cpu.mem.RAM[0xFF4B]-7;
+		
 		int xx, yy;
 
 		yy = y + scrolly;
@@ -279,7 +305,7 @@ public class GPU {
 			yy=yy&(0xff);
 			
 			int charOffset = (xx / 8) + ((yy / 8) * 32);
-			int charIndex = (byte) cpu.mem.RAM[vram + charOffset];
+			int charIndex = (byte) cpu.mem.RAM[bgTileMapLocation + charOffset];
 
 			if (signedTileIndices)
 				charIndex += 128;
@@ -289,17 +315,27 @@ public class GPU {
 			subx = xx % 8;
 
 			int tp = getTilePixel2(cpu, charIndex, subx, suby);
-
 			int pix = tp; //+charIndex;
-
 			// Set draw colour from pixel data.
 			bd.setDrawColor(backgroundPaletteMap[pix&3]);
 			
+			// Handle Window
+			if (windowEnabled && x>=windowXPosition && y>=windowYPosition) {
+				int windowInsideX = x-windowXPosition;
+				int windowInsideY = y-windowYPosition;
+				charOffset = (windowInsideX / 8) + ((windowInsideY / 8) * 32);
+				charIndex = (byte) cpu.mem.RAM[windowTileMapLocation + charOffset];
+				charIndex += 128;
+				//charIndex = charIndex & 0xff;
+				tp = getTilePixel2(cpu, charIndex, windowInsideX%8, windowInsideY%8);
+				bd.setDrawColor(backgroundPaletteMap[tp&3]);
+			}
 
 			// Sprites
 			// Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
 			// Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
 			int sprPalette = 0;
+			if (spritesEnabled) {
 			for (int i=0;i<40;i++) {
 				if (x>=sprites[i].x && x<sprites[i].x+8) {
 					if (y>=sprites[i].y && y<sprites[i].y+spriteHeight) {
@@ -316,6 +352,7 @@ public class GPU {
 							bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
 					}
 				}
+			}
 			}
 			
 			bd.drawFilledRect(x * scale, y * scale, scale, scale);
