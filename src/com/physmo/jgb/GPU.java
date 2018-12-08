@@ -47,7 +47,7 @@ public class GPU {
 		}
 	}
 
-	PALETTE_TYPE paletteType = PALETTE_TYPE.SUPER_GAMEBOY;
+	PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
 	Color backgroundPaletteMaster [] = {
 			PaletteGenerator.get(paletteType, 0),
 			PaletteGenerator.get(paletteType, 1),
@@ -120,15 +120,15 @@ public class GPU {
 		//int y = cpu.mem.peek(0xFF44); // Scanline register
 		//int lcdStat = cpu.mem.peek(CPU.ADDR_FF41_LCD_STAT);
 		
-		if (y < 144) {
-			renderLine(cpu, bd, y);
-		}
-
-		y = y + 1;
-
-		if (y == 144) {
-			cpu.mem.RAM[0xFF0F] |= CPU.INT_VBLANK;
-		}
+//		if (y < 144) {
+//			renderLine(cpu, bd, y);
+//		}
+//
+//		y = y + 1;
+//
+//		if (y == 144) {
+//			cpu.mem.RAM[0xFF0F] |= CPU.INT_VBLANK;
+//		}
 
 		int previousMode = currentMode;
 		boolean statChanged = false;
@@ -175,11 +175,17 @@ public class GPU {
 			if (y == 144) {
 				// this.system.requestInterrupt(0);
 				cpu.requestInterrupt(CPU.INT_VBLANK);
-				cpu.requestInterrupt(CPU.INT_LCDSTAT);
+				//cpu.requestInterrupt(CPU.INT_LCDSTAT);
 			} else if (y > 153 + 10) {
 				y = 0;
 				// this.drawScreen();
 				bd.refresh();
+//				try {
+//					Thread.sleep(5);
+//				} catch (InterruptedException e) {
+//					// TODO Auto-generated catch block
+//					e.printStackTrace();
+//				}
 			}
 		}
 
@@ -293,11 +299,11 @@ public class GPU {
 		
 		int xx, yy;
 
-		yy = y + scrolly;
+		yy = y + scrolly; // + bd.mouseY();
 		int subx = 0, suby = yy % 8;
 
 		for (int x = 0; x < 160; x++) {
-			xx = x + scrollx;
+			xx = x + scrollx; // + bd.mouseX();
 			
 			// Wrap xx and yy
 			xx=xx&(0xff);

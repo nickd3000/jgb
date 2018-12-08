@@ -64,10 +64,9 @@ public class TIMER {
 				SetClockFreq();
 
 				// timer about to overflow
-				if (cpu.mem.RAM[TIMA] == 255) {
+				if (cpu.mem.RAM[TIMA] > 255) {
 					cpu.mem.RAM[TIMA] = cpu.mem.RAM[TMA];
 					cpu.requestInterrupt(CPU.INT_TIMER);
-					//System.out.println("Timer running TMA:"+cpu.mem.RAM[TMA]);
 				} else {
 					cpu.mem.RAM[TIMA]++;
 				}

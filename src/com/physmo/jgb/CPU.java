@@ -8,6 +8,26 @@ class AddressContainer {
 
 public class CPU {
 
+	// Constants that peek and poke will interpret as registers etc.
+	public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.
+	public static final int ADDR_A = -1;
+	public static final int ADDR_B = -2;
+	public static final int ADDR_C = -3;
+	public static final int ADDR_D = -4;
+	public static final int ADDR_E = -5;
+	public static final int ADDR_H = -6;
+	public static final int ADDR_L = -7;
+	public static final int ADDR_F = -8;
+	public static final int ADDR_SP = -10;
+	public static final int ADDR_HL = -11;
+	public static final int ADDR_BC = -12;
+	public static final int ADDR_DE = -13;
+	public static final int ADDR_AF = -14;
+	
+	public static final int FLAG_ZERO = 1 << 7;
+	public static final int FLAG_ADDSUB = 1 << 6;
+	public static final int FLAG_HALFCARRY = 1 << 5;
+	public static final int FLAG_CARRY = 1 << 4;
 
 	public static int INT_VBLANK = 1; // Vblank off Vblank on
 	public static int INT_LCDSTAT = 1 << 1; // LCD stat off LCD stat on
@@ -51,7 +71,7 @@ public class CPU {
 
 		tickCount++;
 		// if (tickCount>30000000) displayInstruction=true;
-		//if (tickCount>21634816 - 10000) displayInstruction=true;
+		//if (tickCount>6020435 - 10000) displayInstruction=true;
 		// if (tickCount>455623-1000) displayInstruction=true;
 		// if (PC==0x001D) displayInstruction=true;
 		// if (PC>0x00FF) displayInstruction=true;
@@ -111,11 +131,6 @@ public class CPU {
 		int entryPC = PC;
 		int currentInstruction = mem.peek(PC++);
 
-		//
-		// fakeVerticalBlank++;
-		// mem.RAM[0xFF44]=(fakeVerticalBlank/12)&0xff;
-		//
-
 		if (mem.peek(0xf6de) > 0xff) {
 			System.out.println("0xf6de is overflow!!! val:" + Utils.toHex4(mem.peek(0xf6de)));
 		}
@@ -148,8 +163,9 @@ public class CPU {
 		}
 
 		int wrk = 0;
-int carryOut = 0;
-int carryIn = 0;
+		int carryOut = 0;
+		int carryIn = 0;
+		
 		// Handle buffered interrupt enable/disable;
 		if (pendingDisableInterrupt > 0) {
 			pendingDisableInterrupt--;
@@ -291,21 +307,17 @@ int carryIn = 0;
 		case LDD: // Load and decrement?
 			wrk = ac2.val;
 			mem.poke(ac1.addr, ac2.val);
-			// how we do this - this insruction is meant to change the pointer too...
-			// mem.poke(ac1.addr, ac1.val + 1);
-
+			
 			if (def.getAddressMode1() == ADDRMODE.__HL) {
-				// System.out.println("get HL:"+getHL()+" 0x"+Utils.toHex4(getHL()));
 				setHL(getHL() - 1);
 			} else if (def.getAddressMode2() == ADDRMODE.__HL) {
-				// System.out.println("get HL:"+getHL()+" 0x"+Utils.toHex4(getHL()));
 				setHL(getHL() - 1);
 			} else {
 				System.out.println("ERROR LDD");
 			}
 			if (getHL() < 0)
 				setHL(0xffff);
-			// NO FLAGS AFFECTED
+
 			break;
 		case LDI: // Load and decrement?
 			wrk = ac2.val;
@@ -321,7 +333,7 @@ int carryIn = 0;
 
 			if (getHL() > 0xffff)
 				setHL(0x0);
-			// NO FLAGS AFFECTED
+
 			break;
 		case XOR:
 			wrk = A ^ ac1.val;
@@ -360,7 +372,6 @@ int carryIn = 0;
 
 			handleZeroFlag(wrk & 0xff);
 			setFlag(FLAG_ADDSUB);
-			// unsetFlag(FLAG_HALFCARRY);
 
 			if (((A ^ ac1.val ^ wrk) & 0x10) > 0)
 				setFlag(FLAG_HALFCARRY);
@@ -390,7 +401,7 @@ int carryIn = 0;
 
 			break;
 		case ADDSPNN:
-			// TODO: add flags.
+
 			wrk = SP + convertSignedByte(ac1.val & 0xff);
 
 			if (((SP ^ convertSignedByte(ac1.val & 0xff) ^ wrk) & 0x10) > 0)
@@ -410,7 +421,7 @@ int carryIn = 0;
 
 			break;
 		case DAA:
-			// TODO: !!
+
 			int correction = 0;
 			boolean flagN = testFlag(FLAG_ADDSUB);
 			boolean flagH = testFlag(FLAG_HALFCARRY);
@@ -444,7 +455,7 @@ int carryIn = 0;
 				unsetFlag(FLAG_CARRY);
 
 			unsetFlag(FLAG_ADDSUB);
-			// if (((hl&0xFFF)+(value&0xFFF))&0x1000) this.setH(); else this.clearH();
+
 			if ((((getHL() & 0xFFF) + (ac2.val & 0xFFF)) & 0x1000) > 0)
 				setFlag(FLAG_HALFCARRY);
 			else
@@ -489,25 +500,19 @@ int carryIn = 0;
 			CPUPrefix.processPrefixCommand(this, ac1.val);
 			break;
 		case SCF:
-			// System.out.println("DEBUG SCF before : FL="+Utils.toHex2(FL));
 			setFlag(FLAG_CARRY);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_HALFCARRY);
-			// System.out.println("DEBUG SCF after : FL="+Utils.toHex2(FL));
 			break;
 		case CCF:
-			// unsetFlag(FLAG_CARRY);
-			// unsetFlag(FLAG_ADDSUB);
-			// unsetFlag(FLAG_HALFCARRY);
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_HALFCARRY);
-			// this.clearN(); this.clearH();
+			
 			if ((FL & 0x10) > 0)
 				unsetFlag(FLAG_CARRY);
 			else
 				setFlag(FLAG_CARRY);
-			;
-
+			
 			break;
 		case JRNZ:
 			if (testFlag(FLAG_ZERO) == false) {
@@ -574,9 +579,6 @@ int carryIn = 0;
 			break;
 		case LDAZPGC:
 			A = mem.peek(0xff00 + (C & 0xff)) & 0xff;
-			// A = mem.RAM[(0xff00+(C&0xff))]&0xff;
-			// if (displayInstruction) System.out.println("zpg
-			// addr:"+Utils.toHex4(0xff00+ac1.val)+" val:"+A);
 			break;
 
 		case LDHLSPN:
@@ -585,12 +587,6 @@ int carryIn = 0;
 
 			wrk = ptr & 0xffff;
 			
-			//System.out.println("LDHLSPN  SP:" +SP+ "  nn="+ac2.val+
-			//		"  signed:"+signedByte+"  ptr:"+ptr+"  wrk:"+wrk+"  \t"+Debug.getFlags(this));
-			
-			// wrk = combineBytes(mem.peek((ptr)&0xffff),mem.peek((ptr+1)&0xffff));
-			
-
 			unsetFlag(FLAG_ADDSUB);
 			unsetFlag(FLAG_ZERO);
 
@@ -674,11 +670,9 @@ int carryIn = 0;
 			mem.poke(ac1.addr, wrk & 0xff);
 			break;
 		case CALL:
-			// pushW(entryPC+1);
 			call(ac1.val);
 			break;
 		case CALLNZ:
-			// pushW(entryPC+1);
 			if (testFlag(FLAG_ZERO) == false) {
 				call(ac1.val);
 			}
@@ -700,14 +694,10 @@ int carryIn = 0;
 			break;
 		case PUSHW:
 			pushW(ac1.val);
-
 			break;
 		case POPW:
-			// TODO: SHould this not handle words?
 			wrk = popW();
-
 			mem.poke(ac1.addr, wrk);
-
 			break;
 
 		case CP:
@@ -726,21 +716,11 @@ int carryIn = 0;
 			else
 				unsetFlag(FLAG_HALFCARRY);
 
-			/*
-			 * const result = this.register.a - value; if ((result&0xFF) === 0) this.setZ();
-			 * else this.clearZ(); this.setN(); if (this.register.a < value) this.setC();
-			 * else this.clearC(); if ((this.register.a&0xF) < (value&0xF)) this.setH();
-			 * else this.clearH();
-			 */
 			break;
 		case CPL:
-			// wrk = (~A)&0xff;
-			// // this.register.a ^= 0xFF;
 			wrk = A ^ 0xFF;
-
 			setFlag(FLAG_ADDSUB);
 			setFlag(FLAG_HALFCARRY);
-
 			A = wrk & 0xff;
 			break;
 
@@ -781,48 +761,33 @@ int carryIn = 0;
 
 	}
 
-	// int A,B,C,D,E,H,L;
-	public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.
-	public static final int ADDR_A = -1;
-	public static final int ADDR_B = -2;
-	public static final int ADDR_C = -3;
-	public static final int ADDR_D = -4;
-	public static final int ADDR_E = -5;
-	public static final int ADDR_H = -6;
-	public static final int ADDR_L = -7;
-	public static final int ADDR_F = -8;
-	public static final int ADDR_SP = -10;
-	public static final int ADDR_HL = -11;
-	public static final int ADDR_BC = -12;
-	public static final int ADDR_DE = -13;
-	public static final int ADDR_AF = -14;
 
+
+	
 	public void call(int addr) {
 		pushW(PC);
 		PC = addr;
+	}
+	
+	public void ret() {
+		PC = popW();
 	}
 
 	// Set a flag on the interrupt register.
 	public void requestInterrupt(int val) {
 		this.mem.RAM[0xFF0F] |= val;
-		// this.mmu.writeByte(0xFF0F, this.mmu.readByte(0xFF0F)|(1<<id));
 	}
 
 	public void checkInterrupts() {
 		if (interruptEnabled == 0)
 			return;
-		// interruptEnabled=0;
 
 		boolean dbgMsgOn = false;
 
 		int intEnabled = mem.RAM[0xFFFF];
 		int intRequests = mem.RAM[0xFF0F];
 		int masked = intEnabled & intRequests;
-		/*
-		 * Bit 4: New Value on Selected Joypad Keyline(s) (rst 60) Bit 3: Serial I/O
-		 * transfer end (rst 58) Bit 2: Timer Overflow (rst 50) Bit 1: LCD (see STAT)
-		 * (rst 48) Bit 0: V-Blank (rst 40)
-		 */
+
 		if ((masked & INT_VBLANK) > 0) {
 			halt = 0;
 			disableInterrupts();
@@ -889,111 +854,91 @@ int carryIn = 0;
 			break;
 		case nn:
 			peeked = getNextByte();
-			ac.val = peeked;// &0xff;
+			ac.val = peeked;
 			break;
 		case nnnn:
 			peeked = getNextWord();
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
-			// ac.addr = peeked;
 			break;
 		case A:
 			peeked = A;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_A;
 			break;
 		case B:
 			peeked = B;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_B;
 			break;
 		case C:
 			peeked = C;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_C;
 			break;
 		case D:
 			peeked = D;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_D;
 			break;
 		case E:
 			peeked = E;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_E;
 			break;
 		case H:
 			peeked = H;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_H;
 			break;
 		case L:
 			peeked = L;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_L;
 			break;
 
 		case SP:
 			peeked = SP;
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_SP;
 			break;
 		case HL:
 			peeked = getHL();
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_HL;
 			break;
 		case BC:
 			peeked = getBC();
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_BC;
 			break;
 		case DE:
 			peeked = getDE();
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_DE;
 			break;
 		case AF:
 			peeked = getAF();
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = ADDR_AF;
 			break;
 		case __HL:
 			peeked = mem.peek(getHL());
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = getHL();
-			// System.out.println("pHL="+Utils.toHex2(peeked));
 			break;
 		case __BC:
 			peeked = mem.peek(getBC());
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked)
 			ac.addr = getBC();
 			break;
 		case __DE:
 			peeked = mem.peek(getDE());
 			ac.val = peeked;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
 			ac.addr = getDE();
 			break;
-
 		case __nnnn:
 			peeked = getNextWord();
-			ac.val = mem.peek(peeked);// &0xff;
-			// ac.bytesRead += " " + Utils.toHex2(peeked);
+			ac.val = mem.peek(peeked);
 			ac.addr = peeked;
 			break;
 
@@ -1028,15 +973,10 @@ int carryIn = 0;
 //				"  PC+tc " + Utils.toHex4((PC + tc)) +
 //				"  "+Debug.getRegisters(this));
 		
-		//PC = (PC + tc);
 		PC = (PC + move)&0xffff;
 
 	}
 
-	/*
-	 * 16bit Hi Lo Name/Function AF A - Accumulator & Flags BC B C BC DE D E DE HL H
-	 * L HL SP - - Stack Pointer PC - - Program Counter/Pointer
-	 */
 
 	// Combine two bytes into one 16 bit value.
 	public int combineBytes(int h, int l) {
@@ -1106,11 +1046,9 @@ int carryIn = 0;
 
 	public void disableInterrupts() {
 		pendingDisableInterrupt = 1;
-		// interruptEnabled=0;
 	}
 
 	public void handleZeroFlag(int val) {
-		// if ((val&0xff)==0) setFlag(FLAG_ZERO);
 		if ((val & 0xffff) == 0)
 			setFlag(FLAG_ZERO);
 		else
@@ -1130,28 +1068,18 @@ int carryIn = 0;
 		return oprnd;
 	}
 
-	/*
-	 * 
-	 * Bit Name Set Clr Expl. 7 zf Z NZ Zero Flag 6 n - - Add/Sub-Flag (BCD) 5 h - -
-	 * Half Carry Flag (BCD) 4 cy C NC Carry Flag 3-0 - - - Not used (always zero)
-	 */
-	public static final int FLAG_ZERO = 1 << 7;
-	public static final int FLAG_ADDSUB = 1 << 6;
-	public static final int FLAG_HALFCARRY = 1 << 5;
-	public static final int FLAG_CARRY = 1 << 4;
+
+
 
 	public void setFlag(int flag) {
 		FL |= flag;
-		// FL = FL & 0xF0;
 	}
 
 	public void unsetFlag(int flag) {
 		FL &= ~(flag);
-		// FL = FL & 0xF0;
 	}
 
 	public boolean testFlag(int flag) {
-		// FL = FL & 0xF0;
 		if ((FL & flag) > 0)
 			return true;
 		return false;
@@ -1164,10 +1092,8 @@ int carryIn = 0;
 	}
 
 	public int popW() {
-
-		 int lb = mem.peek(SP++);
-		 int hb = mem.peek(SP++);
-		 
+		int lb = mem.peek(SP++);
+		int hb = mem.peek(SP++);
 		return combineBytes(hb, lb);
 	}
 }

@@ -5,7 +5,7 @@ import java.awt.Color;
 public class PaletteGenerator {
 
 	enum PALETTE_TYPE {
-		CLASSIC, SUPER_GAMEBOY
+		CLASSIC, SUPER_GAMEBOY, NEWISH
 	};
 
 	public static Color get(PALETTE_TYPE type, int index) {
@@ -30,6 +30,16 @@ public class PaletteGenerator {
 				return new Color(0xd6, 0x8e, 0x49);
 			if (index == 3)
 				return new Color(0xf7, 0xe7, 0xc6);
+			break;
+		case NEWISH:
+			if (index == 0)
+				return new Color( 0x1e, 0x50,0x33);
+			if (index == 1)
+				return new Color( 0x37, 0x25, 0xa6);
+			if (index == 2)
+				return new Color( 0x8e, 0x49, 0xd6);
+			if (index == 3)
+				return new Color(0xe7, 0xc6, 0xf7);
 			break;
 		}
 

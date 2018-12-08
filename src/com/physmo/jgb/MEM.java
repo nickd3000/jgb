@@ -45,7 +45,7 @@ public class MEM {
 
 	CPU cpu = null;
 	
-	int forceMemoryBankType = -1;
+	int forceMemoryBankType = 0;
 
 	public MEM(CPU cpu) {
 		this.cpu = cpu;

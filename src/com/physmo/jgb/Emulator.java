@@ -13,14 +13,14 @@ public class Emulator {
 
 	static BasicDisplay basicDisplay = null;
 
-	boolean useBios = true;
+	boolean useBios = false;
 
 	//private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/drmario.gb";
 	// private static final String gameFileName = "resource/othello.gb";
-	// private static final String gameFileName = "resource/spaceinvaders.gb"; //
-	// Uses timer
-	// private static final String gameFileName = "resource/klax.gb"; // Uses timer
+	private static final String gameFileName = "resource/spaceinvaders.gb"; //
+	//private static final String gameFileName = "resource/klax.gb";
 	// private static final String gameFileName = "resource/tennis.gb";
 	// private static final String gameFileName = "resource/bghost.gb";
 	// private static final String gameFileName = "resource/motocross.gb";
@@ -34,53 +34,48 @@ public class Emulator {
 	// private static final String gameFileName = "resource/serpent.gb";
 
 	//private static final String gameFileName = "resource/batman.gb";
+	//private static final String gameFileName = "resource/rtype.gb";
+	//private static final String gameFileName = "resource/pinballfantasies.gb";
+	//private static final String gameFileName = "resource/tetrisattack.gb";
+	// private static final String gameFileName = "resource/qbert.gb";
+	//private static final String gameFileName = "resource/pacman.gb";
+	// private static final String gameFileName = "resource/pokemon_blue.gb";
+	// private static final String gameFileName = "resource/nemesis2.gb";
+	//private static final String gameFileName = "resource/mario2.gb";
+	// private static final String gameFileName = "resource/bomberman.gb";
+	 //private static final String gameFileName = "resource/gargoyle.gb";
+	//private static final String gameFileName = "resource/zelda.gb";
+	//private static final String gameFileName = "resource/garfield.gb";
+	 //private static final String gameFileName = "resource/lemmings.gb";
+	//private static final String gameFileName = "resource/hook.gb";
+	//private static final String gameFileName = "resource/xenon2.gb";
+	
 	
 	// NON WORKING GAMES
-	////private static final String gameFileName = "resource/spot.gb";
+	//private static final String gameFileName = "resource/startrek.gb";
+	//private static final String gameFileName = "resource/spot.gb";
 	//private static final String gameFileName = "resource/bombjack.gb";
 	//private static final String gameFileName = "resource/centipede.gb";
 	//private static final String gameFileName = "resource/arcade1.gb";
 	//private static final String gameFileName = "resource/aladdin.gb";
 
 	//
-	//private static final String gameFileName = "resource/xenon2.gb";
-	// private static final String gameFileName = "resource/mario.gb";
-	// private static final String gameFileName = "resource/qbert.gb";
-	//private static final String gameFileName = "resource/pacman.gb";
-	// private static final String gameFileName = "resource/pokemon_blue.gb";
-	 private static final String gameFileName = "resource/nemesis2.gb";
-	//private static final String gameFileName = "resource/mario2.gb";
-	// private static final String gameFileName = "resource/bomberman.gb";
-	// private static final String gameFileName = "resource/gargoyle.gb";
-	//private static final String gameFileName = "resource/zelda.gb";
-	//private static final String gameFileName = "resource/garfield.gb";
-	 //private static final String gameFileName = "resource/lemmings.gb";
-	//private static final String gameFileName = "resource/hook.gb";
+	
+
 
 	// private static final String gameFileName = "resource/cpu_instrs.gb";
 	// private static final String gameFileName = "resource/tests/opus5.gb";
-	// private static final String gameFileName = "resource/tests/01-special.gb"; //
-	// PASS
-	// private static final String gameFileName = "resource/tests/02-interrupts.gb";
-	// // FAIL
-	// private static final String gameFileName = "resource/tests/03-op sp,hl.gb";
-	// // PASS
-	// private static final String gameFileName = "resource/tests/04-op r,imm.gb";
-	// // PASS
-	// private static final String gameFileName = "resource/tests/05-op rp.gb"; //
-	// PASS
-	// private static final String gameFileName = "resource/tests/06-ld r,r.gb"; //
-	// PASS
-	// private static final String gameFileName =
-	// "resource/tests/07-jr,jp,call,ret,rst.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/08-misc
-	// instrs.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/09-op r,r.gb"; //
-	// PASS
-	// private static final String gameFileName = "resource/tests/10-bit ops.gb"; //
-	// PASS
-	// private static final String gameFileName = "resource/tests/11-op a,(hl).gb";
-	// // PASS
+	// private static final String gameFileName = "resource/tests/01-special.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/02-interrupts.gb"; // FAIL
+	// private static final String gameFileName = "resource/tests/03-op sp,hl.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/04-op r,imm.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/05-op rp.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/06-ld r,r.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/07-jr,jp,call,ret,rst.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/08-misc instrs.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/09-op r,r.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/10-bit ops.gb"; // PASS
+	// private static final String gameFileName = "resource/tests/11-op a,(hl).gb"; // PASS
 
 	public static void main(String[] args) {
 		Debug.checkInstructionDefs();
@@ -120,16 +115,13 @@ public class Emulator {
 		int tick = 0;
 		while (run) {
 			tick();
-			if ((tick++) % 100 == 0) {
-				gpu.tick(cpu, basicDisplay, 7);
-			}
-
+			gpu.tick(cpu, basicDisplay, 10);
 		}
 	}
 
 	public void tick() {
 		cpu.tick();
-		timer.tick(5); // random number.
+		timer.tick(1); // random number.
 		input.tick(basicDisplay);
 	}
 

@@ -69,8 +69,8 @@ public class Debug {
 		int b1, b2;
 		for (int i = 0; i < numItems; i++) {
 			// if (ptr<=0xff-1)
-			b1 = cpu.mem.RAM[++ptr];
-			b2 = cpu.mem.RAM[++ptr];
+			b1 = cpu.mem.RAM[ptr++];
+			b2 = cpu.mem.RAM[ptr++];
 			str += " " + Utils.toHex4(cpu.combineBytes(b2, b1));
 		}
 		return str;
