@@ -19,7 +19,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/drmario.gb";
 	// private static final String gameFileName = "resource/othello.gb";
-	private static final String gameFileName = "resource/spaceinvaders.gb"; //
+	//private static final String gameFileName = "resource/spaceinvaders.gb"; //
 	//private static final String gameFileName = "resource/klax.gb";
 	// private static final String gameFileName = "resource/tennis.gb";
 	// private static final String gameFileName = "resource/bghost.gb";
@@ -41,15 +41,17 @@ public class Emulator {
 	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
 	// private static final String gameFileName = "resource/nemesis2.gb";
-	//private static final String gameFileName = "resource/mario2.gb";
+	private static final String gameFileName = "resource/mario2.gb";
+	//private static final String gameFileName = "resource/gargoyle.gb";
 	// private static final String gameFileName = "resource/bomberman.gb";
-	 //private static final String gameFileName = "resource/gargoyle.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
 	//private static final String gameFileName = "resource/garfield.gb";
 	 //private static final String gameFileName = "resource/lemmings.gb";
 	//private static final String gameFileName = "resource/hook.gb";
 	//private static final String gameFileName = "resource/xenon2.gb";
 	
+	// GAMEBOY COLOR
+	//private static final String gameFileName = "resource/tetrisdx.gbc";
 	
 	// NON WORKING GAMES
 	//private static final String gameFileName = "resource/startrek.gb";

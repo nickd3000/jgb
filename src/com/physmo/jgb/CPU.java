@@ -72,7 +72,7 @@ public class CPU {
 		tickCount++;
 		// if (tickCount>30000000) displayInstruction=true;
 		//if (tickCount>6020435 - 10000) displayInstruction=true;
-		// if (tickCount>455623-1000) displayInstruction=true;
+		// if (tickCount>2855623-1000) displayInstruction=true;
 		// if (PC==0x001D) displayInstruction=true;
 		// if (PC>0x00FF) displayInstruction=true;
 		//displayInstruction=true;
@@ -115,7 +115,7 @@ public class CPU {
 		}
 
 		if ((SP >= 0xA000) && (SP <= 0xBFFF)) {
-			System.out.println("Stack pointing to paged memory??");
+			//System.out.println("Stack pointing to paged memory??");
 		}
 
 		Debug.checkRegisters(this);
@@ -187,9 +187,11 @@ public class CPU {
 			// PC--;
 			if (interruptEnabled == 1)
 				halt = 1;
-			else
+			else {
 				PC++;
-
+				//PC++;
+			}
+			
 			// enableInterrupts();
 			// System.out.println("HALT !!!!!!!!!!!!!!!!!!!!!");
 			break;

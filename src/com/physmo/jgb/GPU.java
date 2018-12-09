@@ -71,19 +71,23 @@ public class GPU {
 	Color sprite2PaletteMap [] = new Color[4];
 	
 	public void processPalettes(CPU cpu) {
-		int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
+		//int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
+		int bgPalette = cpu.mem.peek(MEM.ADDR_0xFF47_BGPALETTE);
+		
 		backgroundPaletteMap[3] = backgroundPaletteMaster[(bgPalette&3)];
 		backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette>>2)&3)];
 		backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette>>4)&3)];
 		backgroundPaletteMap[0] = backgroundPaletteMaster[((bgPalette>>6)&3)];
 		
-		int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
+		//int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
+		int sprPalette1 = cpu.mem.peek(MEM.ADDR_0xFF48_SPRITEPALETTE1);
 		sprite1PaletteMap[3] = sprite1PaletteMaster[(sprPalette1&3)];
 		sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1>>2)&3)];
 		sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1>>4)&3)];
 		sprite1PaletteMap[0] = sprite1PaletteMaster[((sprPalette1>>6)&3)];
 		
-		int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
+		//int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
+		int sprPalette2 = cpu.mem.peek(MEM.ADDR_0xFF49_SPRITEPALETTE2);
 		sprite2PaletteMap[3] = sprite2PaletteMaster[(sprPalette2&3)];
 		sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2>>2)&3)];
 		sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2>>4)&3)];
@@ -95,10 +99,12 @@ public class GPU {
 		// 1: During V-Blank
 		// 2: During Searching OAM-RAM
 		// 3: During Transfering Data to LCD Driver
-		int val = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
+		//int val = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
+		int val = cpu.mem.peek(MEM.ADDR_FF41_LCD_STAT);
 		val &= 0b1111_1100;
 		val += (mode & 3);
-		cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] = val;
+		//cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] = val;
+		cpu.mem.poke(MEM.ADDR_FF41_LCD_STAT, val);
 	}
 
 	public void debug(CPU cpu, BasicDisplay bd) {
@@ -110,15 +116,29 @@ public class GPU {
 
 		//debug(cpu, bd);
 		
-		clock = (clock + cycles) & 0xFFFFFFFF;
-
-		processPalettes(cpu);
 		
-		
+		int previousMode = currentMode;
 		int y = cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE]; // Scanline register
 		int lcdStat = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
-		//int y = cpu.mem.peek(0xFF44); // Scanline register
-		//int lcdStat = cpu.mem.peek(CPU.ADDR_FF41_LCD_STAT);
+		int lcdControl = cpu.mem.RAM[0xFF40];
+
+		boolean lcdEnabled = testBit(lcdControl,7);
+		
+		if (!lcdEnabled) {
+			cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE]=0;
+			cpu.mem.RAM[0xFF41]&=0b11111100;
+			
+			if (previousMode!=0 && testBit(lcdStat,3)) {
+				cpu.requestInterrupt(CPU.INT_LCDSTAT);
+			}
+			
+			setLCDRegisterMode(cpu, 0);
+			
+			clock=0;
+			return;
+		}
+		
+		clock = (clock + cycles) & 0xFFFFFFFF;
 		
 //		if (y < 144) {
 //			renderLine(cpu, bd, y);
@@ -130,19 +150,22 @@ public class GPU {
 //			cpu.mem.RAM[0xFF0F] |= CPU.INT_VBLANK;
 //		}
 
-		int previousMode = currentMode;
-		boolean statChanged = false;
+		
+		boolean modeInterruptEnabled = false;
 
 		if (y >= 144) {
 			currentMode = 1;
-			if ((lcdStat & 0x10) > 0)
-				statChanged = true;
+			
+			if (testBit(lcdStat,4))
+				modeInterruptEnabled = true;
+			 
 		} else {
 			if (clock <= 80) {
 				// Mode 2
 				currentMode = 2;
-				if ((lcdStat & 0x20) > 0)
-					statChanged = true;
+				
+				if (testBit(lcdStat,5))
+					modeInterruptEnabled = true;
 
 			} else if (clock >= 80 && clock < 252) {
 				// Mode 3
@@ -151,14 +174,15 @@ public class GPU {
 			} else if (clock >= 252 && clock < 456) {
 				// Mode 0
 				currentMode = 0;
-				if ((lcdStat & 0x08) > 0)
-					statChanged = true;
+				
+				if (testBit(lcdStat,3))
+					modeInterruptEnabled = true;
 
 			}
 		}
 
 		setLCDRegisterMode(cpu, currentMode);
-		if (currentMode!=previousMode && statChanged) {
+		if (currentMode!=previousMode && modeInterruptEnabled) {
 			cpu.requestInterrupt(CPU.INT_LCDSTAT);
 		}
 
@@ -225,16 +249,15 @@ public class GPU {
 	
 	public  int getTilePixel2(CPU cpu, int tileId, int subx, int suby) {
 		int byteOffset = (suby * 2);
-		;
 
 		int data1 = cpu.mem.RAM[tileDataPtr + (tileId * 16) + byteOffset];
 		int data2 = cpu.mem.RAM[tileDataPtr + (tileId * 16) + byteOffset + 1];
 		int mask = 1 << (7 - subx);
 		int color = 0;
 		if ((data1 & mask) > 0)
-			color += 0b0001;
+			color |= 0b0001;
 		if ((data2 & mask) > 0)
-			color += 0b0010;
+			color |= 0b0010;
 
 		return color;
 	}
@@ -249,6 +272,7 @@ public class GPU {
 		int bgTileMapLocation = 0x8010;
 		
 		getSprites(cpu);
+		processPalettes(cpu);
 		
 		boolean signedTileIndices = false;
 		int lcdControl = cpu.mem.RAM[0xFF40];
@@ -358,7 +382,7 @@ public class GPU {
 						
 						int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
 						
-						if (sprPixel>0)
+						if (sprPixel!=0)
 							bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
 					}
 				}
