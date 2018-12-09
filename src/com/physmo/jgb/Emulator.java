@@ -13,7 +13,7 @@ public class Emulator {
 
 	static BasicDisplay basicDisplay = null;
 
-	boolean useBios = false;
+	boolean useBios = true;
 
 	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/mario.gb";
@@ -42,14 +42,16 @@ public class Emulator {
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
 	// private static final String gameFileName = "resource/nemesis2.gb";
 	private static final String gameFileName = "resource/mario2.gb";
-	//private static final String gameFileName = "resource/gargoyle.gb";
 	// private static final String gameFileName = "resource/bomberman.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
 	//private static final String gameFileName = "resource/garfield.gb";
-	 //private static final String gameFileName = "resource/lemmings.gb";
+	//private static final String gameFileName = "resource/lemmings.gb";
 	//private static final String gameFileName = "resource/hook.gb";
 	//private static final String gameFileName = "resource/xenon2.gb";
 	
+	// BAD PALETTES
+	//private static final String gameFileName = "resource/gargoyle.gb";
+
 	// GAMEBOY COLOR
 	//private static final String gameFileName = "resource/tetrisdx.gbc";
 	

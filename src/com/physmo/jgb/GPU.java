@@ -74,24 +74,24 @@ public class GPU {
 		//int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
 		int bgPalette = cpu.mem.peek(MEM.ADDR_0xFF47_BGPALETTE);
 		
-		backgroundPaletteMap[3] = backgroundPaletteMaster[(bgPalette&3)];
-		backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette>>2)&3)];
-		backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette>>4)&3)];
-		backgroundPaletteMap[0] = backgroundPaletteMaster[((bgPalette>>6)&3)];
+		backgroundPaletteMap[0] = backgroundPaletteMaster[(bgPalette&0b11)];
+		backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette>>2)&0b11)];
+		backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette>>4)&0b11)];
+		backgroundPaletteMap[3] = backgroundPaletteMaster[((bgPalette>>6)&0b11)];
 		
 		//int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
 		int sprPalette1 = cpu.mem.peek(MEM.ADDR_0xFF48_SPRITEPALETTE1);
-		sprite1PaletteMap[3] = sprite1PaletteMaster[(sprPalette1&3)];
-		sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1>>2)&3)];
-		sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1>>4)&3)];
-		sprite1PaletteMap[0] = sprite1PaletteMaster[((sprPalette1>>6)&3)];
+		sprite1PaletteMap[0] = sprite1PaletteMaster[(sprPalette1&3)];
+		sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1>>2)&3)];
+		sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1>>4)&3)];
+		sprite1PaletteMap[3] = sprite1PaletteMaster[((sprPalette1>>6)&3)];
 		
 		//int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
 		int sprPalette2 = cpu.mem.peek(MEM.ADDR_0xFF49_SPRITEPALETTE2);
-		sprite2PaletteMap[3] = sprite2PaletteMaster[(sprPalette2&3)];
-		sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2>>2)&3)];
-		sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2>>4)&3)];
-		sprite2PaletteMap[0] = sprite2PaletteMaster[((sprPalette2>>6)&3)];
+		sprite2PaletteMap[0] = sprite2PaletteMaster[(sprPalette2&3)];
+		sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2>>2)&3)];
+		sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2>>4)&3)];
+		sprite2PaletteMap[3] = sprite2PaletteMaster[((sprPalette2>>6)&3)];
 	}
 	
 	public  void setLCDRegisterMode(CPU cpu, int mode) {
@@ -124,6 +124,7 @@ public class GPU {
 
 		boolean lcdEnabled = testBit(lcdControl,7);
 		
+		// Handle LCD OFF
 		if (!lcdEnabled) {
 			cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE]=0;
 			cpu.mem.RAM[0xFF41]&=0b11111100;
@@ -133,24 +134,12 @@ public class GPU {
 			}
 			
 			setLCDRegisterMode(cpu, 0);
-			
 			clock=0;
 			return;
 		}
 		
 		clock = (clock + cycles) & 0xFFFFFFFF;
-		
-//		if (y < 144) {
-//			renderLine(cpu, bd, y);
-//		}
-//
-//		y = y + 1;
-//
-//		if (y == 144) {
-//			cpu.mem.RAM[0xFF0F] |= CPU.INT_VBLANK;
-//		}
 
-		
 		boolean modeInterruptEnabled = false;
 
 		if (y >= 144) {
@@ -255,9 +244,9 @@ public class GPU {
 		int mask = 1 << (7 - subx);
 		int color = 0;
 		if ((data1 & mask) > 0)
-			color |= 0b0001;
+			color |= 0b01;
 		if ((data2 & mask) > 0)
-			color |= 0b0010;
+			color |= 0b10;
 
 		return color;
 	}
@@ -271,8 +260,8 @@ public class GPU {
 
 		int bgTileMapLocation = 0x8010;
 		
-		getSprites(cpu);
 		processPalettes(cpu);
+		getSprites(cpu);
 		
 		boolean signedTileIndices = false;
 		int lcdControl = cpu.mem.RAM[0xFF40];
@@ -346,7 +335,7 @@ public class GPU {
 			int tp = getTilePixel2(cpu, charIndex, subx, suby);
 			int pix = tp; //+charIndex;
 			// Set draw colour from pixel data.
-			bd.setDrawColor(backgroundPaletteMap[pix&3]);
+			bd.setDrawColor(backgroundPaletteMap[(pix)&3]);
 			
 			// Handle Window
 			if (windowEnabled && x>=windowXPosition && y>=windowYPosition) {
@@ -370,23 +359,23 @@ public class GPU {
 			// Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
 			int sprPalette = 0;
 			if (spritesEnabled) {
-			for (int i=0;i<40;i++) {
-				if (x>=sprites[i].x && x<sprites[i].x+8) {
-					if (y>=sprites[i].y && y<sprites[i].y+spriteHeight) {
-						//bd.setDrawColor(Color.GREEN);
-						int sprsubx = (x-sprites[i].x)&7;
-						int sprsuby = (y-sprites[i].y)&(spriteHeight-1);
-						if (((sprites[i].attributes)&(1<<5))>0) sprsubx=7-sprsubx;
-						if (((sprites[i].attributes)&(1<<6))>0) sprsuby=(spriteHeight-1)-sprsuby;
-						if (((sprites[i].attributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
-						
-						int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
-						
-						if (sprPixel!=0)
-							bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
+				for (int i=0;i<40;i++) {
+					if (x>=sprites[i].x && x<sprites[i].x+8) {
+						if (y>=sprites[i].y && y<sprites[i].y+spriteHeight) {
+							//bd.setDrawColor(Color.GREEN);
+							int sprsubx = (x-sprites[i].x)&7;
+							int sprsuby = (y-sprites[i].y)&(spriteHeight-1);
+							if (((sprites[i].attributes)&(1<<5))>0) sprsubx=7-sprsubx;
+							if (((sprites[i].attributes)&(1<<6))>0) sprsuby=(spriteHeight-1)-sprsuby;
+							if (((sprites[i].attributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
+							
+							int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
+							
+							if (sprPixel!=0)
+								bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
+						}
 					}
 				}
-			}
 			}
 			
 			bd.drawFilledRect(x * scale, y * scale, scale, scale);
