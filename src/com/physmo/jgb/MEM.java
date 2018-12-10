@@ -183,6 +183,15 @@ public class MEM {
 			return cpu.input.peekFF00();
 		}
 
+		// TODO Serial registers
+		// some games need this to be able to play (EG alleyway)
+		if (addr == 0xFF01) {
+			return 0xFF;
+		}
+		if (addr == 0xFF02) {
+			return 0xff;
+		}
+		
 		// Handle special negative addresses (registers)
 		if (addr < 0) {
 			return peekSpecial(addr);

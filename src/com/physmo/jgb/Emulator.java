@@ -17,7 +17,7 @@ public class Emulator {
 
 	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/mario.gb";
-	//private static final String gameFileName = "resource/drmario.gb";
+	private static final String gameFileName = "resource/drmario.gb";
 	// private static final String gameFileName = "resource/othello.gb";
 	//private static final String gameFileName = "resource/spaceinvaders.gb"; //
 	//private static final String gameFileName = "resource/klax.gb";
@@ -41,7 +41,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
 	// private static final String gameFileName = "resource/nemesis2.gb";
-	private static final String gameFileName = "resource/mario2.gb";
+	//private static final String gameFileName = "resource/mario2.gb";
 	// private static final String gameFileName = "resource/bomberman.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
 	//private static final String gameFileName = "resource/garfield.gb";
@@ -100,6 +100,8 @@ public class Emulator {
 		basicDisplay.setTitle("JGB");
 
 		Utils.ReadFileBytesToMemoryLocation("resource/dmg_boot.bin", mem.BIOS, 0);
+		//Utils.ReadFileBytesToMemoryLocation("resource/gbc_bios.bin", mem.BIOS, 0);
+		
 		Utils.ReadFileBytesToMemoryLocation(gameFileName, mem.CARTRIDGE, 0);
 
 		mem.init(); // Need to load the cartridge before initing memory.
