@@ -6,8 +6,11 @@ class AddressContainer {
 	ADDRMODE mode = ADDRMODE.NONE;
 }
 
-public class CPU {
+enum HARDWARE_TYPE {DMG1, CGB};
 
+public class CPU {
+	public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.DMG1;
+	
 	// Constants that peek and poke will interpret as registers etc.
 	public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.
 	public static final int ADDR_A = -1;
@@ -56,8 +59,8 @@ public class CPU {
 	int topOfSTack = 0xFFFE; // used for debugging.
 
 	AddressContainer ac1 = new AddressContainer();
-	AddressContainer ac2 = new AddressContainer();
-			
+	AddressContainer ac2 = new AddressContainer();		
+	
 	public void attachHardware(MEM mem, INPUT input, GPU gpu) {
 		this.mem = mem;
 		this.input = input;

@@ -32,13 +32,24 @@ public class MEM {
 	public static final int ADDR_0xFF49_SPRITEPALETTE2 = 0xFF49;
 	public static final int ADDR_0xFF44_SCANLINE = 0xFF44;
 	 
-	 
+	public static final int ADDR_0xFF4F_VRAMBANK = 0xFF4F; // FF4F - VBK - CGB Mode Only - VRAM Bank (R/W)
+	
+	public static final int ADDR_0xFF68_BGPALETTEINDEX = 0xFF68; // FF68 - BCPS/BGPI - CGB Mode Only - Background Palette Index
+	public static final int ADDR_0xFF69_BGPALETTEDATA = 0xFF69; // FF69 - BCPD/BGPD - CGB Mode Only - Background Palette Data
+
+	public static final int ADDR_0xFF6A_SPRITEPALETTEINDEX = 0xFF6A; // FF6A - OCPS/OBPI - CGB Mode Only - Sprite Palette Index
+	public static final int ADDR_0xFF6B_SPRITEPALETTEDATA = 0xFF6B; // FF6B - OCPD/OBPD - CGB Mode Only - Sprite Palette Data
+
+
+	
 	ROMBank memoryBank = null;
 
 	public int RAM[] = new int[0x10000]; // 64k
 	public int RAM_BANKS[] = new int[0x10000]; // 64k
 	public int BIOS[] = new int[0x10000]; // 64k
 	public int CARTRIDGE[] = new int[0x10000 * 100]; // 64k
+	public int VRAMBANK0[] = new int[0x1FFF]; // 8000 - 9FFF
+	public int VRAMBANK1[] = new int[0x1FFF]; // 8000 - 9FFF
 
 	// BIOS is active until the first instruction 0x00FF.
 	public boolean biosActive = true;
@@ -97,8 +108,6 @@ public class MEM {
 			//return;
 		}
 		
-
-		
 		// Rough serial output.
 		if (addr == 0xFF02 && val == 0x81) {
 			System.out.println("SERIAL:  "+(char)RAM[0xFF01]);
@@ -117,7 +126,20 @@ public class MEM {
 		}
 
 
-
+		// VRAM
+		if (addr>=0x8000 && addr<0x9FFF) {
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1)
+				VRAMBANK0[addr-0x8000] = val;
+			else {
+				if ((RAM[ADDR_0xFF4F_VRAMBANK]&1)==0) {
+					VRAMBANK0[addr-0x8000] = val;
+				}
+				else
+				{
+					VRAMBANK1[addr-0x8000] = val;
+				}
+			}
+		}
 
 
 		// Writing 1 to this address switches the bios out.
@@ -143,7 +165,30 @@ public class MEM {
 			return;
 		}
 
-
+		// GBC specific background palette
+		if (addr == ADDR_0xFF69_BGPALETTEDATA) {
+			boolean auto = (RAM[ADDR_0xFF68_BGPALETTEINDEX]&0x80)>0?true:false;
+			int pIndex = RAM[ADDR_0xFF68_BGPALETTEINDEX]&0x3F;
+			cpu.gpu.cgbBackgroundPaletteData[pIndex]=val;
+			if (auto) {
+				pIndex = (pIndex++)&0x3F;
+				RAM[ADDR_0xFF68_BGPALETTEINDEX]&=0xc0;
+				RAM[ADDR_0xFF68_BGPALETTEINDEX]|=pIndex;
+			}
+			System.out.println("wrote to BG Pal "+val);
+		}
+		
+		// GBC specific sprite palette
+		if (addr == ADDR_0xFF6B_SPRITEPALETTEDATA) {
+			boolean auto = (RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&0x80)>0?true:false;
+			int pIndex = RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&0x3F;
+			cpu.gpu.cgbSpritePaletteData[pIndex]=val;
+			if (auto) {
+				pIndex = (pIndex++)&0x3F;
+				RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&=0xc0;
+				RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]|=pIndex;
+			}
+		}
 
 		// this area is restricted
 		if ((addr >= 0xFEA0) && (addr < 0xFEFF)) {
@@ -201,6 +246,21 @@ public class MEM {
 			return memoryBank.peek(addr);
 		}
 		
+		// VRAM
+		if (addr>=0x8000 && addr<0x9FFF) {
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1)
+				return VRAMBANK0[addr-0x8000];
+			else {
+				if ((RAM[ADDR_0xFF4F_VRAMBANK]&1)==0) {
+					return VRAMBANK0[addr-0x8000];
+				}
+				else
+				{
+					return VRAMBANK1[addr-0x8000];
+				}
+			}
+		}
+		
 		// Boot rom.
 		if (inRange(addr, 0, 0xff)) {
 			if (biosActive) {
@@ -225,6 +285,19 @@ public class MEM {
 		}
 
 
+		// GBC palette
+		// ADDR_0xFF68_BGPALETTEINDEX
+		if (addr == ADDR_0xFF69_BGPALETTEDATA) {
+			int pIndex = RAM[ADDR_0xFF68_BGPALETTEINDEX]&0x3F;
+			return cpu.gpu.cgbBackgroundPaletteData[pIndex];
+		}
+		
+		if (addr == ADDR_0xFF6B_SPRITEPALETTEDATA) {
+			int pIndex = RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&0x3F;
+			return cpu.gpu.cgbSpritePaletteData[pIndex];
+		}
+		
+		
 		// 0000 3FFF 16KB ROM bank 00 From cartridge, fixed bank
 		if (inRange(addr, 0x0000, 0x3FFF)) {
 			return CARTRIDGE[addr];
