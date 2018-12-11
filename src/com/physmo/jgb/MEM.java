@@ -171,11 +171,10 @@ public class MEM {
 			int pIndex = RAM[ADDR_0xFF68_BGPALETTEINDEX]&0x3F;
 			cpu.gpu.cgbBackgroundPaletteData[pIndex]=val;
 			if (auto) {
-				pIndex = (pIndex++)&0x3F;
+				pIndex = (pIndex+1)&0x3F;
 				RAM[ADDR_0xFF68_BGPALETTEINDEX]&=0xc0;
 				RAM[ADDR_0xFF68_BGPALETTEINDEX]|=pIndex;
 			}
-			System.out.println("wrote to BG Pal "+val);
 		}
 		
 		// GBC specific sprite palette
@@ -184,7 +183,7 @@ public class MEM {
 			int pIndex = RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&0x3F;
 			cpu.gpu.cgbSpritePaletteData[pIndex]=val;
 			if (auto) {
-				pIndex = (pIndex++)&0x3F;
+				pIndex = (pIndex+1)&0x3F;
 				RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&=0xc0;
 				RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]|=pIndex;
 			}

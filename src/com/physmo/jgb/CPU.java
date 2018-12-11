@@ -9,7 +9,7 @@ class AddressContainer {
 enum HARDWARE_TYPE {DMG1, CGB};
 
 public class CPU {
-	public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.DMG1;
+	public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.CGB;
 	
 	// Constants that peek and poke will interpret as registers etc.
 	public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.

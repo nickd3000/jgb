@@ -121,8 +121,8 @@ public class GPU {
 	// Bit 0-4   Red Intensity   (00-1F)
 	// Bit 5-9   Green Intensity (00-1F)
 	// Bit 10-14 Blue Intensity  (00-1F)
-	public Color createColorFrom2ByteValue(int b1, int b2) {
-		int scale=6;
+	public Color createColorFrom2ByteValue(int b2, int b1) {
+		int scale=8;
 		int combined = ((b1&0xff)<<8)|(b2&0xff);
 		int r = (combined)&0x1f;
 		int g = (combined>>5)&0x1f;
@@ -287,10 +287,10 @@ public class GPU {
 		int data1 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset];
 		int data2 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset + 1];
 		
-//		if (bank==1) {
-//			data1=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset];
-//			data2=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset + 1];
-//		}
+		if (bank==1111) {
+			data1=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset];
+			data2=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset + 1];
+		}
 		
 		
 		int mask = 1 << (7 - subx);
@@ -393,10 +393,10 @@ public class GPU {
 			bd.setDrawColor(backgroundPaletteMap[(pix)&3]);
 			
 			// HACK! quick test of CGB palettes.
-			if (cpu.hardwareType==HARDWARE_TYPE.CGB) {
+			if (cpu.hardwareType==HARDWARE_TYPE.CGB /* && y%2==0*/ ) {
 				int fudge = (bd.mouseX()/45);
 				//bd.setDrawColor(cgbBackgroundColors[fudge+((pix)&3)]);
-				int cgbTilePal = 1;//((cgbTileAttributes)&0x7)*4;
+				int cgbTilePal = ((cgbTileAttributes)&0x7)*4;
 				bd.setDrawColor(cgbBackgroundColors[cgbTilePal+((pix)&3)]);
 			}
 			

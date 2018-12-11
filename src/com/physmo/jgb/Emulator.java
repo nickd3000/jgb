@@ -15,7 +15,7 @@ public class Emulator {
 
 	boolean useBios = false;
 
-	private static final String gameFileName = "resource/tetris.gb";
+	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/drmario.gb";
 	// private static final String gameFileName = "resource/othello.gb";
@@ -53,7 +53,11 @@ public class Emulator {
 	//private static final String gameFileName = "resource/gargoyle.gb";
 
 	// GAMEBOY COLOR
-	//private static final String gameFileName = "resource/tetrisdx.gbc";
+	private static final String gameFileName = "resource/tetrisdx.gbc";
+	//private static final String gameFileName = "resource/mariodx.gbc"; // CART TYPE 0x1B
+	//private static final String gameFileName = "resource/testdrive6.gbc";
+	//private static final String gameFileName = "resource/vrally.gbc";
+	//private static final String gameFileName = "resource/harvestmoon3.gbc";
 	
 	// NON WORKING GAMES
 	//private static final String gameFileName = "resource/startrek.gb";
@@ -143,6 +147,7 @@ public class Emulator {
 		}
 	}
 	
+	// Set initial state as if the BIOS / Bootstrap had been run.
 	public void setInitialState() {
 		cpu.setAF(0x01B0);
 		cpu.setBC(0x0013);
