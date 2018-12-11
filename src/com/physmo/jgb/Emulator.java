@@ -47,13 +47,13 @@ public class Emulator {
 	//private static final String gameFileName = "resource/garfield.gb";
 	//private static final String gameFileName = "resource/lemmings.gb";
 	//private static final String gameFileName = "resource/hook.gb";
-	//private static final String gameFileName = "resource/xenon2.gb";
+	private static final String gameFileName = "resource/xenon2.gb";
 	
 	// BAD PALETTES
 	//private static final String gameFileName = "resource/gargoyle.gb";
 
 	// GAMEBOY COLOR
-	private static final String gameFileName = "resource/tetrisdx.gbc";
+	//private static final String gameFileName = "resource/tetrisdx.gbc";
 	//private static final String gameFileName = "resource/mariodx.gbc"; // CART TYPE 0x1B
 	//private static final String gameFileName = "resource/testdrive6.gbc";
 	//private static final String gameFileName = "resource/vrally.gbc";

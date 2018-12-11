@@ -287,7 +287,7 @@ public class GPU {
 		int data1 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset];
 		int data2 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset + 1];
 		
-		if (bank==1111) {
+		if (bank==1) {
 			data1=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset];
 			data2=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset + 1];
 		}
@@ -393,7 +393,7 @@ public class GPU {
 			bd.setDrawColor(backgroundPaletteMap[(pix)&3]);
 			
 			// HACK! quick test of CGB palettes.
-			if (cpu.hardwareType==HARDWARE_TYPE.CGB /* && y%2==0*/ ) {
+			if (cpu.hardwareType==HARDWARE_TYPE.CGB) {
 				int fudge = (bd.mouseX()/45);
 				//bd.setDrawColor(cgbBackgroundColors[fudge+((pix)&3)]);
 				int cgbTilePal = ((cgbTileAttributes)&0x7)*4;
@@ -436,6 +436,12 @@ public class GPU {
 							
 							if (sprPixel!=0)
 								bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
+							
+							// HACK! quick test of CGB palettes.
+							if (cpu.hardwareType==HARDWARE_TYPE.CGB && sprPixel!=0) {
+								int cgbTilePal = sprites[i].cgbSpritePalette*4;
+								bd.setDrawColor(cgbSpriteColors[cgbTilePal+((sprPixel)&3)]);
+							}
 						}
 					}
 				}
@@ -467,11 +473,12 @@ public class GPU {
         sprites[id].x = cpu.mem.RAM[spriteAddress+1] - 8; // Offset for display window.
         sprites[id].tileId = cpu.mem.RAM[spriteAddress+2];
         sprites[id].attributes = cpu.mem.RAM[spriteAddress+3];
+        sprites[id].cgbSpritePalette = cpu.mem.RAM[spriteAddress+3]&0x7;
 	}
         
 }
 
 class Sprite {
-	int x,y,tileId,attributes;
+	int x,y,tileId,attributes,cgbSpritePalette;
 }
 

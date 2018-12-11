@@ -28,6 +28,9 @@ public class HEADER {
 			return "MBC2";
 		case 0x06:
 			return "MBC2+BATTERY";
+			//////////
+		case 0x1B:
+			return "MBC5+RAM+BATTERY";
 		default:
 			return "Unrecognised: 0x" + Utils.toHex2(type);
 		}
