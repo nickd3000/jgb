@@ -26,7 +26,7 @@ public class MBC1 implements ROMBank {
 		else if ((address >= 0xA000) && (address <= 0xBFFF)) {
 			if (enableRam) {
 				int newAddress = address - 0xA000;
-				cpu.mem.RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data;
+				cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data;
 			}
 		}
 	}
@@ -47,7 +47,7 @@ public class MBC1 implements ROMBank {
 		// Are we reading from the cartridge RAM memory bank?
 		if ((address >= 0xA000) && (address <= 0xBFFF)) {
 			int newAddress = address - 0xA000;
-			return cpu.mem.RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
+			return cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
 		}
 
 		// else return memory

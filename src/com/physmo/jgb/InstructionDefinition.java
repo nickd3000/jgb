@@ -43,6 +43,7 @@ public enum InstructionDefinition {
 	NOP(0x00, COMMAND.NOP, 1, ADDRMODE.NONE, ADDRMODE.NONE),
 
 	//DD(0xDD, COMMAND.NOP, 1, ADDRMODE.NONE, ADDRMODE.NONE), // TEST
+	STOP(0x10, COMMAND.NOP, 1, ADDRMODE.NONE, ADDRMODE.NONE), // TEST
 	
 	HALT(0x76, COMMAND.HALT, 1, ADDRMODE.NONE, ADDRMODE.NONE), // 76    HALT
 	
@@ -417,7 +418,9 @@ public enum InstructionDefinition {
 				return ir;
 			}
 		}
-
+		
+		System.out.println("Instruction not found in getEnumFromId: "+Utils.toHex2(id));
+		
 		return null;
 	}
 

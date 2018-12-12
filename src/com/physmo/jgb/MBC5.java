@@ -29,12 +29,13 @@ public class MBC5 implements ROMBank {
         	currentRomBank &= 0xFF00;
         	currentRomBank |= data;
             //cartridge_update_selected_rom();
-
+        	//System.out.println("Rom bank changed to "+currentRomBank);
             break;
         case 0x3:
         	currentRomBank &= 0x00FF;
         	currentRomBank |= ((data & 0x1) << 8);
             //cartridge_update_selected_rom();
+        	//System.out.println("Rom bank changed to "+currentRomBank);
             break;
         case 0x4:
         case 0x5:
@@ -84,7 +85,7 @@ public class MBC5 implements ROMBank {
 	public int peek(int address) {
 		// 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n 
 		// 0xA000 - 0xBFFF (8,192 bytes) External RAM
-		// int newAddress = addr - 0x4000;
+		//int newAddress = addr - 0x4000;
 		// return cpu.mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
 
 		// Are we reading from the SWITCHABLE ROM cartridge memory bank?
@@ -96,7 +97,7 @@ public class MBC5 implements ROMBank {
 		// Are we reading from the cartridge RAM memory bank?
 		if ((address >= 0xA000) && (address <= 0xBFFF)) {
 			int newAddress = address - 0xA000;
-			return cpu.mem.RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
+			return cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
 		}
 
 		// else return memory

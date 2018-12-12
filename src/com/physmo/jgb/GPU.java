@@ -275,7 +275,7 @@ public class GPU {
 		return color;
 	}
 	
-	public  int getTilePixel2(CPU cpu, int tileId, int subx, int suby, int bank) {
+	public  int getTilePixel(CPU cpu, int tileId, int subx, int suby, int bank) {
 		int byteOffset = (suby * 2);
 
 		int normalisedPointer = tileDataPtr-0x8000;
@@ -377,6 +377,7 @@ public class GPU {
 			
 			int charOffset = (xx / 8) + ((yy / 8) * 32);
 			int charIndex = (byte) cpu.mem.peek(bgTileMapLocation + charOffset);
+			
 			int cgbTileAttributes = cpu.mem.VRAMBANK1[0x1800 + charOffset]; 
 			int tileVramBank = ((cgbTileAttributes&(1<<3))>0)?1:0;
 
@@ -387,15 +388,18 @@ public class GPU {
 
 			subx = xx % 8;
 
-			int tp = getTilePixel2(cpu, charIndex, subx, suby, tileVramBank);
-			int pix = tp; //+charIndex;
-			// Set draw colour from pixel data.
-			bd.setDrawColor(backgroundPaletteMap[(pix)&3]);
+			int pix = 0;
 			
-			// HACK! quick test of CGB palettes.
-			if (cpu.hardwareType==HARDWARE_TYPE.CGB) {
-				int fudge = (bd.mouseX()/45);
-				//bd.setDrawColor(cgbBackgroundColors[fudge+((pix)&3)]);
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1) {
+				pix = getTilePixel(cpu, charIndex, subx, suby, tileVramBank);
+				// Set draw colour from pixel data.
+				bd.setDrawColor(backgroundPaletteMap[(pix)&3]);
+			} else if (cpu.hardwareType==HARDWARE_TYPE.CGB) {
+				int subxf = subx;
+				int subyf = suby;
+				if (testBit(cgbTileAttributes,5)) subxf = 7 - subxf;
+				if (testBit(cgbTileAttributes,6)) subyf = 7 - subyf;
+				pix = getTilePixel(cpu, charIndex, subxf, subyf, tileVramBank);
 				int cgbTilePal = ((cgbTileAttributes)&0x7)*4;
 				bd.setDrawColor(cgbBackgroundColors[cgbTilePal+((pix)&3)]);
 			}
@@ -413,8 +417,8 @@ public class GPU {
 					charIndex = charIndex & 0xff;
 				
 				//charIndex = charIndex & 0xff;
-				tp = getTilePixel2(cpu, charIndex, windowInsideX%8, windowInsideY%8, tileVramBank);
-				bd.setDrawColor(backgroundPaletteMap[tp&3]);
+				pix = getTilePixel(cpu, charIndex, windowInsideX%8, windowInsideY%8, tileVramBank);
+				bd.setDrawColor(backgroundPaletteMap[pix&3]);
 			}
 
 			// Sprites
@@ -428,9 +432,10 @@ public class GPU {
 							//bd.setDrawColor(Color.GREEN);
 							int sprsubx = (x-sprites[i].x)&7;
 							int sprsuby = (y-sprites[i].y)&(spriteHeight-1);
-							if (((sprites[i].attributes)&(1<<5))>0) sprsubx=7-sprsubx;
-							if (((sprites[i].attributes)&(1<<6))>0) sprsuby=(spriteHeight-1)-sprsuby;
-							if (((sprites[i].attributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
+							int sprAttributes = sprites[i].attributes;
+							if (((sprAttributes)&(1<<5))>0) sprsubx=7-sprsubx;
+							if (((sprAttributes)&(1<<6))>0) sprsuby=(spriteHeight-1)-sprsuby;
+							if (((sprAttributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
 							
 							int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
 							

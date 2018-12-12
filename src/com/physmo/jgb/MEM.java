@@ -45,7 +45,9 @@ public class MEM {
 	ROMBank memoryBank = null;
 
 	public int RAM[] = new int[0x10000]; // 64k
-	public int RAM_BANKS[] = new int[0x10000]; // 64k
+	public int RAM_BANKS1[] = new int[0x20000]; // switchable ram bank 1
+	
+	public int CART_RAM_BANKS[] = new int[0x10000]; // 64k
 	public int BIOS[] = new int[0x10000]; // 64k
 	public int CARTRIDGE[] = new int[0x10000 * 100]; // 64k
 	public int VRAMBANK0[] = new int[0x1FFF]; // 8000 - 9FFF
@@ -75,6 +77,8 @@ public class MEM {
 			memoryBank = new ROM_ONLY(cpu);
 		else if (mbcType==1)
 			memoryBank = new MBC1(cpu);
+		else if (mbcType==0x1B || mbcType==0x19)
+			memoryBank = new MBC5(cpu);
 		else 
 			memoryBank = new MBC1(cpu);
 	}
@@ -193,6 +197,21 @@ public class MEM {
 		if ((addr >= 0xFEA0) && (addr < 0xFEFF)) {
 		}
 
+		// RAM BANK 1 (Switchable on CGB)
+		// * D000 DFFF 4KB Work RAM (WRAM) bank 1~N Only bank 1 in Non-CGB mode /
+		// Switchable bank 1~7 in CGB mode
+		if (inRange(addr, 0xD000, 0xDFFF)) {
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1)
+				RAM[addr]=val;
+			else {
+				// Ram switch
+				int bank1Switch = RAM[0xFF70]&0x07;
+				if (bank1Switch==0) bank1Switch=1;
+				int normalisedAddress = addr-0xd000;
+				RAM_BANKS1[(bank1Switch*0x1000)+addr]=val;
+			}
+		}
+		
 //		if (inRange(addr, 0x0000, 0x7FFF)) {
 //
 //			for (int i = 0; i < 10; i++) {
@@ -309,15 +328,25 @@ public class MEM {
 		}
 
 
+		// RAM BANK 0
 		// * C000 CFFF 4KB Work RAM (WRAM) bank 0
 		if (inRange(addr, 0xC000, 0xCFFF)) {
 			return RAM[addr];
 		}
 
+		// RAM BANK 1 (Switchable on CGB)
 		// * D000 DFFF 4KB Work RAM (WRAM) bank 1~N Only bank 1 in Non-CGB mode /
 		// Switchable bank 1~7 in CGB mode
 		if (inRange(addr, 0xD000, 0xDFFF)) {
-			return RAM[addr];
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1)
+				return RAM[addr];
+			else {
+				// Ram switch
+				int bank1Switch = RAM[0xFF70]&0x07;
+				if (bank1Switch==0) bank1Switch=1;
+				int normalisedAddress = addr-0xd000;
+				return RAM_BANKS1[(bank1Switch*0x1000)+addr];
+			}
 		}
 
 		// * E000 FDFF Mirror of C000~DDFF (ECHO RAM) Typically not used

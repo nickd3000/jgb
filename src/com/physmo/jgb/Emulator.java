@@ -47,7 +47,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/garfield.gb";
 	//private static final String gameFileName = "resource/lemmings.gb";
 	//private static final String gameFileName = "resource/hook.gb";
-	private static final String gameFileName = "resource/xenon2.gb";
+	//private static final String gameFileName = "resource/xenon2.gb";
 	
 	// BAD PALETTES
 	//private static final String gameFileName = "resource/gargoyle.gb";
@@ -58,6 +58,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/testdrive6.gbc";
 	//private static final String gameFileName = "resource/vrally.gbc";
 	//private static final String gameFileName = "resource/harvestmoon3.gbc";
+	private static final String gameFileName = "resource/rtypedx.gbc";
 	
 	// NON WORKING GAMES
 	//private static final String gameFileName = "resource/startrek.gb";
@@ -116,7 +117,7 @@ public class Emulator {
 	}
 
 	public void run() {
-		System.out.println("Cartridge type: " + HEADER.getMemoryBankControllerName(cpu));
+		System.out.println("Cartridge type: " + Utils.toHex2(HEADER.getMemoryBankControllerType(cpu))+"  " + HEADER.getMemoryBankControllerName(cpu));
 		if (useBios) {
 			cpu.mem.biosActive = true;
 			cpu.PC = 0x0000;
