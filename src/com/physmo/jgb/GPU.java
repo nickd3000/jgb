@@ -47,10 +47,37 @@ public class GPU {
 		for (int i=0;i<40;i++) {
 			sprites[i]=new Sprite();
 		}
-//		for (int i=0;i<64;i++) {
-//			cgbBackgroundPaletteData[i]=(i*2)&0xff;;
-//			cgbSpritePaletteData[i]=(i*2)&0xff;;
-//		}
+		for (int i=0;i<64;i++) {
+			cgbBackgroundPaletteData[i]=(i*2)&0xff;;
+			cgbSpritePaletteData[i]=(i*2)&0xff;;
+		}
+		
+		int p=0;
+//		setGBCColorManually(cgbBackgroundPaletteData,p++,0xf0f0f0);
+//		setGBCColorManually(cgbBackgroundPaletteData,p++,0x808080);
+//		setGBCColorManually(cgbBackgroundPaletteData,p++,0x404040);
+//		setGBCColorManually(cgbBackgroundPaletteData,p++,0x202020);
+		double r,g,b;
+		r=0.7;g=0.8;b=1;p=0;
+		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,1);
+		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,0.66);
+		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,0.33);
+		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,0.0);
+		
+		r=1.0;g=0.3;b=0.4;p=0;
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,1);
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.66);
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.33);
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.0);
+		r=4.0;g=1.0;b=0.4;
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,1);
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.66);
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.33);
+		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.0);		
+//		#define princessCGBPal0c0 6076 17bc
+//		#define princessCGBPal0c1 8935 22e7
+//		#define princessCGBPal0c2 6596 19c4
+//		#define princessCGBPal0c3 5344 14e0
 	}
 
 	PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
@@ -75,6 +102,27 @@ public class GPU {
 	Color backgroundPaletteMap [] = new Color[4];
 	Color sprite1PaletteMap [] = new Color[4];
 	Color sprite2PaletteMap [] = new Color[4];
+	
+	public void setGBCColorManually(int [] colorList, int index, int hexColor) {
+		int r = ((hexColor>>16)&0xff)>>3;
+		int g = ((hexColor>>8)&0xff)>>3;
+		int b = ((hexColor&0xff))>>3;
+		int combined = (r<<10)|(g<<5)|b;
+		colorList[index*2]=combined&0xff;
+		colorList[(index*2)+1]=(combined>>8)&0xff;
+	}
+	
+	public void setGBCColorManually2(
+			int [] colorList, int index, double r, double g, double b, double v) {
+	
+		int rr = (int)((double)0x1f*r*v);
+		int gg = (int)((double)0x1f*g*v);
+		int bb = (int)((double)0x1f*b*v);
+		int combined = ((bb&0x1f)<<10)|((gg&0x1f)<<5)|((rr&0x1f));
+		colorList[index*2]=combined&0xff;
+		colorList[(index*2)+1]=(combined>>8)&0xff;
+	}
+	
 	
 	public void processPalettes(CPU cpu) {
 		//int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
@@ -122,7 +170,7 @@ public class GPU {
 	// Bit 5-9   Green Intensity (00-1F)
 	// Bit 10-14 Blue Intensity  (00-1F)
 	public Color createColorFrom2ByteValue(int b2, int b1) {
-		int scale=8;
+		int scale=7;
 		int combined = ((b1&0xff)<<8)|(b2&0xff);
 		int r = (combined)&0x1f;
 		int g = (combined>>5)&0x1f;

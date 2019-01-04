@@ -36,7 +36,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/batman.gb";
 	//private static final String gameFileName = "resource/rtype.gb";
 	//private static final String gameFileName = "resource/pinballfantasies.gb";
-	//private static final String gameFileName = "resource/tetrisattack.gb";
+	private static final String gameFileName = "resource/tetrisattack.gb";
 	// private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
 	// private static final String gameFileName = "resource/pokemon_blue.gb";
@@ -58,7 +58,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/testdrive6.gbc";
 	//private static final String gameFileName = "resource/vrally.gbc";
 	//private static final String gameFileName = "resource/harvestmoon3.gbc";
-	private static final String gameFileName = "resource/rtypedx.gbc";
+	//private static final String gameFileName = "resource/rtypedx.gbc";
 	
 	// NON WORKING GAMES
 	//private static final String gameFileName = "resource/startrek.gb";
