@@ -42,7 +42,8 @@ public class CPU {
 
 	MEM mem = null;
 	GPU gpu = null;
-	INPUT input = null;
+	public INPUT input = null;
+	public boolean speedMode = false;
 
 	// Registers.
 	int A, B, C, D, E, H, L;
@@ -185,6 +186,20 @@ public class CPU {
 
 		switch (command) {
 		case NOP:
+			break;
+		case STOP:
+			// Used by GBC to change speed.
+			wrk = mem.peek(0xFF4d);
+			
+			if ((wrk&1)>0) {
+				speedMode = !speedMode;
+				
+				if (speedMode) wrk=0b10000000;
+				else wrk=0b00000000;
+			}
+
+			mem.poke(0xff4d, wrk);
+			
 			break;
 		case HALT:
 			// PC--;

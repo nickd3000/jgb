@@ -58,18 +58,18 @@ public class GPU {
 //		setGBCColorManually(cgbBackgroundPaletteData,p++,0x404040);
 //		setGBCColorManually(cgbBackgroundPaletteData,p++,0x202020);
 		double r,g,b;
-		r=0.7;g=0.8;b=1;p=0;
+		r=0.7;g=0.8;b=0.8;p=0;
 		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,1);
 		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,0.66);
 		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,0.33);
 		setGBCColorManually2(cgbBackgroundPaletteData,p++, r,g,b,0.0);
 		
-		r=1.0;g=0.3;b=0.4;p=0;
+		r=0.9;g=0.7;b=0.6;p=0;
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,1);
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.66);
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.33);
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.0);
-		r=4.0;g=1.0;b=0.4;
+		r=0.6;g=0.7;b=0.9;
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,1);
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.66);
 		setGBCColorManually2(cgbSpritePaletteData,p++, r,g,b,0.33);
@@ -276,6 +276,9 @@ public class GPU {
 			} else if (y > 153 + 10) {
 				y = 0;
 				// this.drawScreen();
+				debugDrawKeyStates(cpu, bd,11,31,Color.BLACK);
+				debugDrawKeyStates(cpu, bd,10,30,Color.ORANGE);
+				
 				bd.refresh();
 //				try {
 //					Thread.sleep(5);
@@ -305,6 +308,15 @@ public class GPU {
 	}
 
 	
+	private void debugDrawKeyStates(CPU cpu, BasicDisplay bd,int x, int y, Color col) {
+		
+		bd.setDrawColor(col);
+		
+		for (int i=0;i<cpu.input.keyState.length;i++) {
+			bd.drawText(cpu.input.keyState[i]==0?"---":"-1-", x, y+(i*15));
+		}
+	}
+
 	public  int getSpritePixel2(CPU cpu, int tileId, int subx, int suby) {
 		int byteOffset = (suby * 2);
 
@@ -428,7 +440,9 @@ public class GPU {
 			
 			int cgbTileAttributes = cpu.mem.VRAMBANK1[0x1800 + charOffset]; 
 			int tileVramBank = ((cgbTileAttributes&(1<<3))>0)?1:0;
-
+			//tileVramBank = 1;
+			//tileVramBank = ((int)(Math.random()*33.0))&1;
+			
 			if (signedTileIndices)
 				charIndex += 128;
 			else
@@ -440,7 +454,6 @@ public class GPU {
 			
 			if (cpu.hardwareType==HARDWARE_TYPE.DMG1) {
 				pix = getTilePixel(cpu, charIndex, subx, suby, tileVramBank);
-				// Set draw colour from pixel data.
 				bd.setDrawColor(backgroundPaletteMap[(pix)&3]);
 			} else if (cpu.hardwareType==HARDWARE_TYPE.CGB) {
 				int subxf = subx;
@@ -459,14 +472,29 @@ public class GPU {
 				charOffset = (windowInsideX / 8) + ((windowInsideY / 8) * 32);
 				charIndex = (byte) cpu.mem.RAM[windowTileMapLocation + charOffset];
 				
+				cgbTileAttributes = cpu.mem.VRAMBANK1[0x1800 + charOffset]; 
+				//tileVramBank = ((cgbTileAttributes&(1<<3))>0)?1:0;
+				
 				if (signedTileIndices)
 					charIndex += 128;
 				else
 					charIndex = charIndex & 0xff;
 				
 				//charIndex = charIndex & 0xff;
-				pix = getTilePixel(cpu, charIndex, windowInsideX%8, windowInsideY%8, tileVramBank);
-				bd.setDrawColor(backgroundPaletteMap[pix&3]);
+				if (cpu.hardwareType==HARDWARE_TYPE.DMG1) {
+					pix = getTilePixel(cpu, charIndex, windowInsideX%8, windowInsideY%8, tileVramBank);
+					bd.setDrawColor(backgroundPaletteMap[pix&3]);
+				} else if (cpu.hardwareType==HARDWARE_TYPE.CGB) {
+					int subxf = windowInsideX%8;
+					int subyf = windowInsideY%8;
+					if (testBit(cgbTileAttributes,5)) subxf = 7 - subxf;
+					if (testBit(cgbTileAttributes,6)) subyf = 7 - subyf;
+					//pix = getTilePixel(cpu, charIndex, subxf, subyf, tileVramBank);
+					tileVramBank=0;
+					pix = getTilePixel(cpu, charIndex, subxf, subyf, tileVramBank);
+					int cgbTilePal = ((cgbTileAttributes)&0x7)*4;
+					bd.setDrawColor(cgbBackgroundColors[cgbTilePal+((pix)&3)]);
+				}
 			}
 
 			// Sprites

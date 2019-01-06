@@ -11,6 +11,7 @@ public class MBC5 implements ROMBank {
 
 	boolean m_MBC1 = true;
 	boolean m_MBC2 = false;
+	int [] RAM_BANKS = new int[0xffff];
 
 	public MBC5(CPU cpu) {
 		this.cpu = cpu;
@@ -27,7 +28,7 @@ public class MBC5 implements ROMBank {
             break;
         case 0x2:
         	currentRomBank &= 0xFF00;
-        	currentRomBank |= data;
+        	currentRomBank |= data&0xff;
             //cartridge_update_selected_rom();
         	//System.out.println("Rom bank changed to "+currentRomBank);
             break;
@@ -57,6 +58,12 @@ public class MBC5 implements ROMBank {
 //
 //            location &= 0x1FFF;
 //            cartridge->selected_ram[location] = data;
+        	// RAM BANKING
+        	//int bankOffset = currentRamBank*0x2000;
+        	//RAM_BANKS[currentRamBank+(address-0xA000)] = data&0xff;
+        	int newAddress = address - 0xA000;
+			cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data&0xff;
+			
             break;
         case 0xC:
 //            location &= 0x0FFF;

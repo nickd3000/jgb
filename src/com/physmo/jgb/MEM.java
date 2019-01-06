@@ -255,6 +255,12 @@ public class MEM {
 			return 0xff;
 		}
 		
+		// temp hack test 
+		// this memory address is causing oracle of ages to halt
+//		if (addr == 0xFF4d) {
+//			return cpu.tickCount&0xff;
+//		}
+		
 		// Handle special negative addresses (registers)
 		if (addr < 0) {
 			return peekSpecial(addr);

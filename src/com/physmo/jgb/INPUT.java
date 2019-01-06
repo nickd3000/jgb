@@ -16,7 +16,7 @@ public class INPUT {
 	
 	public int[] keyMap = { 90, // Z
 			88, // X
-			32, 10, // start / select
+			10, 32, // start / select
 			38, 40, 37, 39}; // Arrows
 			
 
