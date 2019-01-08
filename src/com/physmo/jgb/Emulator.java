@@ -58,13 +58,15 @@ public class Emulator {
 	//private static final String gameFileName = "resource/testdrive6.gbc";
 	//private static final String gameFileName = "resource/vrally.gbc";
 	//private static final String gameFileName = "resource/harvestmoon3.gbc";
-	//private static final String gameFileName = "resource/rtypedx.gbc";
+	private static final String gameFileName = "resource/rtypedx.gbc"; // 1B  MBC5+RAM+BATTERY
 	//private static final String gameFileName = "resource/turok.gbc"; // cart type 0x19
 	//private static final String gameFileName = "resource/dk.gbc"; // 0x1b
 	//private static final String gameFileName = "resource/rayman.gbc"; // 0x19
 	//private static final String gameFileName = "resource/tombraider.gbc"; // 0x1b
 	//private static final String gameFileName = "resource/oracle.gbc"; // 
-	private static final String gameFileName = "resource/zelda.gbc"; //  0x1b
+	//private static final String gameFileName = "resource/zelda.gbc"; //  0x1b
+	//private static final String gameFileName = "resource/tony.gbc"; //
+	//private static final String gameFileName = "resource/warioland3.gbc"; // 1B  MBC5+RAM+BATTERY
 	
 	// NON WORKING GAMES
 	//private static final String gameFileName = "resource/startrek.gb";

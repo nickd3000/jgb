@@ -276,8 +276,8 @@ public class GPU {
 			} else if (y > 153 + 10) {
 				y = 0;
 				// this.drawScreen();
-				debugDrawKeyStates(cpu, bd,11,31,Color.BLACK);
-				debugDrawKeyStates(cpu, bd,10,30,Color.ORANGE);
+				//debugDrawKeyStates(cpu, bd,11,31,Color.BLACK);
+				//debugDrawKeyStates(cpu, bd,10,30,Color.ORANGE);
 				
 				bd.refresh();
 //				try {
@@ -312,19 +312,55 @@ public class GPU {
 		
 		bd.setDrawColor(col);
 		
-		for (int i=0;i<cpu.input.keyState.length;i++) {
-			bd.drawText(cpu.input.keyState[i]==0?"---":"-1-", x, y+(i*15));
+//		for (int i=0;i<cpu.input.keyState.length;i++) {
+//			bd.drawText(cpu.input.keyState[i]==0?"---":"-1-", x, y+(i*15));
+//		}
+		
+		///
+		bd.setDrawColor(Color.yellow);
+		
+		int lcdControl = cpu.mem.RAM[0xFF40];
+		int bgTileMapLocation=0;
+		boolean signedTileIndices=false;
+		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+		if (testBit(lcdControl,3))
+			bgTileMapLocation = 0x9C00;
+		else
+			bgTileMapLocation = 0x9800;
+		
+		if (testBit(lcdControl,4)==false) { 
+			tileDataPtr = 0x8800;
+			signedTileIndices = true;
+		} else {
+			tileDataPtr = 0x8000;
+			signedTileIndices = false;
 		}
+		
+		bd.drawText("lcdControl = "+Utils.toHex2(lcdControl), 10,300);
+		bd.drawText("bgTileMapLocation = "+Utils.toHex2(bgTileMapLocation), 10,320);
+		bd.drawText("tileDataPtr = "+Utils.toHex2(tileDataPtr), 10,340);
+		bd.drawText("signedTileIndices = "+signedTileIndices, 10,360);
 	}
 
-	public  int getSpritePixel2(CPU cpu, int tileId, int subx, int suby) {
+	public  int getSpritePixel2(CPU cpu, int tileId, int subx, int suby, int bank) {
 		int byteOffset = (suby * 2);
 
 		//int data1 = cpu.mem.RAM[spriteDataPtr + (tileId * 16) + byteOffset];
 		//int data2 = cpu.mem.RAM[spriteDataPtr + (tileId * 16) + byteOffset + 1];
-		int data1 = cpu.mem.peek(spriteDataPtr + (tileId * 16) + byteOffset);
-		int data2 = cpu.mem.peek(spriteDataPtr + (tileId * 16) + byteOffset + 1);
+
+		// prev int data1 = cpu.mem.peek(spriteDataPtr + (tileId * 16) + byteOffset);
+		//int data2 = cpu.mem.peek(spriteDataPtr + (tileId * 16) + byteOffset + 1);
 				
+		int data1=0,data2=0;
+		if (bank==0) {
+			data1 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset];
+			data2 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset + 1];
+		}
+		else {
+			data1 = cpu.mem.VRAMBANK1[(tileId * 16) + byteOffset];
+			data2 = cpu.mem.VRAMBANK1[(tileId * 16) + byteOffset + 1];
+		}
+		
 		int mask = 1 << (7 - subx);
 		int color = 0;
 		if ((data1 & mask) > 0)
@@ -332,6 +368,8 @@ public class GPU {
 		if ((data2 & mask) > 0)
 			color += 0b0010;
 
+		//if (bank==1 && Math.random()<0.1 ) color=0;
+		
 		return color;
 	}
 	
@@ -344,10 +382,13 @@ public class GPU {
 		//int data2 = cpu.mem.RAM[tileDataPtr + (tileId * 16) + byteOffset + 1];
 		//int data1 = cpu.mem.peek(tileDataPtr + (tileId * 16) + byteOffset);
 		//int data2 = cpu.mem.peek(tileDataPtr + (tileId * 16) + byteOffset + 1);
-		int data1 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset];
-		int data2 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset + 1];
+		int data1=0,data2=0;
 		
-		if (bank==1) {
+		if (bank==0) {
+			data1 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset];
+			data2 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset + 1];
+		}
+		else {
 			data1=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset];
 			data2=cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset + 1];
 		}
@@ -360,6 +401,8 @@ public class GPU {
 		if ((data2 & mask) > 0)
 			color |= 0b10;
 
+		//if (bank==1 && Math.random()<0.1 ) color=0;
+		
 		return color;
 	}
 
@@ -389,9 +432,9 @@ public class GPU {
 
 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
 		if (testBit(lcdControl,3))
-			bgTileMapLocation = 0x9C00;
+			bgTileMapLocation = 0x9C00-0x8000;
 		else
-			bgTileMapLocation = 0x9800;
+			bgTileMapLocation = 0x9800-0x8000;
 
 		if (testBit(lcdControl,2)) spriteHeight=16;
 		
@@ -411,9 +454,9 @@ public class GPU {
         // Bit 6 - Window Screen Display Data Select
         int windowTileMapLocation = 0;
 		if (testBit(lcdControl,6))
-			windowTileMapLocation = 0x9C00;
+			windowTileMapLocation = 0x9C00-0x8000;
 		else
-			windowTileMapLocation = 0x9800;
+			windowTileMapLocation = 0x9800-0x8000;
 
 		// if(GPU._bgtile == 1 && tile < 128) tile += 256;
 		// int tileNum = signedTileNumbers ? ((int)bTileNum + 128) : (bTileNum & 0xff);
@@ -436,7 +479,8 @@ public class GPU {
 			yy=yy&(0xff);
 			
 			int charOffset = (xx / 8) + ((yy / 8) * 32);
-			int charIndex = (byte) cpu.mem.peek(bgTileMapLocation + charOffset);
+			
+			int charIndex = (byte) cpu.mem.VRAMBANK0[(bgTileMapLocation-0x0000)+charOffset];
 			
 			int cgbTileAttributes = cpu.mem.VRAMBANK1[0x1800 + charOffset]; 
 			int tileVramBank = ((cgbTileAttributes&(1<<3))>0)?1:0;
@@ -470,9 +514,11 @@ public class GPU {
 				int windowInsideX = x-windowXPosition;
 				int windowInsideY = y-windowYPosition;
 				charOffset = (windowInsideX / 8) + ((windowInsideY / 8) * 32);
-				charIndex = (byte) cpu.mem.RAM[windowTileMapLocation + charOffset];
 				
-				cgbTileAttributes = cpu.mem.VRAMBANK1[0x1800 + charOffset]; 
+				//charIndex = (byte) cpu.mem.RAM[windowTileMapLocation + charOffset];
+				charIndex = (byte) cpu.mem.VRAMBANK0[windowTileMapLocation + charOffset];
+				
+				cgbTileAttributes = cpu.mem.VRAMBANK1[windowTileMapLocation + charOffset]; 
 				//tileVramBank = ((cgbTileAttributes&(1<<3))>0)?1:0;
 				
 				if (signedTileIndices)
@@ -501,6 +547,7 @@ public class GPU {
 			// Bit6   Y flip          (0=Normal, 1=Vertically mirrored)
 			// Bit5   X flip          (0=Normal, 1=Horizontally mirrored)
 			int sprPalette = 0;
+			int sprBank = 0;
 			if (spritesEnabled) {
 				for (int i=0;i<40;i++) {
 					if (x>=sprites[i].x && x<sprites[i].x+8) {
@@ -509,11 +556,13 @@ public class GPU {
 							int sprsubx = (x-sprites[i].x)&7;
 							int sprsuby = (y-sprites[i].y)&(spriteHeight-1);
 							int sprAttributes = sprites[i].attributes;
-							if (((sprAttributes)&(1<<5))>0) sprsubx=7-sprsubx;
-							if (((sprAttributes)&(1<<6))>0) sprsuby=(spriteHeight-1)-sprsuby;
-							if (((sprAttributes)&(1<<4))>0) sprPalette=1; // Bit4: Palette number
+							sprBank = 0;
+							if (testBit(sprAttributes,5)) sprsubx=7-sprsubx;
+							if (testBit(sprAttributes,6)) sprsuby=(spriteHeight-1)-sprsuby;
+							if (testBit(sprAttributes,4)) sprPalette=1; // Bit4: Palette number
+							if (testBit(sprAttributes,3)) sprBank=1; // Bit4: Palette number
 							
-							int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby);
+							int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby, sprBank);
 							
 							if (sprPixel!=0)
 								bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
@@ -552,9 +601,11 @@ public class GPU {
         int spriteAddress = 0xFE00 + (id * 4);
         sprites[id].y = cpu.mem.RAM[spriteAddress] - 16; // Offset for display window.
         sprites[id].x = cpu.mem.RAM[spriteAddress+1] - 8; // Offset for display window.
-        sprites[id].tileId = cpu.mem.RAM[spriteAddress+2];
         sprites[id].attributes = cpu.mem.RAM[spriteAddress+3];
         sprites[id].cgbSpritePalette = cpu.mem.RAM[spriteAddress+3]&0x7;
+        
+        sprites[id].tileId = cpu.mem.RAM[spriteAddress+2];
+        
 	}
         
 }

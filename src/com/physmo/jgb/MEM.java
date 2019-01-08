@@ -79,6 +79,8 @@ public class MEM {
 			memoryBank = new MBC1(cpu);
 		else if (mbcType==0x1B || mbcType==0x19)
 			memoryBank = new MBC5(cpu);
+		else if (mbcType>=0x19 && mbcType<=0x1E)
+			memoryBank = new MBC5(cpu);
 		else 
 			memoryBank = new MBC1(cpu);
 	}
@@ -100,6 +102,10 @@ public class MEM {
 		if (addr == 0xFF04) {
 		   RAM[0xFF04] = 0 ;
 		}
+		
+		if (addr == 0xFF44) {
+			   RAM[0xFF44] = 0 ;
+			}
 		
 		// Input.
 		if (addr == 0xFF00) {
@@ -125,22 +131,37 @@ public class MEM {
 //			writeBigMessage("poke addr==val!!", 100000);
 //		}
 
-		if (addr < 0x8000) {
+		// GBC DMA transfer.
+		if (addr == 0xFF55) {
+			RAM[0xFF55] = val ;
+			GBCDMATransfer();
+			return;
+		}
+		
+		// TODO: verify what areas of ram we need to write to for cart switching
+		if (addr < 0x8000  ) {
 			memoryBank.poke(addr, val);
+			return;
 		}
 
 
 		// VRAM
+		// TODO: investigate effect of the return statement here - makes
+		// the window not appear is return is enabled?
 		if (addr>=0x8000 && addr<0x9FFF) {
-			if (cpu.hardwareType==HARDWARE_TYPE.DMG1)
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1) {
 				VRAMBANK0[addr-0x8000] = val;
+				return;
+			}
 			else {
 				if ((RAM[ADDR_0xFF4F_VRAMBANK]&1)==0) {
 					VRAMBANK0[addr-0x8000] = val;
+					return;
 				}
 				else
 				{
 					VRAMBANK1[addr-0x8000] = val;
+					return;
 				}
 			}
 		}
@@ -158,7 +179,7 @@ public class MEM {
 		}
 
 		if (addr == ADDR_FF46_DMA_TRANSFER) {
-			// RAM[addr] = val;
+			RAM[addr] = val;
 			transferDMA(val);
 			return;
 		}
@@ -179,6 +200,7 @@ public class MEM {
 				RAM[ADDR_0xFF68_BGPALETTEINDEX]&=0xc0;
 				RAM[ADDR_0xFF68_BGPALETTEINDEX]|=pIndex;
 			}
+			return;
 		}
 		
 		// GBC specific sprite palette
@@ -191,24 +213,29 @@ public class MEM {
 				RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&=0xc0;
 				RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]|=pIndex;
 			}
+			return;
 		}
 
 		// this area is restricted
 		if ((addr >= 0xFEA0) && (addr < 0xFEFF)) {
+			return;
 		}
 
 		// RAM BANK 1 (Switchable on CGB)
 		// * D000 DFFF 4KB Work RAM (WRAM) bank 1~N Only bank 1 in Non-CGB mode /
 		// Switchable bank 1~7 in CGB mode
 		if (inRange(addr, 0xD000, 0xDFFF)) {
-			if (cpu.hardwareType==HARDWARE_TYPE.DMG1)
+			if (cpu.hardwareType==HARDWARE_TYPE.DMG1) {
 				RAM[addr]=val;
+				return;
+			}
 			else {
 				// Ram switch
 				int bank1Switch = RAM[0xFF70]&0x07;
 				if (bank1Switch==0) bank1Switch=1;
 				int normalisedAddress = addr-0xd000;
 				RAM_BANKS1[(bank1Switch*0x1000)+addr]=val;
+				return;
 			}
 		}
 		
@@ -221,6 +248,28 @@ public class MEM {
 //		}
 
 		RAM[addr] = val;
+	}
+
+	private void GBCDMATransfer() {
+		// FF51 - HDMA1 - CGB Mode Only - New DMA Source, High
+		// FF52 - HDMA2 - CGB Mode Only - New DMA Source, Low
+		// FF53 - HDMA3 - CGB Mode Only - New DMA Destination, High
+		// FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
+		// FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
+
+		int srcAddress = ((RAM[0xFF51]<<8)|(RAM[0xFF52]))&0xFFF0;
+		int destAddress = ((RAM[0xFF53]<<8)|(RAM[0xFF54]))&0x1FF0;
+		int mode = RAM[0xFF55];
+		int length = mode&0x7f;
+		length=(length+1)*0x10;
+		
+		System.out.println("GBCDMATransfer src:0x"+Utils.toHex4(srcAddress)+" dest:0x"+Utils.toHex4(destAddress)+" len:"+length);
+	
+		for (int i=0;i<length;i++) {
+			poke(0x8000+destAddress+i,peek(srcAddress+i));
+		}
+		
+		RAM[0xFF55]=0xff; // mark dma as completed.
 	}
 
 	// Return true if this is a memor address handled by the memory controller.
@@ -301,10 +350,10 @@ public class MEM {
 
 		// Scanline returns 0 if LCD is off
 		if (addr == 0xFF44) {
-			// TODO:
-//			if ((RAM[0xFF40] & 0x80) == 0) {
-//				return 0;
-//			}
+
+			if ((RAM[0xFF40] & 0x80) == 0) {
+				return 0;
+			}
 			return RAM[0xFF44];
 		}
 
@@ -382,7 +431,8 @@ public class MEM {
 
 	public void transferDMA(int val) {
 		// int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
-		int addr = val << 8;
+		//int addr = val << 8;
+		int addr = val * 0x100;
 		for (int i = 0; i < 0xA0; i++) {
 			poke(0xFE00 + i, peek(addr + i));
 		}
