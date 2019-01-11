@@ -1107,13 +1107,13 @@ public class CPU {
 
 	// STACK
 	public void pushW(int val) {
-		 mem.poke(--SP, getHighByte(val));
-		 mem.poke(--SP, getLowByte(val));
+		 mem.poke((--SP)&0xffff, getHighByte(val));
+		 mem.poke((--SP)&0xffff, getLowByte(val));
 	}
 
 	public int popW() {
-		int lb = mem.peek(SP++);
-		int hb = mem.peek(SP++);
+		int lb = mem.peek((SP++)&0xffff);
+		int hb = mem.peek((SP++)&0xffff);
 		return combineBytes(hb, lb);
 	}
 }

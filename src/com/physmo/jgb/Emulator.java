@@ -18,7 +18,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/tetris.gb";
 	//private static final String gameFileName = "resource/mario.gb";
 	//private static final String gameFileName = "resource/drmario.gb";
-	// private static final String gameFileName = "resource/othello.gb";
+	//private static final String gameFileName = "resource/othello.gb";
 	//private static final String gameFileName = "resource/spaceinvaders.gb"; //
 	//private static final String gameFileName = "resource/klax.gb";
 	// private static final String gameFileName = "resource/tennis.gb";
@@ -39,10 +39,9 @@ public class Emulator {
 	//private static final String gameFileName = "resource/tetrisattack.gb";
 	// private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
-	// private static final String gameFileName = "resource/pokemon_blue.gb";
 	// private static final String gameFileName = "resource/nemesis2.gb";
 	//private static final String gameFileName = "resource/mario2.gb";
-	// private static final String gameFileName = "resource/bomberman.gb";
+	//private static final String gameFileName = "resource/bomberman.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
 	//private static final String gameFileName = "resource/garfield.gb";
 	//private static final String gameFileName = "resource/lemmings.gb";
@@ -55,30 +54,35 @@ public class Emulator {
 	// GAMEBOY COLOR
 	//private static final String gameFileName = "resource/tetrisdx.gbc";
 	//private static final String gameFileName = "resource/mariodx.gbc"; // CART TYPE 0x1B
-	//private static final String gameFileName = "resource/testdrive6.gbc";
 	//private static final String gameFileName = "resource/vrally.gbc";
+	//private static final String gameFileName = "resource/internationalrally.gbc";
 	//private static final String gameFileName = "resource/harvestmoon3.gbc";
-	private static final String gameFileName = "resource/rtypedx.gbc"; // 1B  MBC5+RAM+BATTERY
+	//private static final String gameFileName = "resource/rtypedx.gbc"; // 1B  MBC5+RAM+BATTERY
 	//private static final String gameFileName = "resource/turok.gbc"; // cart type 0x19
 	//private static final String gameFileName = "resource/dk.gbc"; // 0x1b
-	//private static final String gameFileName = "resource/rayman.gbc"; // 0x19
-	//private static final String gameFileName = "resource/tombraider.gbc"; // 0x1b
-	//private static final String gameFileName = "resource/oracle.gbc"; // 
 	//private static final String gameFileName = "resource/zelda.gbc"; //  0x1b
-	//private static final String gameFileName = "resource/tony.gbc"; //
 	//private static final String gameFileName = "resource/warioland3.gbc"; // 1B  MBC5+RAM+BATTERY
+	//private static final String gameFileName = "resource/mortalkombat.gbc";
+	//private static final String gameFileName = "resource/microsoftentertainmentpack.gbc";
+	//private static final String gameFileName = "resource/yodastories.gbc"; //
+	//private static final String gameFileName = "resource/f18thunderstrike.gbc";
+	private static final String gameFileName = "resource/F1WorldGrandPrixII.gbc";
 	
 	// NON WORKING GAMES
+	//private static final String gameFileName = "resource/oracle.gbc"; // 
+	//private static final String gameFileName = "resource/pokemon_blue.gb"; // 13
+	//private static final String gameFileName = "resource/tombraider.gbc"; // 0x1b
+	//private static final String gameFileName = "resource/rayman.gbc"; // 0x19 - not working
+	//private static final String gameFileName = "resource/aladdin.gbc"; // 19 - not working
+	//private static final String gameFileName = "resource/tony.gbc"; // 19 not working
 	//private static final String gameFileName = "resource/startrek.gb";
 	//private static final String gameFileName = "resource/spot.gb";
 	//private static final String gameFileName = "resource/bombjack.gb";
 	//private static final String gameFileName = "resource/centipede.gb";
 	//private static final String gameFileName = "resource/arcade1.gb";
 	//private static final String gameFileName = "resource/aladdin.gb";
-
-	//
+	//private static final String gameFileName = "resource/megamanextreme.gbc";
 	
-
 
 	// private static final String gameFileName = "resource/cpu_instrs.gb";
 	// private static final String gameFileName = "resource/tests/opus5.gb";

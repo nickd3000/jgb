@@ -29,50 +29,33 @@ public class MBC5 implements ROMBank {
         case 0x2:
         	currentRomBank &= 0xFF00;
         	currentRomBank |= data&0xff;
-            //cartridge_update_selected_rom();
-        	//System.out.println("Rom bank changed to "+currentRomBank);
             break;
         case 0x3:
         	currentRomBank &= 0x00FF;
         	currentRomBank |= ((data & 0x1) << 8);
-            //cartridge_update_selected_rom();
-        	//System.out.println("Rom bank changed to "+currentRomBank);
             break;
         case 0x4:
         case 0x5:
         	currentRamBank = (data & 0x0F);
-            //cartridge_update_selected_ram();
             break;
         case 0x6:
         case 0x7:
-            break;
         case 0x8:
         case 0x9:
-//            location &= 0x1FFF;
-//            gb->selected_vram[location] = data;
             break;
         case 0xA:
         case 0xB:
-//            //TODO do something different here...
-//            assert(cartridge->ram_enabled == true);
-//
-//            location &= 0x1FFF;
-//            cartridge->selected_ram[location] = data;
-        	// RAM BANKING
-        	//int bankOffset = currentRamBank*0x2000;
-        	//RAM_BANKS[currentRamBank+(address-0xA000)] = data&0xff;
         	int newAddress = address - 0xA000;
 			cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data&0xff;
-			
             break;
-        case 0xC:
-//            location &= 0x0FFF;
-//            gb->ram[location] = data;
-            break;
-        case 0xD:
-//            location &= 0x0FFF;
-//            gb->selected_ram[location] = data;
-            break;
+//        case 0xC:
+////            location &= 0x0FFF;
+////            gb->ram[location] = data;
+//            break;
+//        case 0xD:
+////            location &= 0x0FFF;
+////            gb->selected_ram[location] = data;
+//            break;
 	    }
 	    
 	    

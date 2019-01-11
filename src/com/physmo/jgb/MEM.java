@@ -49,9 +49,9 @@ public class MEM {
 	
 	public int CART_RAM_BANKS[] = new int[0x10000]; // 64k
 	public int BIOS[] = new int[0x10000]; // 64k
-	public int CARTRIDGE[] = new int[0x10000 * 100]; // 64k
-	public int VRAMBANK0[] = new int[0x1FFF]; // 8000 - 9FFF
-	public int VRAMBANK1[] = new int[0x1FFF]; // 8000 - 9FFF
+	public int CARTRIDGE[] = new int[0x10000 * 200]; // 64k
+	public int VRAMBANK0[] = new int[0x2000]; // 8000 - 9FFF
+	public int VRAMBANK1[] = new int[0x2000]; // 8000 - 9FFF
 
 	// BIOS is active until the first instruction 0x00FF.
 	public boolean biosActive = true;
@@ -101,10 +101,12 @@ public class MEM {
 		// Writing to the divider register sets it to zero.
 		if (addr == 0xFF04) {
 		   RAM[0xFF04] = 0 ;
+		   return;
 		}
 		
 		if (addr == 0xFF44) {
 			   RAM[0xFF44] = 0 ;
+			   return;
 			}
 		
 		// Input.
@@ -115,7 +117,12 @@ public class MEM {
 		
 		if (isSwitchableddress(addr)) {
 			memoryBank.poke(addr, val);
-			//return;
+			return;
+		}
+		// TODO: verify what areas of ram we need to write to for cart switching
+		if (addr < 0x8000  ) {
+			memoryBank.poke(addr, val);
+			return;
 		}
 		
 		// Rough serial output.
@@ -133,16 +140,18 @@ public class MEM {
 
 		// GBC DMA transfer.
 		if (addr == 0xFF55) {
-			RAM[0xFF55] = val ;
+			RAM[0xFF55] = val&0xff;
 			GBCDMATransfer();
 			return;
 		}
 		
-		// TODO: verify what areas of ram we need to write to for cart switching
-		if (addr < 0x8000  ) {
-			memoryBank.poke(addr, val);
+		if (addr == ADDR_FF46_DMA_TRANSFER) {
+			//RAM[addr] = val&0xff;
+			transferDMA(val&0xff);
 			return;
 		}
+
+
 
 
 		// VRAM
@@ -178,11 +187,6 @@ public class MEM {
 			//writeBigMessage("wrote to 0x0150!!!", 1000);
 		}
 
-		if (addr == ADDR_FF46_DMA_TRANSFER) {
-			RAM[addr] = val;
-			transferDMA(val);
-			return;
-		}
 
 		// Writing anything to the scanline register resets it.
 		if (addr == ADDR_FF44_Y_SCANLINE) {
@@ -249,6 +253,20 @@ public class MEM {
 
 		RAM[addr] = val;
 	}
+	
+	
+	public void transferDMA(int val) {
+		// int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
+		//int addr = val << 8;
+		int addr = val * 0x100;
+		// OAM memory is 40*4 bytes = 0xA0.
+		for (int i = 0; i < 0xA0; i++) {
+			poke(0xFE00 + i, peek(addr + i));
+		}
+		//System.out.println("Old style DMA addr:"+Utils.toHex4(addr));
+		
+	}
+	
 
 	private void GBCDMATransfer() {
 		// FF51 - HDMA1 - CGB Mode Only - New DMA Source, High
@@ -257,26 +275,55 @@ public class MEM {
 		// FF54 - HDMA4 - CGB Mode Only - New DMA Destination, Low
 		// FF55 - HDMA5 - CGB Mode Only - New DMA Length/Mode/Start
 
-		int srcAddress = ((RAM[0xFF51]<<8)|(RAM[0xFF52]))&0xFFF0;
-		int destAddress = ((RAM[0xFF53]<<8)|(RAM[0xFF54]))&0x1FF0;
+		int srcAddress = ((RAM[0xFF51]<<8)+(RAM[0xFF52]))&0xFFF0;
+		int destAddress = ((RAM[0xFF53]<<8)+(RAM[0xFF54]))&0x1FF0;
 		int mode = RAM[0xFF55];
 		int length = mode&0x7f;
 		length=(length+1)*0x10;
+		//length=(length+1)*0x200;
 		
-		System.out.println("GBCDMATransfer src:0x"+Utils.toHex4(srcAddress)+" dest:0x"+Utils.toHex4(destAddress)+" len:"+length);
+//		System.out.println(
+//				"GBCDMATransfer src:0x"+Utils.toHex4(srcAddress)+
+//				" dest:0x"+Utils.toHex4(destAddress)+" len:"+length+
+//				" mode:"+(((mode&0b1000000)>0)?"HBLANK":"GENERAL"));
 	
 		for (int i=0;i<length;i++) {
 			poke(0x8000+destAddress+i,peek(srcAddress+i));
+			//VRAMBANK1[destAddress+i] = peek(srcAddress+i);
 		}
 		
 		RAM[0xFF55]=0xff; // mark dma as completed.
+		
+		// Update destination address.
+		srcAddress+=length;
+		destAddress+=length;
+		RAM[0xFF51]=(srcAddress>>8)&0xff;
+		RAM[0xFF52]=(srcAddress)&0xff;
+		RAM[0xFF53]=(destAddress>>8)&0xff;
+		RAM[0xFF54]=(destAddress)&0xff;
 	}
 
-	// Return true if this is a memor address handled by the memory controller.
+	// Return true if this is a memory address handled by the memory controller.
 	// Switchable address range:
 	// 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n 
 	// 0xA000 - 0xBFFF (8,192 bytes) External RAM
 	public boolean isSwitchableddress(int address) {
+//		int location_hi = ((address & 0xF000) >> 12);
+//		
+//		switch (location_hi) {
+//		case 0x0:
+//		case 0x1:
+//		case 0x2:
+//		case 0x3:
+//		case 0x4:
+//		case 0xA:
+//		case 0xB:
+//			return true;
+//			
+//			default:
+//				return false;
+//		}
+		
 		if (address>=0x4000 && address<=0x7FFF) {
 			return true;
 		}
@@ -288,6 +335,11 @@ public class MEM {
 	
 	public int peek(int addr) {
 		
+		// Handle special negative addresses (registers)
+		if (addr < 0) {
+			return peekSpecial(addr);
+		}
+		
 		// INPUT
 		if (addr == 0xFF00) {
 			//System.out.println("Peeked 0xff00 at "+cpu.tickCount);
@@ -295,6 +347,25 @@ public class MEM {
 			return cpu.input.peekFF00();
 		}
 
+		// * E000 FDFF Mirror of C000~DDFF (ECHO RAM) Typically not used
+		// TODO: check
+		if (inRange(addr, 0xE000, 0xFDFF)) {
+			return peek(addr-0x2000);
+		}
+		
+		// * FE00 FE9F Sprite attribute table (OAM)
+		if (inRange(addr, 0xFE00, 0xFE9F)) {
+			return RAM[addr];
+		}
+		
+		// * FEA0 FEFF Not Usable
+		// * FF00 FF7F I/O Registers
+
+		// * FF80 FFFE High RAM (HRAM)
+		if (inRange(addr, 0xFF80, 0xFFFE)) {
+			return RAM[addr];
+		}
+		
 		// TODO Serial registers
 		// some games need this to be able to play (EG alleyway)
 		if (addr == 0xFF01) {
@@ -304,16 +375,13 @@ public class MEM {
 			return 0xff;
 		}
 		
-		// temp hack test 
-		// this memory address is causing oracle of ages to halt
-//		if (addr == 0xFF4d) {
-//			return cpu.tickCount&0xff;
-//		}
-		
-		// Handle special negative addresses (registers)
-		if (addr < 0) {
-			return peekSpecial(addr);
+		// VRAM bank selector (bit 0 is important, other bits should be 1)
+		if (addr == 0xFF4F) {
+			return RAM[0xFF4F]|0b1111_1110;
 		}
+		
+
+
 
 		if (isSwitchableddress(addr)) {
 			return memoryBank.peek(addr);
@@ -378,9 +446,9 @@ public class MEM {
 
 		// * 8000 9FFF 8KB Video RAM (VRAM) Only bank 0 in Non-CGB mode / Switchable
 		// bank 0/1 in CGB mode
-		if (inRange(addr, 0x8000, 0x9FFF)) {
-			return RAM[addr];
-		}
+//		if (inRange(addr, 0x8000, 0x9FFF)) {
+//			return RAM[addr];
+//		}
 
 
 		// RAM BANK 0
@@ -404,18 +472,7 @@ public class MEM {
 			}
 		}
 
-		// * E000 FDFF Mirror of C000~DDFF (ECHO RAM) Typically not used
-		// * FE00 FE9F Sprite attribute table (OAM)
-		if (inRange(addr, 0xFE00, 0xFE9F)) {
-			return RAM[addr];
-		}
-		// * FEA0 FEFF Not Usable
-		// * FF00 FF7F I/O Registers
 
-		// * FF80 FFFE High RAM (HRAM)
-		if (inRange(addr, 0xFF80, 0xFFFE)) {
-			return RAM[addr];
-		}
 
 		// * FFFF FFFF Interrupts Enable Register (IE)
 
@@ -429,14 +486,7 @@ public class MEM {
 		return false;
 	}
 
-	public void transferDMA(int val) {
-		// int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
-		//int addr = val << 8;
-		int addr = val * 0x100;
-		for (int i = 0; i < 0xA0; i++) {
-			poke(0xFE00 + i, peek(addr + i));
-		}
-	}
+	
 
 	// Handle register addresses (where Address<0)
 

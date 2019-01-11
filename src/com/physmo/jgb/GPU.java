@@ -279,6 +279,8 @@ public class GPU {
 				//debugDrawKeyStates(cpu, bd,11,31,Color.BLACK);
 				//debugDrawKeyStates(cpu, bd,10,30,Color.ORANGE);
 				
+				debugDrawYIncidence(cpu,bd);
+						
 				bd.refresh();
 //				try {
 //					Thread.sleep(5);
@@ -302,12 +304,19 @@ public class GPU {
 			cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] &= ~0x04;
 		}
 		
+		debugDrawYIncidence(cpu,bd);
 		
 		cpu.mem.RAM[MEM.ADDR_FF44_Y_SCANLINE] = y;
 		//cpu.mem.poke(0xFF44,y);
 	}
 
 	
+	private void debugDrawYIncidence(CPU cpu, BasicDisplay bd) {
+		int ycmp = cpu.mem.RAM[MEM.ADDR_FF45_Y_COMPARE];
+		bd.setDrawColor(Color.RED);
+		bd.drawFilledRect(0, (ycmp-2)*2, 5, 4*2);
+	}
+
 	private void debugDrawKeyStates(CPU cpu, BasicDisplay bd,int x, int y, Color col) {
 		
 		bd.setDrawColor(col);
@@ -324,9 +333,9 @@ public class GPU {
 		boolean signedTileIndices=false;
 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
 		if (testBit(lcdControl,3))
-			bgTileMapLocation = 0x9C00;
+			bgTileMapLocation = 0x9C00-0x8000;
 		else
-			bgTileMapLocation = 0x9800;
+			bgTileMapLocation = 0x9800-0x8000;
 		
 		if (testBit(lcdControl,4)==false) { 
 			tileDataPtr = 0x8800;
@@ -345,12 +354,6 @@ public class GPU {
 	public  int getSpritePixel2(CPU cpu, int tileId, int subx, int suby, int bank) {
 		int byteOffset = (suby * 2);
 
-		//int data1 = cpu.mem.RAM[spriteDataPtr + (tileId * 16) + byteOffset];
-		//int data2 = cpu.mem.RAM[spriteDataPtr + (tileId * 16) + byteOffset + 1];
-
-		// prev int data1 = cpu.mem.peek(spriteDataPtr + (tileId * 16) + byteOffset);
-		//int data2 = cpu.mem.peek(spriteDataPtr + (tileId * 16) + byteOffset + 1);
-				
 		int data1=0,data2=0;
 		if (bank==0) {
 			data1 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset];
@@ -564,14 +567,16 @@ public class GPU {
 							
 							int sprPixel = getSpritePixel2(cpu, sprites[i].tileId, sprsubx, sprsuby, sprBank);
 							
-							if (sprPixel!=0)
-								bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
-							
-							// HACK! quick test of CGB palettes.
-							if (cpu.hardwareType==HARDWARE_TYPE.CGB && sprPixel!=0) {
-								int cgbTilePal = sprites[i].cgbSpritePalette*4;
-								bd.setDrawColor(cgbSpriteColors[cgbTilePal+((sprPixel)&3)]);
+							if (sprPixel!=0) {
+								if (cpu.hardwareType==HARDWARE_TYPE.DMG1) {
+									bd.setDrawColor(getSpriteCol(sprPixel, sprPalette));
+								}
+								else {
+									int cgbTilePal = sprites[i].cgbSpritePalette*4;
+									bd.setDrawColor(cgbSpriteColors[cgbTilePal+((sprPixel)&3)]);
+								}
 							}
+							
 						}
 					}
 				}
@@ -597,17 +602,24 @@ public class GPU {
 		}
 	}
 	
-	public  void getSprite(CPU cpu, int id) {
+	public  void getSpriteOriginal(CPU cpu, int id) {
         int spriteAddress = 0xFE00 + (id * 4);
         sprites[id].y = cpu.mem.RAM[spriteAddress] - 16; // Offset for display window.
         sprites[id].x = cpu.mem.RAM[spriteAddress+1] - 8; // Offset for display window.
         sprites[id].attributes = cpu.mem.RAM[spriteAddress+3];
         sprites[id].cgbSpritePalette = cpu.mem.RAM[spriteAddress+3]&0x7;
-        
         sprites[id].tileId = cpu.mem.RAM[spriteAddress+2];
-        
 	}
-        
+      
+	public  void getSprite(CPU cpu, int id) {
+        int spriteAddress = (0xFE00) + (id * 4);
+        int [] sprData = cpu.mem.RAM;
+        sprites[id].y = sprData[spriteAddress] - 16; // Offset for display window.
+        sprites[id].x = sprData[spriteAddress+1] - 8; // Offset for display window.
+        sprites[id].attributes = sprData[spriteAddress+3];
+        sprites[id].cgbSpritePalette = sprData[spriteAddress+3]&0x7;
+        sprites[id].tileId = sprData[spriteAddress+2];
+	}
 }
 
 class Sprite {
