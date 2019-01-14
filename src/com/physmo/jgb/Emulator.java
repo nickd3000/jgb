@@ -26,7 +26,7 @@ public class Emulator {
 	// private static final String gameFileName = "resource/motocross.gb";
 	// private static final String gameFileName = "resource/asteroids.gb";
 	 // private static final String gameFileName = "resource/bowling.gb";
-	// private static final String gameFileName = "resource/loderunner.gb";
+	//private static final String gameFileName = "resource/loderunner.gb";
 	//private static final String gameFileName = "resource/pipedream.gb";
 	//private static final String gameFileName = "resource/alleyway.gb"; // control problem.
 
@@ -39,7 +39,7 @@ public class Emulator {
 	//private static final String gameFileName = "resource/tetrisattack.gb";
 	// private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
-	// private static final String gameFileName = "resource/nemesis2.gb";
+	 private static final String gameFileName = "resource/nemesis2.gb";
 	//private static final String gameFileName = "resource/mario2.gb";
 	//private static final String gameFileName = "resource/bomberman.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
@@ -66,7 +66,9 @@ public class Emulator {
 	//private static final String gameFileName = "resource/microsoftentertainmentpack.gbc";
 	//private static final String gameFileName = "resource/yodastories.gbc"; //
 	//private static final String gameFileName = "resource/f18thunderstrike.gbc";
-	private static final String gameFileName = "resource/F1WorldGrandPrixII.gbc";
+	//private static final String gameFileName = "resource/F1WorldGrandPrixII.gbc";
+	//private static final String gameFileName = "resource/StreetFighterAlpha.gbc";
+	//private static final String gameFileName = "resource/pokemoncrystal.gbc";
 	
 	// NON WORKING GAMES
 	//private static final String gameFileName = "resource/oracle.gbc"; // 
@@ -150,6 +152,8 @@ public class Emulator {
 		cpu.tick();
 		timer.tick(1); // random number.
 		input.tick(basicDisplay);
+		
+		//degradeMemory();
 	}
 
 	public void keyboardStub() {
@@ -159,6 +163,31 @@ public class Emulator {
 
 		}
 	}
+	
+	public void degradeMemory() {
+
+		// Vram
+		if (Math.random()<0.0002) glitchArea(0x8000, 0x9fff);
+		
+		// OAM
+		if (Math.random()<0.002) glitchArea(0xFE00, 0xFE9F);
+		
+		// High RAM (HRAM)	
+		//if (Math.random()<0.02) glitchArea(0xFF80, 0xFFFE);
+		
+		// work ram bank 0 
+		//if (Math.random()<0.0002) glitchArea(0xC000, 0xCFFF);
+	}
+	
+	public void glitchArea(int start, int end) {
+		int addr = start + (int)(Math.random()*(end-start));
+		int val = mem.peek(addr);
+		val += (int)((Math.random()-0.5)*3);
+		val = val & 0xff;
+		mem.poke(addr,val);
+	}
+	
+	
 	
 	// Set initial state as if the BIOS / Bootstrap had been run.
 	public void setInitialState() {

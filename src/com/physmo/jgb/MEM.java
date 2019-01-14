@@ -47,7 +47,7 @@ public class MEM {
 	public int RAM[] = new int[0x10000]; // 64k
 	public int RAM_BANKS1[] = new int[0x20000]; // switchable ram bank 1
 	
-	public int CART_RAM_BANKS[] = new int[0x10000]; // 64k
+	public int CART_RAM_BANKS[] = new int[0x10000*5]; // 64k
 	public int BIOS[] = new int[0x10000]; // 64k
 	public int CARTRIDGE[] = new int[0x10000 * 200]; // 64k
 	public int VRAMBANK0[] = new int[0x2000]; // 8000 - 9FFF
@@ -92,6 +92,12 @@ public class MEM {
 	}
 
 	public void poke(int addr, int val) {
+		
+		
+//		if (Math.random()<0.0001) {
+//			val += (int)((Math.random()-0.5)*3);
+//			val = val & 0xff;
+//		}
 		
 		if (addr < 0) {
 			pokeSpecial(addr, val);

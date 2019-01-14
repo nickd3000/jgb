@@ -435,9 +435,9 @@ public class GPU {
 
 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
 		if (testBit(lcdControl,3))
-			bgTileMapLocation = 0x9C00-0x8000;
+			bgTileMapLocation = 0x1C00;
 		else
-			bgTileMapLocation = 0x9800-0x8000;
+			bgTileMapLocation = 0x1800;
 
 		if (testBit(lcdControl,2)) spriteHeight=16;
 		
@@ -483,12 +483,20 @@ public class GPU {
 			
 			int charOffset = (xx / 8) + ((yy / 8) * 32);
 			
-			int charIndex = (byte) cpu.mem.VRAMBANK0[(bgTileMapLocation-0x0000)+charOffset];
+			int charIndex = (byte) cpu.mem.VRAMBANK0[bgTileMapLocation+charOffset];
 			
-			int cgbTileAttributes = cpu.mem.VRAMBANK1[0x1800 + charOffset]; 
+			int cgbTileAttributes = cpu.mem.VRAMBANK1[bgTileMapLocation+charOffset]; 
 			int tileVramBank = ((cgbTileAttributes&(1<<3))>0)?1:0;
 			//tileVramBank = 1;
 			//tileVramBank = ((int)(Math.random()*33.0))&1;
+			
+			/*
+			 * 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+				if (testBit(lcdControl,3))
+					bgTileMapLocation = 0x1C00;
+				else
+					bgTileMapLocation = 0x1800;
+			 */
 			
 			if (signedTileIndices)
 				charIndex += 128;
