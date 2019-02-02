@@ -34,12 +34,12 @@ public class Emulator {
 	// private static final String gameFileName = "resource/serpent.gb";
 
 	//private static final String gameFileName = "resource/batman.gb";
-	//private static final String gameFileName = "resource/rtype.gb";
+	private static final String gameFileName = "resource/rtype.gb";
 	//private static final String gameFileName = "resource/pinballfantasies.gb";
 	//private static final String gameFileName = "resource/tetrisattack.gb";
 	// private static final String gameFileName = "resource/qbert.gb";
 	//private static final String gameFileName = "resource/pacman.gb";
-	 private static final String gameFileName = "resource/nemesis2.gb";
+	// private static final String gameFileName = "resource/nemesis2.gb";
 	//private static final String gameFileName = "resource/mario2.gb";
 	//private static final String gameFileName = "resource/bomberman.gb";
 	//private static final String gameFileName = "resource/zelda.gb";
