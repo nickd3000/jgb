@@ -16,7 +16,7 @@ public class CPUPrefix {
 		int carryOut=0;
 		int carryIn=0;
 
-		if (cpu.displayInstruction)
+		if (CPU.displayInstruction)
 			System.out.println("Prefix command: " + Utils.toHex2(instr) + "   val:" + value + "   bit:" + bit);
 
 		// RLC - rotate left with carry? (guess)

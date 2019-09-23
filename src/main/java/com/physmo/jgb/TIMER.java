@@ -18,12 +18,9 @@ public class TIMER {
 
 	public boolean isClockEnabled() {
 		int iTMC = cpu.mem.RAM[TMC];
-		
-		if ((iTMC & (1 << 2)) > 0)
-			return true;
-		
-		return false;
-		// return TestBit(ReadMemory(TMC),2)?true:false ;
+
+        return (iTMC & (1 << 2)) > 0;
+        // return TestBit(ReadMemory(TMC),2)?true:false ;
 	}
 
 	public int getClockFreq() {

@@ -1,9 +1,11 @@
 package com.physmo.jgb;
 
-import java.awt.Color;
-
 import com.physmo.jgb.PaletteGenerator.PALETTE_TYPE;
-import com.physmo.toolbox.BasicDisplay;
+import com.physmo.minvio.BasicDisplay;
+
+import java.awt.*;
+//import com.physmo.toolbox.BasicDisplay;
+
 
 /*
 	8000-87FF	Tile set #1: tiles 0-127
@@ -48,8 +50,8 @@ public class GPU {
 			sprites[i]=new Sprite();
 		}
 		for (int i=0;i<64;i++) {
-			cgbBackgroundPaletteData[i]=(i*2)&0xff;;
-			cgbSpritePaletteData[i]=(i*2)&0xff;;
+			cgbBackgroundPaletteData[i]=(i*2)&0xff;
+			cgbSpritePaletteData[i]=(i*2)&0xff;
 		}
 		
 		int p=0;
@@ -81,27 +83,27 @@ public class GPU {
 	}
 
 	PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
-	Color backgroundPaletteMaster [] = {
+	Color[] backgroundPaletteMaster = {
 			PaletteGenerator.get(paletteType, 0),
 			PaletteGenerator.get(paletteType, 1),
 			PaletteGenerator.get(paletteType, 2),
 			PaletteGenerator.get(paletteType, 3)
 	};
-	Color sprite1PaletteMaster [] = {
+	Color[] sprite1PaletteMaster = {
 			PaletteGenerator.get(paletteType, 0),
 			PaletteGenerator.get(paletteType, 1),
 			PaletteGenerator.get(paletteType, 2),
 			PaletteGenerator.get(paletteType, 3)
 	};
-	Color sprite2PaletteMaster [] = {
+	Color[] sprite2PaletteMaster = {
 			PaletteGenerator.get(paletteType, 0),
 			PaletteGenerator.get(paletteType, 1),
 			PaletteGenerator.get(paletteType, 2),
 			PaletteGenerator.get(paletteType, 3)
 	};
-	Color backgroundPaletteMap [] = new Color[4];
-	Color sprite1PaletteMap [] = new Color[4];
-	Color sprite2PaletteMap [] = new Color[4];
+	Color[] backgroundPaletteMap = new Color[4];
+	Color[] sprite1PaletteMap = new Color[4];
+	Color[] sprite2PaletteMap = new Color[4];
 	
 	public void setGBCColorManually(int [] colorList, int index, int hexColor) {
 		int r = ((hexColor>>16)&0xff)>>3;
@@ -410,8 +412,7 @@ public class GPU {
 	}
 
 	public boolean testBit(int value, int bit) {
-		if ((value&(1<<bit))>0) return true;
-		return false;
+		return (value & (1 << bit)) > 0;
 	}
 	
 	public  void renderLine(CPU cpu, BasicDisplay bd, int y) {

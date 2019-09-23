@@ -6,7 +6,7 @@ class AddressContainer {
 	ADDRMODE mode = ADDRMODE.NONE;
 }
 
-enum HARDWARE_TYPE {DMG1, CGB};
+enum HARDWARE_TYPE {DMG1, CGB}
 
 public class CPU {
 	public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.CGB;
@@ -1100,9 +1100,7 @@ public class CPU {
 	}
 
 	public boolean testFlag(int flag) {
-		if ((FL & flag) > 0)
-			return true;
-		return false;
+		return (FL & flag) > 0;
 	}
 
 	// STACK

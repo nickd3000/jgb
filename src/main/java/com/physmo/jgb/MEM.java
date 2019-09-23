@@ -44,14 +44,14 @@ public class MEM {
 	
 	ROMBank memoryBank = null;
 
-	public int RAM[] = new int[0x10000]; // 64k
-	public int RAM_BANKS1[] = new int[0x20000]; // switchable ram bank 1
+	public int[] RAM = new int[0x10000]; // 64k
+	public int[] RAM_BANKS1 = new int[0x20000]; // switchable ram bank 1
 	
-	public int CART_RAM_BANKS[] = new int[0x10000*5]; // 64k
-	public int BIOS[] = new int[0x10000]; // 64k
-	public int CARTRIDGE[] = new int[0x10000 * 200]; // 64k
-	public int VRAMBANK0[] = new int[0x2000]; // 8000 - 9FFF
-	public int VRAMBANK1[] = new int[0x2000]; // 8000 - 9FFF
+	public int[] CART_RAM_BANKS = new int[0x10000*5]; // 64k
+	public int[] BIOS = new int[0x10000]; // 64k
+	public int[] CARTRIDGE = new int[0x10000 * 200]; // 64k
+	public int[] VRAMBANK0 = new int[0x2000]; // 8000 - 9FFF
+	public int[] VRAMBANK1 = new int[0x2000]; // 8000 - 9FFF
 
 	// BIOS is active until the first instruction 0x00FF.
 	public boolean biosActive = true;
@@ -202,7 +202,7 @@ public class MEM {
 
 		// GBC specific background palette
 		if (addr == ADDR_0xFF69_BGPALETTEDATA) {
-			boolean auto = (RAM[ADDR_0xFF68_BGPALETTEINDEX]&0x80)>0?true:false;
+			boolean auto = (RAM[ADDR_0xFF68_BGPALETTEINDEX] & 0x80) > 0;
 			int pIndex = RAM[ADDR_0xFF68_BGPALETTEINDEX]&0x3F;
 			cpu.gpu.cgbBackgroundPaletteData[pIndex]=val;
 			if (auto) {
@@ -215,7 +215,7 @@ public class MEM {
 		
 		// GBC specific sprite palette
 		if (addr == ADDR_0xFF6B_SPRITEPALETTEDATA) {
-			boolean auto = (RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&0x80)>0?true:false;
+			boolean auto = (RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX] & 0x80) > 0;
 			int pIndex = RAM[ADDR_0xFF6A_SPRITEPALETTEINDEX]&0x3F;
 			cpu.gpu.cgbSpritePaletteData[pIndex]=val;
 			if (auto) {
@@ -333,11 +333,8 @@ public class MEM {
 		if (address>=0x4000 && address<=0x7FFF) {
 			return true;
 		}
-		if (address>=0xA000 && address<=0xBFFF) {
-			return true;
-		}	
-		return false;
-	}
+        return address >= 0xA000 && address <= 0xBFFF;
+    }
 	
 	public int peek(int addr) {
 		
@@ -487,10 +484,8 @@ public class MEM {
 	}
 
 	public boolean inRange(int addr, int start, int end) {
-		if (addr >= start && addr <= end)
-			return true;
-		return false;
-	}
+        return addr >= start && addr <= end;
+    }
 
 	
 

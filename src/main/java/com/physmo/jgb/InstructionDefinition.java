@@ -30,13 +30,13 @@ package com.physmo.jgb;
 enum ADDRMODE {
 	NONE, __BC, __DE, __HL, __nnnn, A, B, C, D, E, H, L, Z, AF, BC, DE, NZ, disp, HL, NC, nn, nnnn, SP,
 	// A, ABS, ABS_X, ABS_Y, IMDT, IMPL, IND, X_IND, IND_Y, REL, ZPG, ZPG_X, ZPG_Y,
-};
+}
 
 enum COMMAND {
 	NOP, LD, INC, XOR, LDD, LDI, PREFIX, JRNZ, LDZPGCA, LDZPGNNA,LDAZPGNN, CALL, PUSHW, POPW, RLA, DEC, DECW, JP, DI, EI
 	, INCW, RET, CP, OR, AND, CPL,JRZ,JR,SUB,ADD,HALT,
 	RST_38H, RST_8H, RETZ, RETNZ, JRNC, JRC, ADC, SBC, JPZ, RRCA, ADDHL, RETNC, CALLNZ, RETI, JPNZ, LDHLSPN, RST_28H, RLCA, JPNC, CALLZ, SCF, CALLC, RST_00H, RR, JPC, RST_20H, RETC, RST_18H, DAA, RST_30H, RST_10H, CCF, LDAZPGC, ADDSPNN, CALLNC, LDSPHL, LDW, STOP,
-};
+}
 
 public enum InstructionDefinition {
 
@@ -365,10 +365,10 @@ public enum InstructionDefinition {
 	SCF(0x37, COMMAND.SCF, 1, ADDRMODE.NONE, ADDRMODE.NONE),	// 37    SCF
 	CCF(0x3F, COMMAND.CCF, 1, ADDRMODE.NONE, ADDRMODE.NONE),	// 3F    CCF
 	
-	;;;;
-	
-	
-	private int opcode;
+	;
+
+
+    private int opcode;
 	private COMMAND command;
 	private int numBytes;
 	private ADDRMODE am1;

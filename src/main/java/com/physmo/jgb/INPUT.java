@@ -1,6 +1,6 @@
 package com.physmo.jgb;
 
-import com.physmo.toolbox.BasicDisplay;
+import com.physmo.minvio.BasicDisplay;
 
 public class INPUT {
 

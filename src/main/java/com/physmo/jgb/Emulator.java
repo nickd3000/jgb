@@ -1,6 +1,7 @@
 package com.physmo.jgb;
 
-import com.physmo.toolbox.BasicDisplay;
+import com.physmo.minvio.BasicDisplay;
+import com.physmo.minvio.BasicDisplayAwt;
 
 public class Emulator {
 
@@ -115,7 +116,7 @@ public class Emulator {
 		timer = new TIMER(cpu);
 
 		cpu.attachHardware(mem, input, gpu);
-		basicDisplay = new BasicDisplay(160*displayScale,144*displayScale);
+		basicDisplay = new BasicDisplayAwt(160*displayScale,144*displayScale);
 		basicDisplay.setTitle("JGB");
 
 		Utils.ReadFileBytesToMemoryLocation("resource/dmg_boot.bin", mem.BIOS, 0);

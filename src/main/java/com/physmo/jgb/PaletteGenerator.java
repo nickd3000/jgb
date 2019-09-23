@@ -1,12 +1,12 @@
 package com.physmo.jgb;
 
-import java.awt.Color;
+import java.awt.*;
 
 public class PaletteGenerator {
 
 	enum PALETTE_TYPE {
 		CLASSIC, SUPER_GAMEBOY, NEWISH
-	};
+	}
 
 	public static Color get(PALETTE_TYPE type, int index) {
 

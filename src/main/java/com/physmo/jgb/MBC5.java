@@ -24,7 +24,7 @@ public class MBC5 implements ROMBank {
 	    switch(location_hi) {
 	    case 0x0:
         case 0x1:
-            enableRam = ((data & 0x0A) == 0x0A)?true:false;
+            enableRam = (data & 0x0A) == 0x0A;
             break;
         case 0x2:
         	currentRomBank &= 0xFF00;
