@@ -1,12 +1,16 @@
-package com.physmo.jgb;
+package com.physmo.jgb.rombank;
+
+import com.physmo.jgb.CPU;
+import com.physmo.jgb.MEM;
 
 public class ROM_ONLY implements ROMBank {
 
 	public CPU cpu;
+	private MEM mem;
 
 	public ROM_ONLY(CPU cpu) {
 		this.cpu = cpu;
-		// this.mem = cpu.mem;
+		mem = cpu.getMem();
 	}
 	
 	@Override
@@ -16,7 +20,7 @@ public class ROM_ONLY implements ROMBank {
 		}
 		else if ((address >= 0xA000) && (address <= 0xBFFF)) {
 
-			cpu.mem.RAM[address] = data;
+			mem.RAM[address] = data;
 			
 		}
 	}
@@ -31,16 +35,16 @@ public class ROM_ONLY implements ROMBank {
 
 		// Are we reading from the SWITCHABLE ROM cartridge memory bank?
 		if ((address >= 0x4000) && (address <= 0x7FFF)) {
-			return cpu.mem.CARTRIDGE[address];
+			return mem.CARTRIDGE[address];
 		}
 
 		// Are we reading from the cartridge RAM memory bank?
 		if ((address >= 0xA000) && (address <= 0xBFFF)) {
-			return cpu.mem.RAM[address];
+			return mem.RAM[address];
 		}
 
 		// else return memory
-		return cpu.mem.RAM[address];
+		return mem.RAM[address];
 		//return cpu.mem.CARTRIDGE[address];
 		
 	}

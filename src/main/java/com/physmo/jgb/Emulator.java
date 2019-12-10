@@ -5,101 +5,20 @@ import com.physmo.minvio.BasicDisplayAwt;
 
 public class Emulator {
 
-	int displayScale = 3;
-	CPU cpu = null;
-	GPU gpu = null;
-	MEM mem = null;
-	INPUT input = null;
-	TIMER timer = null;
+	private String biosPath = "/Users/nick/emulatorsupportfiles/gb/bios/";
+	private String romPath = "/Users/nick/emulatorsupportfiles/gb/roms/";
 
-	static BasicDisplay basicDisplay = null;
+	private int displayScale = 3;
+	private CPU cpu = null;
+	private GPU gpu = null;
+	private MEM mem = null;
+	private INPUT input = null;
+	private TIMER timer = null;
+	private Gui gui;
 
-	boolean useBios = false;
+	private static BasicDisplay basicDisplay = null;
 
-	//private static final String gameFileName = "resource/tetris.gb";
-	//private static final String gameFileName = "resource/mario.gb";
-	//private static final String gameFileName = "resource/drmario.gb";
-	//private static final String gameFileName = "resource/othello.gb";
-	//private static final String gameFileName = "resource/spaceinvaders.gb"; //
-	//private static final String gameFileName = "resource/klax.gb";
-	// private static final String gameFileName = "resource/tennis.gb";
-	// private static final String gameFileName = "resource/bghost.gb";
-	// private static final String gameFileName = "resource/motocross.gb";
-	// private static final String gameFileName = "resource/asteroids.gb";
-	 // private static final String gameFileName = "resource/bowling.gb";
-	//private static final String gameFileName = "resource/loderunner.gb";
-	//private static final String gameFileName = "resource/pipedream.gb";
-	//private static final String gameFileName = "resource/alleyway.gb"; // control problem.
-
-	// private static final String gameFileName = "resource/tesserae.gb";
-	// private static final String gameFileName = "resource/serpent.gb";
-
-	//private static final String gameFileName = "resource/batman.gb";
-	private static final String gameFileName = "resource/rtype.gb";
-	//private static final String gameFileName = "resource/pinballfantasies.gb";
-	//private static final String gameFileName = "resource/tetrisattack.gb";
-	// private static final String gameFileName = "resource/qbert.gb";
-	//private static final String gameFileName = "resource/pacman.gb";
-	// private static final String gameFileName = "resource/nemesis2.gb";
-	//private static final String gameFileName = "resource/mario2.gb";
-	//private static final String gameFileName = "resource/bomberman.gb";
-	//private static final String gameFileName = "resource/zelda.gb";
-	//private static final String gameFileName = "resource/garfield.gb";
-	//private static final String gameFileName = "resource/lemmings.gb";
-	//private static final String gameFileName = "resource/hook.gb";
-	//private static final String gameFileName = "resource/xenon2.gb";
-	
-	// BAD PALETTES
-	//private static final String gameFileName = "resource/gargoyle.gb";
-
-	// GAMEBOY COLOR
-	//private static final String gameFileName = "resource/tetrisdx.gbc";
-	//private static final String gameFileName = "resource/mariodx.gbc"; // CART TYPE 0x1B
-	//private static final String gameFileName = "resource/vrally.gbc";
-	//private static final String gameFileName = "resource/internationalrally.gbc";
-	//private static final String gameFileName = "resource/harvestmoon3.gbc";
-	//private static final String gameFileName = "resource/rtypedx.gbc"; // 1B  MBC5+RAM+BATTERY
-	//private static final String gameFileName = "resource/turok.gbc"; // cart type 0x19
-	//private static final String gameFileName = "resource/dk.gbc"; // 0x1b
-	//private static final String gameFileName = "resource/zelda.gbc"; //  0x1b
-	//private static final String gameFileName = "resource/warioland3.gbc"; // 1B  MBC5+RAM+BATTERY
-	//private static final String gameFileName = "resource/mortalkombat.gbc";
-	//private static final String gameFileName = "resource/microsoftentertainmentpack.gbc";
-	//private static final String gameFileName = "resource/yodastories.gbc"; //
-	//private static final String gameFileName = "resource/f18thunderstrike.gbc";
-	//private static final String gameFileName = "resource/F1WorldGrandPrixII.gbc";
-	//private static final String gameFileName = "resource/StreetFighterAlpha.gbc";
-	//private static final String gameFileName = "resource/pokemoncrystal.gbc";
-	
-	// NON WORKING GAMES
-	//private static final String gameFileName = "resource/oracle.gbc"; // 
-	//private static final String gameFileName = "resource/pokemon_blue.gb"; // 13
-	//private static final String gameFileName = "resource/tombraider.gbc"; // 0x1b
-	//private static final String gameFileName = "resource/rayman.gbc"; // 0x19 - not working
-	//private static final String gameFileName = "resource/aladdin.gbc"; // 19 - not working
-	//private static final String gameFileName = "resource/tony.gbc"; // 19 not working
-	//private static final String gameFileName = "resource/startrek.gb";
-	//private static final String gameFileName = "resource/spot.gb";
-	//private static final String gameFileName = "resource/bombjack.gb";
-	//private static final String gameFileName = "resource/centipede.gb";
-	//private static final String gameFileName = "resource/arcade1.gb";
-	//private static final String gameFileName = "resource/aladdin.gb";
-	//private static final String gameFileName = "resource/megamanextreme.gbc";
-	
-
-	// private static final String gameFileName = "resource/cpu_instrs.gb";
-	// private static final String gameFileName = "resource/tests/opus5.gb";
-	// private static final String gameFileName = "resource/tests/01-special.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/02-interrupts.gb"; // FAIL
-	// private static final String gameFileName = "resource/tests/03-op sp,hl.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/04-op r,imm.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/05-op rp.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/06-ld r,r.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/07-jr,jp,call,ret,rst.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/08-misc instrs.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/09-op r,r.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/10-bit ops.gb"; // PASS
-	// private static final String gameFileName = "resource/tests/11-op a,(hl).gb"; // PASS
+	private boolean useBios = false;
 
 	public static void main(String[] args) {
 		Debug.checkInstructionDefs();
@@ -108,31 +27,53 @@ public class Emulator {
 		emulator.run();
 	}
 
-	public Emulator() {
+	private Emulator() {
 		cpu = new CPU();
 		gpu = new GPU(displayScale);
 		mem = new MEM(cpu);
 		input = new INPUT(cpu);
 		timer = new TIMER(cpu);
+		gui = new Gui(this);
 
 		cpu.attachHardware(mem, input, gpu);
 		basicDisplay = new BasicDisplayAwt(160*displayScale,144*displayScale);
 		basicDisplay.setTitle("JGB");
 
-		Utils.ReadFileBytesToMemoryLocation("resource/dmg_boot.bin", mem.BIOS, 0);
+		Utils.ReadFileBytesToMemoryLocation(biosPath+"dmg_boot.bin", mem.BIOS, 0);
 		//Utils.ReadFileBytesToMemoryLocation("resource/gbc_bios.bin", mem.BIOS, 0);
-		
-		Utils.ReadFileBytesToMemoryLocation(gameFileName, mem.CARTRIDGE, 0);
+
+		String gameFileName = DebugRomChoser.getDebugRomName();
+
+		loadCart(romPath + gameFileName );
+
+		reset();
+	}
+
+	public void loadCart(String path) {
+		Utils.ReadFileBytesToMemoryLocation(path, mem.CARTRIDGE, 0);
 
 		mem.init(); // Need to load the cartridge before initing memory.
-		
+
+	}
+
+	public void reset() {
+
+		if (useBios) {
+			cpu.mem.biosActive = true;
+			cpu.PC = 0x0000;
+		} else {
+			cpu.mem.biosActive = false;
+			cpu.PC = 0x0100;
+		}
+
 		// Initial state.
 		setInitialState();
 		cpu.A = 0x11; // GBC
+
 	}
 
-	public void run() {
-		System.out.println("Cartridge type: " + Utils.toHex2(HEADER.getMemoryBankControllerType(cpu))+"  " + HEADER.getMemoryBankControllerName(cpu));
+	private void run() {
+		System.out.println("Cartridge type: " + Utils.toHex2(CartHeader.getMemoryBankControllerType(cpu))+"  " + CartHeader.getMemoryBankControllerName(cpu));
 		if (useBios) {
 			cpu.mem.biosActive = true;
 			cpu.PC = 0x0000;
@@ -149,11 +90,11 @@ public class Emulator {
 		}
 	}
 
-	public void tick() {
+	private void tick() {
 		cpu.tick();
 		timer.tick(1); // random number.
 		input.tick(basicDisplay);
-		
+		gui.tick(basicDisplay);
 		//degradeMemory();
 	}
 
@@ -168,7 +109,7 @@ public class Emulator {
 	public void degradeMemory() {
 
 		// Vram
-		if (Math.random()<0.0002) glitchArea(0x8000, 0x9fff);
+		if (Math.random()<0.002) glitchArea(0x8000, 0x9fff);
 		
 		// OAM
 		if (Math.random()<0.002) glitchArea(0xFE00, 0xFE9F);
@@ -177,10 +118,10 @@ public class Emulator {
 		//if (Math.random()<0.02) glitchArea(0xFF80, 0xFFFE);
 		
 		// work ram bank 0 
-		//if (Math.random()<0.0002) glitchArea(0xC000, 0xCFFF);
+		if (Math.random()<0.002) glitchArea(0xC000, 0xCFFF);
 	}
 	
-	public void glitchArea(int start, int end) {
+	private void glitchArea(int start, int end) {
 		int addr = start + (int)(Math.random()*(end-start));
 		int val = mem.peek(addr);
 		val += (int)((Math.random()-0.5)*3);
@@ -191,7 +132,7 @@ public class Emulator {
 	
 	
 	// Set initial state as if the BIOS / Bootstrap had been run.
-	public void setInitialState() {
+	private void setInitialState() {
 		cpu.setAF(0x01B0);
 		cpu.setBC(0x0013);
 		cpu.setDE(0x00D8);

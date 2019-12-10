@@ -1,8 +1,13 @@
-package com.physmo.jgb;
+package com.physmo.jgb.rombank;
+
+import com.physmo.jgb.CPU;
+import com.physmo.jgb.MEM;
 
 public class MBC5 implements ROMBank {
 
 	public CPU cpu;
+	private MEM mem;
+
 	// public MEM mem;
 	int currentRomBank = 0;
 	int currentRamBank = 0;
@@ -15,6 +20,8 @@ public class MBC5 implements ROMBank {
 
 	public MBC5(CPU cpu) {
 		this.cpu = cpu;
+		mem = cpu.getMem();
+
 		// this.mem = cpu.mem;
 	}
 
@@ -46,7 +53,7 @@ public class MBC5 implements ROMBank {
         case 0xA:
         case 0xB:
         	int newAddress = address - 0xA000;
-			cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data&0xff;
+			mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data&0xff;
             break;
 //        case 0xC:
 ////            location &= 0x0FFF;
@@ -81,17 +88,17 @@ public class MBC5 implements ROMBank {
 		// Are we reading from the SWITCHABLE ROM cartridge memory bank?
 		if ((address >= 0x4000) && (address <= 0x7FFF)) {
 			int newAddress = address - 0x4000;
-			return cpu.mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
+			return mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
 		}
 
 		// Are we reading from the cartridge RAM memory bank?
 		if ((address >= 0xA000) && (address <= 0xBFFF)) {
 			int newAddress = address - 0xA000;
-			return cpu.mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
+			return mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
 		}
 
 		// else return memory
-		return cpu.mem.CARTRIDGE[address];
+		return mem.CARTRIDGE[address];
 
 	}
 

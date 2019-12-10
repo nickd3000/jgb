@@ -3,6 +3,7 @@
   <component name="ProjectModuleManager">
     <modules>
       <module fileurl="file://$PROJECT_DIR$/JGB.iml" filepath="$PROJECT_DIR$/JGB.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../minvio/minvio.iml" filepath="$PROJECT_DIR$/../minvio/minvio.iml" />
     </modules>
   </component>
 </project>

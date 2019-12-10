@@ -1,13 +1,5 @@
 package com.physmo.jgb;
 
-class AddressContainer {
-	public int oprnd = 0, val = 0, addr = 0;
-	public String bytesRead = "";
-	ADDRMODE mode = ADDRMODE.NONE;
-}
-
-enum HARDWARE_TYPE {DMG1, CGB}
-
 public class CPU {
 	public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.CGB;
 	
@@ -66,6 +58,10 @@ public class CPU {
 		this.mem = mem;
 		this.input = input;
 		this.gpu = gpu;
+	}
+
+	public MEM getMem() {
+		return mem;
 	}
 
 	int serialBit = 0;
@@ -517,7 +513,7 @@ public class CPU {
 			A = wrk & 0xff;
 			break;
 		case PREFIX:
-			CPUPrefix.processPrefixCommand(this, ac1.val);
+			CPUPrefixInstructions.processPrefixCommand(this, ac1.val);
 			break;
 		case SCF:
 			setFlag(FLAG_CARRY);
@@ -571,13 +567,13 @@ public class CPU {
 			}
 			break;
 		case JPNC:
-			if (testFlag(FLAG_CARRY) == false) {
+			if (!testFlag(FLAG_CARRY)) {
 				wrk = ac1.val;
 				PC = wrk;
 			}
 			break;
 		case JPC:
-			if (testFlag(FLAG_CARRY) == true) {
+			if (testFlag(FLAG_CARRY)) {
 				wrk = ac1.val;
 				PC = wrk;
 			}

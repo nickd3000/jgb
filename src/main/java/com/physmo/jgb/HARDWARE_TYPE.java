@@ -1,3 +1,6 @@
 package com.physmo.jgb;
 
-enum HARDWARE_TYPE {DMG1, CGB}
+enum HARDWARE_TYPE {
+    DMG1,
+    CGB
+}

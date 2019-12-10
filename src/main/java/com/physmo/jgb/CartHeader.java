@@ -1,9 +1,9 @@
 package com.physmo.jgb;
 
-public class HEADER {
+public class CartHeader {
 
 	// TODO: rewrite this to use enums instead of ints.
-	enum MBCTYPE {ROM_ONLY, MBC1}
+	//enum MBCTYPE {ROM_ONLY, MBC1}
 
 	public static int getMemoryBankControllerType(CPU cpu) {
 		int type = cpu.mem.peek(0x0147);

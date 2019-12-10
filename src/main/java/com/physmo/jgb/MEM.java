@@ -19,6 +19,11 @@ package com.physmo.jgb;
  * 
  */
 
+import com.physmo.jgb.rombank.MBC1;
+import com.physmo.jgb.rombank.MBC5;
+import com.physmo.jgb.rombank.ROMBank;
+import com.physmo.jgb.rombank.ROM_ONLY;
+
 public class MEM {
 
 	public static final int ADDR_FF01_SERIAL_DATA = 0xFF01;
@@ -69,7 +74,7 @@ public class MEM {
 	}
 
 	public void createMBCForHeaderType() {
-		int mbcType = HEADER.getMemoryBankControllerType(cpu);
+		int mbcType = CartHeader.getMemoryBankControllerType(cpu);
 		
 		if (forceMemoryBankType!=-1) mbcType=forceMemoryBankType;
 		

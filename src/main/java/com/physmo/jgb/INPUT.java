@@ -60,9 +60,7 @@ public class INPUT {
 		}
 		
 		// Now copy new state to previous state.
-		for (int i = 0; i < keyMap.length; i++) {
-			keyPrevious[i]=keyState[i];
-		}
+		System.arraycopy(keyState, 0, keyPrevious, 0, keyMap.length);
 	}
 	
 	

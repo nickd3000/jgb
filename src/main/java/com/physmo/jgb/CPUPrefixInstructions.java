@@ -4,7 +4,7 @@ package com.physmo.jgb;
 // Some explanation of instructions - rolls etc
 // http://www.devrs.com/gb/files/opcodes.html
 	
-public class CPUPrefix {
+public class CPUPrefixInstructions {
 
 	public static void processPrefixCommand(CPU cpu, int instr) {
 

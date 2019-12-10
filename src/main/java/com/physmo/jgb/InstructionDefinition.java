@@ -1,35 +1,7 @@
 package com.physmo.jgb;
 
-/*
- 	Minimal set of address modes:
- 	
- 	(BC)
-	(DE)
-	(HL)
-	(nnnn)
-	
-	A
-	B
-	C
-	D
-	E
-	H
-	L
-	Z
-	BC
-	DE
-	NZ
-	disp
-	HL
-	NC
-	nn
-	nnnn
-	SP
-
- */
 enum ADDRMODE {
-	NONE, __BC, __DE, __HL, __nnnn, A, B, C, D, E, H, L, Z, AF, BC, DE, NZ, disp, HL, NC, nn, nnnn, SP,
-	// A, ABS, ABS_X, ABS_Y, IMDT, IMPL, IND, X_IND, IND_Y, REL, ZPG, ZPG_X, ZPG_Y,
+	NONE, __BC, __DE, __HL, __nnnn, A, B, C, D, E, H, L, Z, AF, BC, DE, HL, nn, nnnn, SP,
 }
 
 enum COMMAND {
