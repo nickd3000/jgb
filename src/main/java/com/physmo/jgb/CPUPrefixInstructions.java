@@ -1,5 +1,6 @@
 package com.physmo.jgb;
 
+// CPU Extended commands.
 // Some explanation of instructions - rolls etc
 // http://www.devrs.com/gb/files/opcodes.html
 	
