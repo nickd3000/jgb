@@ -531,22 +531,22 @@ public class CPU {
 			
 			break;
 		case JRNZ:
-			if (testFlag(FLAG_ZERO) == false) {
+			if (!testFlag(FLAG_ZERO)) {
 				jumpRelative(ac1.val);
 			}
 			break;
 		case JRZ:
-			if (testFlag(FLAG_ZERO) == true) {
+			if (testFlag(FLAG_ZERO)) {
 				jumpRelative(ac1.val);
 			}
 			break;
 		case JRNC:
-			if (testFlag(FLAG_CARRY) == false) {
+			if (!testFlag(FLAG_CARRY)) {
 				jumpRelative(ac1.val);
 			}
 			break;
 		case JRC:
-			if (testFlag(FLAG_CARRY) == true) {
+			if (testFlag(FLAG_CARRY)) {
 				jumpRelative(ac1.val);
 			}
 			break;
@@ -555,13 +555,13 @@ public class CPU {
 
 			break;
 		case JPZ:
-			if (testFlag(FLAG_ZERO) == true) {
+			if (testFlag(FLAG_ZERO)) {
 				wrk = ac1.val;
 				PC = wrk;
 			}
 			break;
 		case JPNZ:
-			if (testFlag(FLAG_ZERO) == false) {
+			if (!testFlag(FLAG_ZERO)) {
 				wrk = ac1.val;
 				PC = wrk;
 			}
