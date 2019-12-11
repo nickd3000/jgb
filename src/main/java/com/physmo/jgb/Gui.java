@@ -3,17 +3,17 @@ package com.physmo.jgb;
 import com.physmo.minvio.BasicDisplay;
 
 import javax.swing.*;
-
 import java.io.File;
 
 import static java.awt.event.KeyEvent.VK_L;
 
+// Simple file chooser for loading roms
 public class Gui {
     //BasicDisplay bd;
     //Create a file chooser
     final JFileChooser fc = new JFileChooser();
     Emulator emulator;
-    int[] keyStatePrevious ;
+    int[] keyStatePrevious;
 
     public Gui(Emulator emulator) {
         this.emulator = emulator;
@@ -27,8 +27,8 @@ public class Gui {
         int[] keyState = basicDisplay.getKeyState();
 
 
-        if (keyState[loadKey]>0 && keyStatePrevious[loadKey]==0) {
-            System.out.println("key "+keyState.length);
+        if (keyState[loadKey] > 0 && keyStatePrevious[loadKey] == 0) {
+            System.out.println("key " + keyState.length);
 
             int returnVal = fc.showOpenDialog(null);
             File file = fc.getSelectedFile();
@@ -36,7 +36,7 @@ public class Gui {
             emulator.reset();
         }
 
-        System.arraycopy(keyState,0,keyStatePrevious,0,keyState.length);
+        System.arraycopy(keyState, 0, keyStatePrevious, 0, keyState.length);
 
     }
 }
