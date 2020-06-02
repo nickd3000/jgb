@@ -2,9 +2,9 @@ package com.physmo.jgb;
 
 public class TIMER {
 
-    public static int TIMA = 0xFF05;
-    public static int TMA = 0xFF06;
-    public static int TMC = 0xFF07;
+    public static int ADDR_0xFF05_TIMA = 0xFF05;
+    public static int ADDR_0xFF06_TMA = 0xFF06;
+    public static int ADDR_0xFF07_TMC = 0xFF07;
 
     CPU cpu = null;
     int timerCounter = 1024;
@@ -17,18 +17,18 @@ public class TIMER {
     }
 
     public boolean isClockEnabled() {
-        int iTMC = cpu.mem.RAM[TMC];
+        int iTMC = cpu.mem.RAM[ADDR_0xFF07_TMC];
 
         return (iTMC & (1 << 2)) > 0;
         // return TestBit(ReadMemory(TMC),2)?true:false ;
     }
 
     public int getClockFreq() {
-        int val = cpu.mem.RAM[TMC];
+        int val = cpu.mem.RAM[ADDR_0xFF07_TMC];
         return val & 0x3;
     }
 
-    public void SetClockFreq() {
+    public void setClockFreq() {
         int freq = getClockFreq();
         switch (freq) {
             case 0:
@@ -56,14 +56,14 @@ public class TIMER {
             // enough cpu clock cycles have happened to update the timer
             if (timerCounter <= 0) {
                 // reset m_TimerTracer to the correct value
-                SetClockFreq();
+                setClockFreq();
 
                 // timer about to overflow
-                if (cpu.mem.RAM[TIMA] > 255) {
-                    cpu.mem.RAM[TIMA] = cpu.mem.RAM[TMA];
+                if (cpu.mem.RAM[ADDR_0xFF05_TIMA] > 255) {
+                    cpu.mem.RAM[ADDR_0xFF05_TIMA] = cpu.mem.RAM[ADDR_0xFF06_TMA];
                     cpu.requestInterrupt(CPU.INT_TIMER);
                 } else {
-                    cpu.mem.RAM[TIMA]++;
+                    cpu.mem.RAM[ADDR_0xFF05_TIMA]++;
                 }
             }
         }

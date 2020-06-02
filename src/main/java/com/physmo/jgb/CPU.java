@@ -1,36 +1,27 @@
 package com.physmo.jgb;
 
 public class CPU {
-    // Constants that peek and poke will interpret as registers etc.
-    public static final int ADDR_INVALID = 0xDEADBEEF; // Operand address that shouldn't be written to.
-    public static final int ADDR_A = -1;
-    public static final int ADDR_B = -2;
-    public static final int ADDR_C = -3;
-    public static final int ADDR_D = -4;
-    public static final int ADDR_E = -5;
-    public static final int ADDR_H = -6;
-    public static final int ADDR_L = -7;
-    public static final int ADDR_F = -8;
-    public static final int ADDR_SP = -10;
-    public static final int ADDR_HL = -11;
-    public static final int ADDR_BC = -12;
-    public static final int ADDR_DE = -13;
-    public static final int ADDR_AF = -14;
-    public static final int FLAG_ZERO = 1 << 7;
-    public static final int FLAG_ADDSUB = 1 << 6;
-    public static final int FLAG_HALFCARRY = 1 << 5;
-    public static final int FLAG_CARRY = 1 << 4;
-    public static int INT_VBLANK = 1; // Vblank off Vblank on
-    public static int INT_LCDSTAT = 1 << 1; // LCD stat off LCD stat on
-    public static int INT_TIMER = 1 << 2; // Timer off Timer on
-    public static int INT_SERIAL = 1 << 3; // Serial off Serial on
-    public static int INT_JOYPAD = 1 << 4; // Joypad off
+
+    // CPU Flags
+    public static final int FLAG_ZERO = 0b1000_0000;
+    public static final int FLAG_ADDSUB = 0b0100_0000;
+    public static final int FLAG_HALFCARRY = 0b0010_0000;
+    public static final int FLAG_CARRY = 0b0001_0000;
+
+    // Interrupts
+    public static int INT_VBLANK = 0b0000_0001; // Vblank off Vblank on
+    public static int INT_LCDSTAT = 0b0000_0010; // LCD stat off LCD stat on
+    public static int INT_TIMER = 0b0000_0100; // Timer off Timer on
+    public static int INT_SERIAL = 0b0000_1000; // Serial off Serial on
+    public static int INT_JOYPAD =  0b0001_0000; // Joypad off
+
     public static boolean displayInstruction = false;
     public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.CGB;
     public INPUT input = null;
     public boolean speedMode = false;
     MEM mem = null;
     GPU gpu = null;
+
     // Registers.
     int A, B, C, D, E, H, L;
     int PC; // Program counter
@@ -816,99 +807,82 @@ public class CPU {
         PC = addr;
     }
 
-    // Based on the address mode, set up data and addresses to be used by the
-    // operation.
+    // Based on the address mode, set up the address container
+    // with data and addresses to be used by the current operation.
     public void processAddressMode(AddressContainer ac, ADDRMODE mode) {
         int peeked = 0;
 
         ac.mode = mode;
-        ac.addr = ADDR_INVALID;
+        ac.addr = AddrMap.ADDR_INVALID;
 
         switch (mode) {
             case NONE:
                 break;
             case nn:
-                peeked = getNextByte();
-                ac.val = peeked;
+                ac.val = getNextByte();
                 break;
             case nnnn:
-                peeked = getNextWord();
-                ac.val = peeked;
+                ac.val = getNextWord();
                 break;
             case A:
-                peeked = A;
-                ac.val = peeked;
-                ac.addr = ADDR_A;
+                ac.val = A;
+                ac.addr = AddrMap.ADDR_A;
                 break;
             case B:
-                peeked = B;
-                ac.val = peeked;
-                ac.addr = ADDR_B;
+                ac.val = B;
+                ac.addr = AddrMap.ADDR_B;
                 break;
             case C:
-                peeked = C;
-                ac.val = peeked;
-                ac.addr = ADDR_C;
+                ac.val = C;
+                ac.addr = AddrMap.ADDR_C;
                 break;
             case D:
-                peeked = D;
-                ac.val = peeked;
-                ac.addr = ADDR_D;
+                ac.val = D;
+                ac.addr = AddrMap.ADDR_D;
                 break;
             case E:
-                peeked = E;
-                ac.val = peeked;
-                ac.addr = ADDR_E;
+                ac.val = E;
+                ac.addr = AddrMap.ADDR_E;
                 break;
             case H:
-                peeked = H;
-                ac.val = peeked;
-                ac.addr = ADDR_H;
+                ac.val = H;
+                ac.addr = AddrMap.ADDR_H;
                 break;
             case L:
-                peeked = L;
-                ac.val = peeked;
-                ac.addr = ADDR_L;
+                ac.val = L;
+                ac.addr = AddrMap.ADDR_L;
                 break;
 
             case SP:
-                peeked = SP;
-                ac.val = peeked;
-                ac.addr = ADDR_SP;
+                ac.val = SP;
+                ac.addr = AddrMap.ADDR_SP;
                 break;
             case HL:
-                peeked = getHL();
-                ac.val = peeked;
-                ac.addr = ADDR_HL;
+                ac.val = getHL();
+                ac.addr = AddrMap.ADDR_HL;
                 break;
             case BC:
-                peeked = getBC();
-                ac.val = peeked;
-                ac.addr = ADDR_BC;
+                ac.val = getBC();
+                ac.addr = AddrMap.ADDR_BC;
                 break;
             case DE:
-                peeked = getDE();
-                ac.val = peeked;
-                ac.addr = ADDR_DE;
+                ac.val = getDE();
+                ac.addr = AddrMap.ADDR_DE;
                 break;
             case AF:
-                peeked = getAF();
-                ac.val = peeked;
-                ac.addr = ADDR_AF;
+                ac.val = getAF();
+                ac.addr = AddrMap.ADDR_AF;
                 break;
             case __HL:
-                peeked = mem.peek(getHL());
-                ac.val = peeked;
+                ac.val = mem.peek(getHL());
                 ac.addr = getHL();
                 break;
             case __BC:
-                peeked = mem.peek(getBC());
-                ac.val = peeked;
+                ac.val = mem.peek(getBC());
                 ac.addr = getBC();
                 break;
             case __DE:
-                peeked = mem.peek(getDE());
-                ac.val = peeked;
+                ac.val = mem.peek(getDE());
                 ac.addr = getDE();
                 break;
             case __nnnn:

@@ -38,6 +38,8 @@ public class GPU {
     public final int[] cgbSpritePaletteData = new int[64];
     private final Sprite[] sprites = new Sprite[40];
     private final PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
+
+    // TODO: set these up in a method
     private final int[] backgroundPaletteMaster = {
             PaletteGenerator.get(paletteType, 0),
             PaletteGenerator.get(paletteType, 1),
@@ -63,7 +65,7 @@ public class GPU {
     private final int[] cgbSpriteColors = new int[64];
     int drawBufferWidth = 160;
     int drawBufferHeight = 144;
-    //160 x 144
+
     BufferedImage drawBuffer = new BufferedImage(drawBufferWidth, drawBufferHeight, BufferedImage.TYPE_INT_ARGB);
     private int scale = 3;
     private int clock = 0;
@@ -139,7 +141,7 @@ public class GPU {
 
     private void processPalettes(CPU cpu) {
         //int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
-        int bgPalette = cpu.mem.peek(MEM.ADDR_0xFF47_BGPALETTE);
+        int bgPalette = cpu.mem.peek(MEM.ADDR_FF47_BGPALETTE);
 
         backgroundPaletteMap[0] = backgroundPaletteMaster[(bgPalette & 0b11)];
         backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette >> 2) & 0b11)];
@@ -147,14 +149,14 @@ public class GPU {
         backgroundPaletteMap[3] = backgroundPaletteMaster[((bgPalette >> 6) & 0b11)];
 
         //int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
-        int sprPalette1 = cpu.mem.peek(MEM.ADDR_0xFF48_SPRITEPALETTE1);
+        int sprPalette1 = cpu.mem.peek(MEM.ADDR_FF48_SPRITEPALETTE1);
         sprite1PaletteMap[0] = sprite1PaletteMaster[(sprPalette1 & 3)];
         sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1 >> 2) & 3)];
         sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1 >> 4) & 3)];
         sprite1PaletteMap[3] = sprite1PaletteMaster[((sprPalette1 >> 6) & 3)];
 
         //int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
-        int sprPalette2 = cpu.mem.peek(MEM.ADDR_0xFF49_SPRITEPALETTE2);
+        int sprPalette2 = cpu.mem.peek(MEM.ADDR_FF49_SPRITEPALETTE2);
         sprite2PaletteMap[0] = sprite2PaletteMaster[(sprPalette2 & 3)];
         sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2 >> 2) & 3)];
         sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2 >> 4) & 3)];
@@ -231,7 +233,7 @@ public class GPU {
 //		}
 
         int previousMode = currentMode;
-        int y = cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE]; // Scanline register
+        int y = cpu.mem.RAM[MEM.ADDR_FF44_SCANLINE]; // Scanline register
         int lcdStat = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
         int lcdControl = cpu.mem.RAM[0xFF40];
 
@@ -239,7 +241,7 @@ public class GPU {
 
         // Handle LCD OFF
         if (!lcdEnabled) {
-            cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE] = 0;
+            cpu.mem.RAM[MEM.ADDR_FF44_SCANLINE] = 0;
             cpu.mem.RAM[0xFF41] &= 0b11111100;
 
             if (previousMode != 0 && testBit(lcdStat, 3)) {

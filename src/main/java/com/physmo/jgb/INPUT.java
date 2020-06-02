@@ -43,12 +43,12 @@ public class INPUT {
             if (keyPrevious[i] == 10 && keyState[i] == 1) {
 
                 // Should we only respond to the signals the cpu is looking for?
-                if (i <= 3 && (cpu.mem.RAM[0xFF00] & 0x10) > 0) {
+                if (i <= 3 && (cpu.mem.RAM[MEM.ADDR_FF00_JOYPAD] & 0x10) > 0) {
                     System.out.println("jp int");
                     cpu.requestInterrupt(CPU.INT_JOYPAD);
                 }
 
-                if (i >= 4 && (cpu.mem.RAM[0xFF00] & 0x20) > 0) {
+                if (i >= 4 && (cpu.mem.RAM[MEM.ADDR_FF00_JOYPAD] & 0x20) > 0) {
                     System.out.println("jp int");
                     cpu.requestInterrupt(CPU.INT_JOYPAD);
                 }
@@ -62,7 +62,7 @@ public class INPUT {
 
 
     public void pokeFF00(int val) {
-        cpu.mem.RAM[0xFF00] = val & 0x30;
+        cpu.mem.RAM[MEM.ADDR_FF00_JOYPAD] = val & 0x30;
 
         //this.register.p1 = byte&0x30;
     }
@@ -78,7 +78,7 @@ public class INPUT {
         Bit 0 - P10 Input Right or Button A (0=Pressed) (Read Only)
      */
     public int peekFF00() {
-        int status = cpu.mem.RAM[0xFF00];
+        int status = cpu.mem.RAM[MEM.ADDR_FF00_JOYPAD];
 
         int directionCombined = (keyState[DOWN] << 3) | (keyState[UP] << 2) | (keyState[LEFT] << 1) | (keyState[RIGHT]);
         int buttonsCombined = (keyState[START] << 3) | (keyState[SELECT] << 2) | (keyState[B] << 1) | (keyState[A]);
@@ -86,7 +86,7 @@ public class INPUT {
         directionCombined = (~directionCombined) & 0x0f;
         buttonsCombined = (~buttonsCombined) & 0x0f;
 
-        int controlFlags = cpu.mem.RAM[0xFF00] & 0x30;
+        int controlFlags = cpu.mem.RAM[MEM.ADDR_FF00_JOYPAD] & 0x30;
 
         if ((status & 0x10) > 0)
             return ((buttonsCombined) & 0x0F) | controlFlags;
