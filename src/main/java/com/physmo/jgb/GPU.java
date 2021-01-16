@@ -312,8 +312,7 @@ public class GPU {
 
 
                 bd.drawImage(drawBuffer, 0, 0, drawBufferWidth * scale, drawBufferHeight * scale);
-                bd.refresh(60);
-
+                bd.repaint(60);
 
             }
         }

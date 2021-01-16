@@ -8,8 +8,8 @@ public class Emulator {
 
     public static final int GPU_CYCLES_PER_TICK = 10;
     private static BasicDisplay basicDisplay = null;
-    private String biosPath = "/Users/nick/emulatorsupportfiles/gb/bios/";
-    private String romPath = "/Users/nick/emulatorsupportfiles/gb/roms/";
+    private String biosPath = "/Users/nick/dev/emulatorsupportfiles/gb/bios/";
+    private String romPath = "/Users/nick/dev/emulatorsupportfiles/gb/roms/";
     private int displayScale = 3;
     private CPU cpu = null;
     private GPU gpu = null;
