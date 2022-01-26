@@ -6,13 +6,13 @@
         <sourceOutputDir name="target/generated-sources/annotations" />
         <sourceTestOutputDir name="target/generated-test-sources/test-annotations" />
         <outputRelativeToContentRoot value="true" />
-        <module name="minvio" />
         <module name="JGB" />
+        <module name="minvio" />
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="JGB" target="1.8" />
-      <module name="minvio" target="1.8" />
+      <module name="JGB" target="11" />
+      <module name="minvio" target="11" />
     </bytecodeTargetLevel>
   </component>
 </project>
