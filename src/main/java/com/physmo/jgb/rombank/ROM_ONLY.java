@@ -6,7 +6,7 @@ import com.physmo.jgb.MEM;
 public class ROM_ONLY implements ROMBank {
 
     public CPU cpu;
-    private MEM mem;
+    private final MEM mem;
 
     public ROM_ONLY(CPU cpu) {
         this.cpu = cpu;

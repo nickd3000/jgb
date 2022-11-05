@@ -1,27 +1,29 @@
 package com.physmo.jgb;
 
+
 public class Debug {
 
     public static String dissasemble(CPU cpu, int addr) {
-
-        String str = "> ";
-        int instr = cpu.mem.peek(addr);
-        InstructionDefinition def = InstructionDefinition.getEnumFromId(instr);
-
-        String strBytes = "";
-        int numBytes = def.getNumBytes();
-        for (int i = 0; i < numBytes; i++) {
-            strBytes += " " + Utils.toHex2(cpu.mem.peek(addr + i));
-        }
-        strBytes = Utils.padToLength(strBytes, 10);
-
-        str += "0x" + Utils.toHex4(addr); // Address
-        str += "  " + strBytes;
-        str += "  " + def.toString();
-
-        str = Utils.padToLength(str, 40 - 6);
-
-        return str;
+//
+//        String str = "> ";
+//        int instr = cpu.mem.peek(addr);
+//        _InstructionDefinition def = _InstructionDefinition.getEnumFromId(instr);
+//
+//        String strBytes = "";
+//        int numBytes = def.getNumBytes();
+//        for (int i = 0; i < numBytes; i++) {
+//            strBytes += " " + Utils.toHex2(cpu.mem.peek(addr + i));
+//        }
+//        strBytes = Utils.padToLength(strBytes, 10);
+//
+//        str += "0x" + Utils.toHex4(addr); // Address
+//        str += "  " + strBytes;
+//        str += "  " + def.toString();
+//
+//        str = Utils.padToLength(str, 40 - 6);
+//
+//        return str;
+        return "";
     }
 
     public static String getFlags(CPU cpu) {
@@ -98,31 +100,16 @@ public class Debug {
 
     public static void checkInstructionDefs() {
 
-        for (InstructionDefinition id : InstructionDefinition.values()) {
-            ADDRMODE am1 = id.getAddressMode1();
-            ADDRMODE am2 = id.getAddressMode2();
-
-            int total = getAddressModeBytes(am1) + getAddressModeBytes(am2);
-            int numBytes = id.getNumBytes();
-        }
-
-    }
-
-    public static int getAddressModeBytes(ADDRMODE a) {
-        switch (a) {
-
-            case __nnnn:
-                return 2;
-            case nnnn:
-                return 2;
-            case nn:
-                return 1;
-
-            default:
-                return 0;
-        }
+//        for (_InstructionDefinition id : _InstructionDefinition.values()) {
+//            ADDRMODE am1 = id.getAddressMode1();
+//            ADDRMODE am2 = id.getAddressMode2();
+//
+//            int total = getAddressModeBytes(am1) + getAddressModeBytes(am2);
+//            int numBytes = id.getNumBytes();
+//        }
 
     }
+
 
     public static void checkRegisters(CPU cpu) {
         checkRegister8Bit(cpu, cpu.A, "A");

@@ -3,7 +3,7 @@ package com.physmo.jgb;
 import com.physmo.jgb.PaletteGenerator.PALETTE_TYPE;
 import com.physmo.minvio.BasicDisplay;
 
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 //import com.physmo.toolbox.BasicDisplay;
@@ -119,15 +119,6 @@ public class GPU {
 //		#define princessCGBPal0c3 5344 14e0
     }
 
-    public void setGBCColorManually(int[] colorList, int index, int hexColor) {
-        int r = ((hexColor >> 16) & 0xff) >> 3;
-        int g = ((hexColor >> 8) & 0xff) >> 3;
-        int b = ((hexColor & 0xff)) >> 3;
-        int combined = (r << 10) | (g << 5) | b;
-        colorList[index * 2] = combined & 0xff;
-        colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
-    }
-
     private void setGBCColorManually2(
             int[] colorList, int index, double r, double g, double b, double v) {
 
@@ -139,80 +130,13 @@ public class GPU {
         colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
     }
 
-    private void processPalettes(CPU cpu) {
-        //int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
-        int bgPalette = cpu.mem.peek(MEM.ADDR_FF47_BGPALETTE);
-
-        backgroundPaletteMap[0] = backgroundPaletteMaster[(bgPalette & 0b11)];
-        backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette >> 2) & 0b11)];
-        backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette >> 4) & 0b11)];
-        backgroundPaletteMap[3] = backgroundPaletteMaster[((bgPalette >> 6) & 0b11)];
-
-        //int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
-        int sprPalette1 = cpu.mem.peek(MEM.ADDR_FF48_SPRITEPALETTE1);
-        sprite1PaletteMap[0] = sprite1PaletteMaster[(sprPalette1 & 3)];
-        sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1 >> 2) & 3)];
-        sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1 >> 4) & 3)];
-        sprite1PaletteMap[3] = sprite1PaletteMaster[((sprPalette1 >> 6) & 3)];
-
-        //int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
-        int sprPalette2 = cpu.mem.peek(MEM.ADDR_FF49_SPRITEPALETTE2);
-        sprite2PaletteMap[0] = sprite2PaletteMaster[(sprPalette2 & 3)];
-        sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2 >> 2) & 3)];
-        sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2 >> 4) & 3)];
-        sprite2PaletteMap[3] = sprite2PaletteMaster[((sprPalette2 >> 6) & 3)];
-    }
-
-    private void processGBCPalettes(CPU cpu) {
-        int col = 0;
-        for (int i = 0; i < 64; i += 2) {
-            cgbBackgroundColors[col] = createColorFrom2ByteValue(
-                    cgbBackgroundPaletteData[i],
-                    cgbBackgroundPaletteData[i + 1]);
-
-            cgbSpriteColors[col] = createColorFrom2ByteValue(
-                    cgbSpritePaletteData[i],
-                    cgbSpritePaletteData[i + 1]);
-            col++;
-        }
-    }
-
-
-    // Bit 0-4   Red Intensity   (00-1F)
-    // Bit 5-9   Green Intensity (00-1F)
-    // Bit 10-14 Blue Intensity  (00-1F)
-    private int createColorFrom2ByteValue(int b2, int b1) {
-        int alpha = 0xff;
-        int scale = 7;
-        int combined = ((b1 & 0xff) << 8) | (b2 & 0xff);
-        int r = (combined) & 0x1f;
-        int g = (combined >> 5) & 0x1f;
-        int b = (combined >> 10) & 0x1f;
-        //return (0xff<<24)+(r<<16)+(g<<8)+b;
-        //return new Color(r*scale,g*scale,b*scale);
-
-        float[] hsv = new float[4];
-        Color.RGBtoHSB(r * scale, g * scale, b * scale, hsv);
-        hsv[1] *= 0.6; // Scale saturation down a bit.
-        int newColInt = Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]);
-
-        return newColInt;
-
-        //return (alpha<<24)+((r*scale)<<16)+((g*scale)<<8)+(b*scale);
-    }
-
-
-    private void setLCDRegisterMode(CPU cpu, int mode) {
-        // 0: During H-Blank
-        // 1: During V-Blank
-        // 2: During Searching OAM-RAM
-        // 3: During Transfering Data to LCD Driver
-        //int val = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
-        int val = cpu.mem.peek(MEM.ADDR_FF41_LCD_STAT);
-        val &= 0b1111_1100;
-        val += (mode & 3);
-        //cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] = val;
-        cpu.mem.poke(MEM.ADDR_FF41_LCD_STAT, val);
+    public void setGBCColorManually(int[] colorList, int index, int hexColor) {
+        int r = ((hexColor >> 16) & 0xff) >> 3;
+        int g = ((hexColor >> 8) & 0xff) >> 3;
+        int b = ((hexColor & 0xff)) >> 3;
+        int combined = (r << 10) | (g << 5) | b;
+        colorList[index * 2] = combined & 0xff;
+        colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
     }
 
     public void debug(CPU cpu, BasicDisplay bd) {
@@ -221,16 +145,6 @@ public class GPU {
     }
 
     public void tick(CPU cpu, BasicDisplay bd, int cycles) {
-
-        //debug(cpu, bd);
-
-        // Send sprite locations to glow system.
-//		if (cpu.mem.RAM[MEM.ADDR_0xFF44_SCANLINE]==1 && frameCount%2==0) {
-//			Glow.clear();
-//			for (int i = 0; i < 40; i++) {
-//				Glow.addSprite(sprites[i].x, sprites[i].y);
-//			}
-//		}
 
         int previousMode = currentMode;
         int y = cpu.mem.RAM[MEM.ADDR_FF44_SCANLINE]; // Scanline register
@@ -336,93 +250,17 @@ public class GPU {
         //cpu.mem.poke(0xFF44,y);
     }
 
-
-    private void debugDrawYIncidence(CPU cpu, BasicDisplay bd) {
-        int ycmp = cpu.mem.RAM[MEM.ADDR_FF45_Y_COMPARE];
-        bd.setDrawColor(Color.RED);
-        bd.drawFilledRect(0, (ycmp - 2) * 2, 5, 4 * 2);
-    }
-
-    private void debugDrawKeyStates(CPU cpu, BasicDisplay bd, int x, int y, Color col) {
-
-        bd.setDrawColor(col);
-
-//		for (int i=0;i<cpu.input.keyState.length;i++) {
-//			bd.drawText(cpu.input.keyState[i]==0?"---":"-1-", x, y+(i*15));
-//		}
-
-        ///
-        bd.setDrawColor(Color.yellow);
-
-        int lcdControl = cpu.mem.RAM[0xFF40];
-        int bgTileMapLocation = 0;
-        boolean signedTileIndices;
-        // Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
-        if (testBit(lcdControl, 3))
-            bgTileMapLocation = 0x9C00 - 0x8000;
-        else
-            bgTileMapLocation = 0x9800 - 0x8000;
-
-        if (testBit(lcdControl, 4) == false) {
-            tileDataPtr = 0x8800;
-            signedTileIndices = true;
-        } else {
-            tileDataPtr = 0x8000;
-            signedTileIndices = false;
-        }
-
-        bd.drawText("lcdControl = " + Utils.toHex2(lcdControl), 10, 300);
-        bd.drawText("bgTileMapLocation = " + Utils.toHex2(bgTileMapLocation), 10, 320);
-        bd.drawText("tileDataPtr = " + Utils.toHex2(tileDataPtr), 10, 340);
-        bd.drawText("signedTileIndices = " + signedTileIndices, 10, 360);
-    }
-
-    private int getSpritePixel2(CPU cpu, int tileId, int subx, int suby, int bank) {
-        int byteOffset = (suby * 2);
-
-        int data1 = 0, data2 = 0;
-        if (bank == 0) {
-            data1 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset];
-            data2 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset + 1];
-        } else {
-            data1 = cpu.mem.VRAMBANK1[(tileId * 16) + byteOffset];
-            data2 = cpu.mem.VRAMBANK1[(tileId * 16) + byteOffset + 1];
-        }
-
-        int mask = 1 << (7 - subx);
-        int color = 0;
-        if ((data1 & mask) > 0)
-            color += 0b0001;
-        if ((data2 & mask) > 0)
-            color += 0b0010;
-
-        return color;
-    }
-
-    private int getTilePixel(CPU cpu, int tileId, int subx, int suby, int bank) {
-        int byteOffset = (suby * 2);
-
-        int normalisedPointer = tileDataPtr - 0x8000;
-
-        int data1 = 0, data2 = 0;
-
-        if (bank == 0) {
-            data1 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset];
-            data2 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset + 1];
-        } else {
-            data1 = cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset];
-            data2 = cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset + 1];
-        }
-
-
-        int mask = 1 << (7 - subx);
-        int color = 0;
-        if ((data1 & mask) > 0)
-            color |= 0b01;
-        if ((data2 & mask) > 0)
-            color |= 0b10;
-
-        return color;
+    private void setLCDRegisterMode(CPU cpu, int mode) {
+        // 0: During H-Blank
+        // 1: During V-Blank
+        // 2: During Searching OAM-RAM
+        // 3: During Transfering Data to LCD Driver
+        //int val = cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT];
+        int val = cpu.mem.peek(MEM.ADDR_FF41_LCD_STAT);
+        val &= 0b1111_1100;
+        val += (mode & 3);
+        //cpu.mem.RAM[MEM.ADDR_FF41_LCD_STAT] = val;
+        cpu.mem.poke(MEM.ADDR_FF41_LCD_STAT, val);
     }
 
     private boolean testBit(int value, int bit) {
@@ -462,7 +300,7 @@ public class GPU {
         // Bit 4 - BG & Window Tile Data Select (0=8800-97FF, 1=8000-8FFF)
         //if ((lcdControl & (1 << 4)) == 0) {
 
-        if (testBit(lcdControl, 4) == false) {
+        if (!testBit(lcdControl, 4)) {
             tileDataPtr = 0x8800;
             signedTileIndices = true;
         } else {
@@ -506,7 +344,7 @@ public class GPU {
             int tileVramBank = ((cgbTileAttributes & (1 << 3)) > 0) ? 1 : 0;
             //tileVramBank = 1;
             //tileVramBank = ((int)(Math.random()*33.0))&1;
-			
+
 			/*
 			 * 		// Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
 				if (testBit(lcdControl,3))
@@ -621,6 +459,115 @@ public class GPU {
         //bd.drawImage(drawBuffer,0,0);
     }
 
+    private void processPalettes(CPU cpu) {
+        //int bgPalette = cpu.mem.RAM[MEM.ADDR_0xFF47_BGPALETTE];
+        int bgPalette = cpu.mem.peek(MEM.ADDR_FF47_BGPALETTE);
+
+        backgroundPaletteMap[0] = backgroundPaletteMaster[(bgPalette & 0b11)];
+        backgroundPaletteMap[1] = backgroundPaletteMaster[((bgPalette >> 2) & 0b11)];
+        backgroundPaletteMap[2] = backgroundPaletteMaster[((bgPalette >> 4) & 0b11)];
+        backgroundPaletteMap[3] = backgroundPaletteMaster[((bgPalette >> 6) & 0b11)];
+
+        //int sprPalette1 = cpu.mem.RAM[MEM.ADDR_0xFF48_SPRITEPALETTE1];
+        int sprPalette1 = cpu.mem.peek(MEM.ADDR_FF48_SPRITEPALETTE1);
+        sprite1PaletteMap[0] = sprite1PaletteMaster[(sprPalette1 & 3)];
+        sprite1PaletteMap[1] = sprite1PaletteMaster[((sprPalette1 >> 2) & 3)];
+        sprite1PaletteMap[2] = sprite1PaletteMaster[((sprPalette1 >> 4) & 3)];
+        sprite1PaletteMap[3] = sprite1PaletteMaster[((sprPalette1 >> 6) & 3)];
+
+        //int sprPalette2 = cpu.mem.RAM[MEM.ADDR_0xFF49_SPRITEPALETTE2];
+        int sprPalette2 = cpu.mem.peek(MEM.ADDR_FF49_SPRITEPALETTE2);
+        sprite2PaletteMap[0] = sprite2PaletteMaster[(sprPalette2 & 3)];
+        sprite2PaletteMap[1] = sprite2PaletteMaster[((sprPalette2 >> 2) & 3)];
+        sprite2PaletteMap[2] = sprite2PaletteMaster[((sprPalette2 >> 4) & 3)];
+        sprite2PaletteMap[3] = sprite2PaletteMaster[((sprPalette2 >> 6) & 3)];
+    }
+
+    private void processGBCPalettes(CPU cpu) {
+        int col = 0;
+        for (int i = 0; i < 64; i += 2) {
+            cgbBackgroundColors[col] = createColorFrom2ByteValue(
+                    cgbBackgroundPaletteData[i],
+                    cgbBackgroundPaletteData[i + 1]);
+
+            cgbSpriteColors[col] = createColorFrom2ByteValue(
+                    cgbSpritePaletteData[i],
+                    cgbSpritePaletteData[i + 1]);
+            col++;
+        }
+    }
+
+    // Bit 0-4   Red Intensity   (00-1F)
+    // Bit 5-9   Green Intensity (00-1F)
+    // Bit 10-14 Blue Intensity  (00-1F)
+    private int createColorFrom2ByteValue(int b2, int b1) {
+        int alpha = 0xff;
+        int scale = 7;
+        int combined = ((b1 & 0xff) << 8) | (b2 & 0xff);
+        int r = (combined) & 0x1f;
+        int g = (combined >> 5) & 0x1f;
+        int b = (combined >> 10) & 0x1f;
+        //return (0xff<<24)+(r<<16)+(g<<8)+b;
+        //return new Color(r*scale,g*scale,b*scale);
+
+        float[] hsv = new float[4];
+        Color.RGBtoHSB(r * scale, g * scale, b * scale, hsv);
+        hsv[1] *= 0.6; // Scale saturation down a bit.
+        int newColInt = Color.HSBtoRGB(hsv[0], hsv[1], hsv[2]);
+
+        return newColInt;
+
+        //return (alpha<<24)+((r*scale)<<16)+((g*scale)<<8)+(b*scale);
+    }
+
+    private int getSpritePixel2(CPU cpu, int tileId, int subx, int suby, int bank) {
+        int byteOffset = (suby * 2);
+
+        int data1, data2 = 0;
+        if (bank == 0) {
+            data1 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset];
+            data2 = cpu.mem.VRAMBANK0[(tileId * 16) + byteOffset + 1];
+        } else {
+            data1 = cpu.mem.VRAMBANK1[(tileId * 16) + byteOffset];
+            data2 = cpu.mem.VRAMBANK1[(tileId * 16) + byteOffset + 1];
+        }
+
+        int mask = 1 << (7 - subx);
+        int color = 0;
+        if ((data1 & mask) > 0)
+            color += 0b0001;
+        if ((data2 & mask) > 0)
+            color += 0b0010;
+
+        return color;
+    }
+
+    private int getTilePixel(CPU cpu, int tileId, int subx, int suby, int bank) {
+        int byteOffset = (suby * 2);
+
+        int normalisedPointer = tileDataPtr - 0x8000;
+
+        int data1 = 0, data2 = 0;
+
+        if (bank == 0) {
+            data1 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset];
+            data2 = cpu.mem.VRAMBANK0[normalisedPointer + (tileId * 16) + byteOffset + 1];
+        } else {
+            data1 = cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset];
+            data2 = cpu.mem.VRAMBANK1[normalisedPointer + (tileId * 16) + byteOffset + 1];
+        }
+
+
+        int mask = 1 << (7 - subx);
+        int color = 0;
+        if ((data1 & mask) > 0)
+            color |= 0b01;
+        if ((data2 & mask) > 0)
+            color |= 0b10;
+
+        return color;
+    }
+
     private int getSpriteCol(int i, int pal) {
 
         if (pal == 0) {
@@ -637,7 +584,6 @@ public class GPU {
         }
     }
 
-
     private void getSprite(CPU cpu, int id) {
         int spriteAddress = (0xFE00) + (id * 4);
         int[] sprData = cpu.mem.RAM;
@@ -648,6 +594,46 @@ public class GPU {
         sprites[id].tileId = sprData[spriteAddress + 2];
 
         //if (sprites[id].y<50) sprites[id].y+=50;
+    }
+
+    private void debugDrawYIncidence(CPU cpu, BasicDisplay bd) {
+        int ycmp = cpu.mem.RAM[MEM.ADDR_FF45_Y_COMPARE];
+        bd.setDrawColor(Color.RED);
+        bd.drawFilledRect(0, (ycmp - 2) * 2, 5, 4 * 2);
+    }
+
+    private void debugDrawKeyStates(CPU cpu, BasicDisplay bd, int x, int y, Color col) {
+
+        bd.setDrawColor(col);
+
+//		for (int i=0;i<cpu.input.keyState.length;i++) {
+//			bd.drawText(cpu.input.keyState[i]==0?"---":"-1-", x, y+(i*15));
+//		}
+
+        ///
+        bd.setDrawColor(Color.yellow);
+
+        int lcdControl = cpu.mem.RAM[0xFF40];
+        int bgTileMapLocation = 0;
+        boolean signedTileIndices;
+        // Bit 3 - BG Tile Map Display Select (0=9800-9BFF, 1=9C00-9FFF)
+        if (testBit(lcdControl, 3))
+            bgTileMapLocation = 0x9C00 - 0x8000;
+        else
+            bgTileMapLocation = 0x9800 - 0x8000;
+
+        if (!testBit(lcdControl, 4)) {
+            tileDataPtr = 0x8800;
+            signedTileIndices = true;
+        } else {
+            tileDataPtr = 0x8000;
+            signedTileIndices = false;
+        }
+
+        bd.drawText("lcdControl = " + Utils.toHex2(lcdControl), 10, 300);
+        bd.drawText("bgTileMapLocation = " + Utils.toHex2(bgTileMapLocation), 10, 320);
+        bd.drawText("tileDataPtr = " + Utils.toHex2(tileDataPtr), 10, 340);
+        bd.drawText("signedTileIndices = " + signedTileIndices, 10, 360);
     }
 }
 

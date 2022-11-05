@@ -90,17 +90,6 @@ public class MEM {
 
     public void poke(int addr, int val) {
 
-
-//		if (Math.random()<0.0001) {
-//			val += (int)((Math.random()-0.5)*3);
-//			val = val & 0xff;
-//		}
-
-        if (addr < 0) {
-            pokeToRegister(addr, val);
-            return;
-        }
-
         // Writing to the divider register sets it to zero.
         if (addr == 0xFF04) {
             RAM[0xFF04] = 0;
@@ -137,10 +126,6 @@ public class MEM {
             //writeBigMessage("DEBUG: Poked "+Utils.toHex4(addr)+"  val="+val, 1);
         }
 
-//		if (addr == val) {
-//			writeBigMessage("poke addr==val!!", 100000);
-//		}
-
         // GBC DMA transfer.
         if (addr == 0xFF55) {
             RAM[0xFF55] = val & 0xff;
@@ -149,7 +134,6 @@ public class MEM {
         }
 
         if (addr == ADDR_FF46_DMA_TRANSFER) {
-            //RAM[addr] = val&0xff;
             transferDMA(val & 0xff);
             return;
         }
@@ -173,17 +157,11 @@ public class MEM {
             }
         }
 
-
         // Writing 1 to this address switches the bios out.
         if (addr == 0xFF50 && val == 1) {
             // RAM[0xFF50]=1;
             biosActive = false;
         }
-
-        if (addr == 0x0151) {
-            //writeBigMessage("wrote to 0x0150!!!", 1000);
-        }
-
 
         // Writing anything to the scanline register resets it.
         if (addr == ADDR_FF44_Y_SCANLINE) {
@@ -244,14 +222,12 @@ public class MEM {
 
 
     public void transferDMA(int val) {
-        // int addr = peek(CPU.ADDR_FF46_DMA_TRANSFER) << 8;
-        //int addr = val << 8;
+
         int addr = val * 0x100;
         // OAM memory is 40*4 bytes = 0xA0.
         for (int i = 0; i < 0xA0; i++) {
             poke(0xFE00 + i, peek(addr + i));
         }
-        //System.out.println("Old style DMA addr:"+Utils.toHex4(addr));
 
     }
 
@@ -303,11 +279,6 @@ public class MEM {
     }
 
     public int peek(int addr) {
-
-        // Handle special negative addresses (registers)
-        if (addr < 0) {
-            return peekToRegister(addr);
-        }
 
         // INPUT
         if (addr == 0xFF00) {
@@ -449,104 +420,4 @@ public class MEM {
     }
 
 
-
-    // Handle poking to a negative address, which gets mapped to a specific register.
-    private void pokeToRegister(int addr, int val) {
-        // TODO: make this use a switch statement.
-
-        if (addr == AddrMap.ADDR_A) {
-            cpu.A = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_B) {
-            cpu.B = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_C) {
-            cpu.C = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_D) {
-            cpu.D = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_E) {
-            cpu.E = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_H) {
-            cpu.H = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_L) {
-            cpu.L = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_SP) {
-            cpu.SP = val;
-            cpu.topOfSTack = val;
-            return;
-        }
-        if (addr == AddrMap.ADDR_HL) {
-            cpu.setHL(val);
-            return;
-        }
-        if (addr == AddrMap.ADDR_DE) {
-            cpu.setDE(val);
-            return;
-        }
-        if (addr == AddrMap.ADDR_BC) {
-            cpu.setBC(val);
-            return;
-        }
-        if (addr == AddrMap.ADDR_AF) {
-            cpu.setAF(val);
-            return;
-        }
-
-    }
-
-    // Handle peeking to a negative address, which gets mapped to a specific register.
-    public int peekToRegister(int addr) {
-
-        if (addr == AddrMap.ADDR_A) {
-            return cpu.A;
-        }
-        if (addr == AddrMap.ADDR_B) {
-            return cpu.B;
-        }
-        if (addr == AddrMap.ADDR_C) {
-            return cpu.C;
-        }
-        if (addr == AddrMap.ADDR_D) {
-            return cpu.D;
-        }
-        if (addr == AddrMap.ADDR_E) {
-            return cpu.E;
-        }
-        if (addr == AddrMap.ADDR_H) {
-            return cpu.H;
-        }
-        if (addr == AddrMap.ADDR_L) {
-            return cpu.L;
-        }
-        if (addr == AddrMap.ADDR_SP) {
-            return cpu.SP;
-        }
-        if (addr == AddrMap.ADDR_HL) {
-            return cpu.getHL();
-        }
-        if (addr == AddrMap.ADDR_DE) {
-            return cpu.getDE();
-        }
-        if (addr == AddrMap.ADDR_BC) {
-            return cpu.getBC();
-        }
-        if (addr == AddrMap.ADDR_AF) {
-            return cpu.getAF();
-        }
-
-        System.out.println("Error, unrecognised register address.");
-        return 0;
-    }
 }

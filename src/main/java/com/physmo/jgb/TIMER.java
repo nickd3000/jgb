@@ -16,36 +16,6 @@ public class TIMER {
         this.cpu = cpu;
     }
 
-    public boolean isClockEnabled() {
-        int iTMC = cpu.mem.RAM[ADDR_0xFF07_TMC];
-
-        return (iTMC & (1 << 2)) > 0;
-        // return TestBit(ReadMemory(TMC),2)?true:false ;
-    }
-
-    public int getClockFreq() {
-        int val = cpu.mem.RAM[ADDR_0xFF07_TMC];
-        return val & 0x3;
-    }
-
-    public void setClockFreq() {
-        int freq = getClockFreq();
-        switch (freq) {
-            case 0:
-                timerCounter = 1024;
-                break; // freq 4096
-            case 1:
-                timerCounter = 16;
-                break; // freq 262144
-            case 2:
-                timerCounter = 64;
-                break; // freq 65536
-            case 3:
-                timerCounter = 256;
-                break; // freq 16382
-        }
-    }
-
     public void tick(int cycles) {
         doDividerRegister(cycles);
 
@@ -69,6 +39,35 @@ public class TIMER {
         }
     }
 
+    public boolean isClockEnabled() {
+        int iTMC = cpu.mem.RAM[ADDR_0xFF07_TMC];
+
+        return (iTMC & (1 << 2)) > 0;
+        // return TestBit(ReadMemory(TMC),2)?true:false ;
+    }
+
+    public void setClockFreq() {
+        int freq = getClockFreq();
+        switch (freq) {
+            case 0:
+                timerCounter = 1024;
+                break; // freq 4096
+            case 1:
+                timerCounter = 16;
+                break; // freq 262144
+            case 2:
+                timerCounter = 64;
+                break; // freq 65536
+            case 3:
+                timerCounter = 256;
+                break; // freq 16382
+        }
+    }
+
+    public int getClockFreq() {
+        int val = cpu.mem.RAM[ADDR_0xFF07_TMC];
+        return val & 0x3;
+    }
 
     public void doDividerRegister(int cycles) {
         dividerCounter += cycles;

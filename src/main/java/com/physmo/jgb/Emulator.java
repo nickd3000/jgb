@@ -8,17 +8,17 @@ public class Emulator {
 
     public static final int GPU_CYCLES_PER_TICK = 10;
     private static BasicDisplay basicDisplay = null;
-    private String biosPath = "/Users/nick/dev/emulatorsupportfiles/gb/bios/";
-    private String romPath = "/Users/nick/dev/emulatorsupportfiles/gb/roms/";
-    private int displayScale = 3;
+    private final String biosPath = "/Users/nick/dev/emulatorsupportfiles/gb/bios/";
+    private final String romPath = "/Users/nick/dev/emulatorsupportfiles/gb/roms/";
+    private final int displayScale = 3;
     private CPU cpu = null;
     private GPU gpu = null;
     private MEM mem = null;
     private INPUT input = null;
     private TIMER timer = null;
-    private Gui gui;
-    private boolean useBios = false;
-    private boolean loadRomOnStartup = true;
+    private final Gui gui;
+    private final boolean useBios = false;
+    private final boolean loadRomOnStartup = true;
 
     private Emulator() {
         cpu = new CPU();
@@ -43,13 +43,6 @@ public class Emulator {
         }
 
         reset();
-    }
-
-    public static void main(String[] args) {
-        Debug.checkInstructionDefs();
-
-        Emulator emulator = new Emulator();
-        emulator.run();
     }
 
     // TODO: should we init all state here?
@@ -77,6 +70,13 @@ public class Emulator {
         StartupState.setStartupState(cpu, mem);
         cpu.A = 0x11; // GBC
 
+    }
+
+    public static void main(String[] args) {
+        Debug.checkInstructionDefs();
+
+        Emulator emulator = new Emulator();
+        emulator.run();
     }
 
     private void run() {
@@ -112,8 +112,6 @@ public class Emulator {
 
         }
     }
-
-
 
 
 }

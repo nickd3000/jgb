@@ -1,17 +1,8 @@
 package com.physmo.jgb;
 
-import java.awt.*;
+import java.awt.Color;
 
 public class PaletteGenerator {
-
-    public static int buildColor(Color c) {
-        int alpha = 0xff;
-        //return ((c.getRed())<<24)+((c.getGreen()&0xff)<<16)+((c.getBlue()&0xff)<<8)+((c.getAlpha()));
-        return (((alpha) << 24)) +
-                ((c.getRed() & 0xff) << 16) +
-                ((c.getGreen() & 0xff) << 8) +
-                ((c.getBlue() & 0xff));
-    }
 
     public static int get(PALETTE_TYPE type, int index) {
 
@@ -51,6 +42,15 @@ public class PaletteGenerator {
         }
 
         return 0;
+    }
+
+    public static int buildColor(Color c) {
+        int alpha = 0xff;
+        //return ((c.getRed())<<24)+((c.getGreen()&0xff)<<16)+((c.getBlue()&0xff)<<8)+((c.getAlpha()));
+        return (((alpha) << 24)) +
+                ((c.getRed() & 0xff) << 16) +
+                ((c.getGreen() & 0xff) << 8) +
+                ((c.getBlue() & 0xff));
     }
 
     enum PALETTE_TYPE {

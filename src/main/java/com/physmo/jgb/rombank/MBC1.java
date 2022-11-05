@@ -13,7 +13,7 @@ public class MBC1 implements ROMBank {
     boolean enableRam = false;
     boolean m_MBC1 = true;
     boolean m_MBC2 = false;
-    private MEM mem;
+    private final MEM mem;
 
     public MBC1(CPU cpu) {
         this.cpu = cpu;
@@ -31,30 +31,6 @@ public class MBC1 implements ROMBank {
                 mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)] = data;
             }
         }
-    }
-
-    @Override
-    public int peek(int address) {
-        // 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n
-        // 0xA000 - 0xBFFF (8,192 bytes) External RAM
-        // int newAddress = addr - 0x4000;
-        // return cpu.mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
-
-        // Are we reading from the SWITCHABLE ROM cartridge memory bank?
-        if ((address >= 0x4000) && (address <= 0x7FFF)) {
-            int newAddress = address - 0x4000;
-            return mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
-        }
-
-        // Are we reading from the cartridge RAM memory bank?
-        if ((address >= 0xA000) && (address <= 0xBFFF)) {
-            int newAddress = address - 0xA000;
-            return mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
-        }
-
-        // else return memory
-        return mem.CARTRIDGE[address];
-
     }
 
     public void handleBankChange(int address, int data) {
@@ -97,12 +73,6 @@ public class MBC1 implements ROMBank {
 
     void DoRAMBankChange(int data) {
         currentRamBank = data & 0x3;
-    }
-
-    public int TestBit(int val, int bit) {
-        if ((val & (1 << bit)) > 0)
-            return 1;
-        return 0;
     }
 
     void DoChangeLoROMBank(int data) {
@@ -149,6 +119,36 @@ public class MBC1 implements ROMBank {
             enableRam = true;
         else if (testData == 0x0)
             enableRam = false;
+    }
+
+    public int TestBit(int val, int bit) {
+        if ((val & (1 << bit)) > 0)
+            return 1;
+        return 0;
+    }
+
+    @Override
+    public int peek(int address) {
+        // 0x4000 - 0x7FFF (16,384 bytes) Cartridge ROM Bank n
+        // 0xA000 - 0xBFFF (8,192 bytes) External RAM
+        // int newAddress = addr - 0x4000;
+        // return cpu.mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
+
+        // Are we reading from the SWITCHABLE ROM cartridge memory bank?
+        if ((address >= 0x4000) && (address <= 0x7FFF)) {
+            int newAddress = address - 0x4000;
+            return mem.CARTRIDGE[newAddress + (currentRomBank * 0x4000)];
+        }
+
+        // Are we reading from the cartridge RAM memory bank?
+        if ((address >= 0xA000) && (address <= 0xBFFF)) {
+            int newAddress = address - 0xA000;
+            return mem.CART_RAM_BANKS[newAddress + (currentRamBank * 0x2000)];
+        }
+
+        // else return memory
+        return mem.CARTRIDGE[address];
+
     }
 
 }

@@ -2,7 +2,7 @@ package com.physmo.jgb;
 
 import com.physmo.minvio.BasicDisplay;
 
-import javax.swing.*;
+import javax.swing.JFileChooser;
 import java.io.File;
 
 import static java.awt.event.KeyEvent.VK_L;

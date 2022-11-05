@@ -20,6 +20,44 @@ public class Glow {
         drawBlob(x + 2, y + 4, 20, 45);
     }
 
+    public static void drawBlob(int mx, int my, int r, int v) {
+        double d = 0;
+        double dx, dy;
+        double dr = r;
+        double dv = v;
+        int index;
+
+
+        for (int y = clampy(my - r); y < clampy(my + r); y++) {
+            for (int x = clampx(mx - r); x < clampx(mx + r); x++) {
+
+                dx = x - mx;
+                dy = y - my;
+                d = Math.sqrt((dx * dx) + (dy * dy));
+                if (d > r) continue;
+                d = (dr - d) / dr; // Invert and normalise.
+                d *= dv;
+                index = x + (width * y);
+                glowGrid[index] += d;
+                if (glowGrid[index] > maxBrightness) {
+                    glowGrid[index] = maxBrightness;
+                }
+            }
+        }
+    }
+
+    public static int clampy(int y) {
+        if (y < 0) return 0;
+        if (y > height) return height;
+        return y;
+    }
+
+    public static int clampx(int x) {
+        if (x < 0) return 0;
+        if (x > width) return width;
+        return x;
+    }
+
     public static int getPoint(int x, int y) {
         return glowGrid[x + (width * y)];
     }
@@ -42,44 +80,6 @@ public class Glow {
         int cc = (0xff << 24) + (r << 16) + (g << 8) + (b);
 
         return cc;
-    }
-
-    public static int clampy(int y) {
-        if (y < 0) return 0;
-        if (y > height) return height;
-        return y;
-    }
-
-    public static int clampx(int x) {
-        if (x < 0) return 0;
-        if (x > width) return width;
-        return x;
-    }
-
-    public static void drawBlob(int mx, int my, int r, int v) {
-        double d = 0;
-        double dx, dy;
-        double dr = (double) r;
-        double dv = (double) v;
-        int index;
-
-
-        for (int y = clampy(my - r); y < clampy(my + r); y++) {
-            for (int x = clampx(mx - r); x < clampx(mx + r); x++) {
-
-                dx = x - mx;
-                dy = y - my;
-                d = Math.sqrt((dx * dx) + (dy * dy));
-                if (d > r) continue;
-                d = (dr - d) / dr; // Invert and normalise.
-                d *= dv;
-                index = x + (width * y);
-                glowGrid[index] += d;
-                if (glowGrid[index] > maxBrightness) {
-                    glowGrid[index] = maxBrightness;
-                }
-            }
-        }
     }
 
 }

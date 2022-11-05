@@ -14,7 +14,7 @@ public class MBC5 implements ROMBank {
     boolean m_MBC1 = true;
     boolean m_MBC2 = false;
     int[] RAM_BANKS = new int[0xffff];
-    private MEM mem;
+    private final MEM mem;
 
     public MBC5(CPU cpu) {
         this.cpu = cpu;
@@ -142,12 +142,6 @@ public class MBC5 implements ROMBank {
         currentRamBank = data & 0x3;
     }
 
-    public int TestBit(int val, int bit) {
-        if ((val & (1 << bit)) > 0)
-            return 1;
-        return 0;
-    }
-
     void DoChangeLoROMBank(int data) {
         if (m_MBC2) {
             currentRomBank = data & 0xF;
@@ -192,6 +186,12 @@ public class MBC5 implements ROMBank {
             enableRam = true;
         else if (testData == 0x0)
             enableRam = false;
+    }
+
+    public int TestBit(int val, int bit) {
+        if ((val & (1 << bit)) > 0)
+            return 1;
+        return 0;
     }
 
 }

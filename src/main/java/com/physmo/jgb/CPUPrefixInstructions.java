@@ -253,7 +253,7 @@ public class CPUPrefixInstructions {
             operationSupported = true;
         }
 
-        if (operationSupported == false) {
+        if (!operationSupported) {
             System.out.println(
                     "Unsupported Prefix command: 0x" + Utils.toHex2(instr) + "   val:" + value + "   bit:" + bit);
             cpu.mem.poke(0xffff + 10, 1);

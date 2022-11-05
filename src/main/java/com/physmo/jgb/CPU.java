@@ -1,5 +1,11 @@
 package com.physmo.jgb;
 
+import com.physmo.jgb.microcode.MicroOp;
+import com.physmo.jgb.microcode.Microcode;
+
+import java.util.HashMap;
+import java.util.Map;
+
 public class CPU {
 
     // CPU Flags
@@ -13,7 +19,7 @@ public class CPU {
     public static int INT_LCDSTAT = 0b0000_0010; // LCD stat off LCD stat on
     public static int INT_TIMER = 0b0000_0100; // Timer off Timer on
     public static int INT_SERIAL = 0b0000_1000; // Serial off Serial on
-    public static int INT_JOYPAD =  0b0001_0000; // Joypad off
+    public static int INT_JOYPAD = 0b0001_0000; // Joypad off
 
     public static boolean displayInstruction = false;
     public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.CGB;
@@ -36,9 +42,15 @@ public class CPU {
     int fakeVerticalBlank = 0;
     int topOfSTack = 0xFFFE; // used for debugging.
 
-    AddressContainer ac1 = new AddressContainer();
-    AddressContainer ac2 = new AddressContainer();
+    //AddressContainer ac1 = new AddressContainer();
+    //AddressContainer ac2 = new AddressContainer();
     int serialBit = 0;
+
+    Microcode microcode = new Microcode();
+    int temp;
+    Map<Integer, Integer> usedNewOp = new HashMap<>();
+    int fetchAddress = 0;
+    int printNewOpUseCount = 0;
 
     public void attachHardware(MEM mem, INPUT input, GPU gpu) {
         this.mem = mem;
@@ -51,22 +63,8 @@ public class CPU {
     }
 
     public void tick() {
-        // mem.poke(0xC000,0x69);
 
         tickCount++;
-        // if (tickCount>30000000) displayInstruction=true;
-        //if (tickCount>6020435 - 10000) displayInstruction=true;
-        // if (tickCount>2855623-1000) displayInstruction=true;
-        // if (PC==0x001D) displayInstruction=true;
-        // if (PC>0x00FF) displayInstruction=true;
-        //displayInstruction=true;
-        // if (PC==0x0100) displayInstruction=true;
-        // if (PC==0x02A0) displayInstruction=true;
-
-//		if (PC == 0xCBB0) {
-//			System.out.println("elephants "+tickCount);
-//		}
-
 
         int serialBitOld = serialBit;
         if ((mem.peek(0xFF02) & 0x10) > 0)
@@ -80,10 +78,6 @@ public class CPU {
 
         if (mem.peek(0xdef6) > 0xff) {
             System.out.println("overflow detected at tick pc:" + Utils.toHex4(PC) + "  tick:" + tickCount);
-        }
-
-        if ((SP >= 0xA000) && (SP <= 0xBFFF)) {
-            //System.out.println("Stack pointing to paged memory??");
         }
 
         Debug.checkRegisters(this);
@@ -100,21 +94,6 @@ public class CPU {
         if (mem.peek(0xf6de) > 0xff) {
             System.out.println("0xf6de is overflow!!! val:" + Utils.toHex4(mem.peek(0xf6de)));
         }
-
-        // Get this instructions definition.
-        InstructionDefinition def = InstructionDefinition.getEnumFromId(currentInstruction & 0xff);
-
-        if (def == null) {
-            System.out.println("No InstructionDefinition at " + Utils.toHex4(entryPC) + " : "
-                    + Utils.toHex2(currentInstruction) + "   " + "tick:" + tickCount);
-        }
-
-        COMMAND command = def.getCommand();
-        ADDRMODE addrmode1 = def.getAddressMode1();
-        ADDRMODE addrmode2 = def.getAddressMode2();
-
-        processAddressMode(ac1, addrmode1);
-        processAddressMode(ac2, addrmode2);
 
         if (displayInstruction) {
             String dis = Debug.dissasemble(this, entryPC);
@@ -144,29 +123,435 @@ public class CPU {
             }
         }
 
-        switch (command) {
-            case NOP:
-                break;
-            case STOP:
-                // Used by GBC to change speed.
-                wrk = mem.peek(0xFF4d);
+        ////////////////////////////////////////////////////
+        // Inject new microcode stuff
+        MicroOp[] ops = microcode.getInstructionCode(currentInstruction);
+        if (ops.length > 0 && ops[0] != MicroOp.TODO) {
+            //System.out.println("Microcode: " + microcode.getInstructionName(currentInstruction));
+            printNewOpUse(currentInstruction);
+            for (MicroOp op : ops) {
+                doMicroOp(op);
+            }
+        }
 
-                if ((wrk & 1) > 0) {
-                    speedMode = !speedMode;
+    }
 
-                    if (speedMode) wrk = 0b10000000;
-                    else wrk = 0b00000000;
-                }
+    private void printNewOpUse(int currentInstruction) {
 
-                mem.poke(0xff4d, wrk);
+        if (!usedNewOp.containsKey(currentInstruction)) {
+            usedNewOp.put(currentInstruction, 1);
+            String instructionName = microcode.getInstructionName(currentInstruction);
+            System.out.println("Microcode: " + instructionName);
+        } else {
+            int count = usedNewOp.get(currentInstruction);
+            usedNewOp.put(currentInstruction, count + 1);
+        }
 
-                break;
+//        printNewOpUseCount++;
+//        if (printNewOpUseCount%50000==0) {
+//            for (Integer integer : usedNewOp.keySet()) {
+//                int val = usedNewOp.get(integer);
+//                System.out.println(" "+microcode.getInstructionName(integer)+"  "+val);
+//            }
+//        }
+    }
+
+
+    // int A, B, C, D, E, H, L;
+    private void doMicroOp(MicroOp op) {
+        switch (op) {
             case HALT:
                 if (interruptEnabled == 1)
                     halt = 1;
                 else {
                     PC++;
                 }
+                break;
+            case FETCH_A:
+                temp = A;
+                break;
+            case FETCH_B:
+                temp = B;
+                break;
+            case FETCH_C:
+                temp = C;
+                break;
+            case FETCH_D:
+                temp = D;
+                break;
+            case FETCH_E:
+                temp = E;
+                break;
+            case FETCH_H:
+                temp = H;
+                break;
+            case FETCH_L:
+                temp = L;
+                break;
+            case FETCH_AF:
+                temp = combineBytes(A, FL);
+                break;
+            case FETCH_BC:
+                temp = combineBytes(B, C);
+                break;
+            case FETCH_DE:
+                temp = combineBytes(D, E);
+                break;
+            case FETCH_HL:
+                temp = combineBytes(H, L);
+                break;
+            case FETCH_SP:
+                temp = SP;
+                break;
+            case FETCH_8:
+                temp = getNextByte();
+                break;
+            case FETCH_16:
+                temp = getNextWord();
+                break;
+            case FETCH_16_ADDRESS:
+                fetchAddress = getNextWord();
+                break;
+            case SET_ADDR_FROM_HL:
+                fetchAddress = getHL();
+                break;
+            case SET_ADDR_FROM_HL_INC:
+                fetchAddress = getHL();
+                setHL(getHL() + 1);
+                break;
+            case SET_ADDR_FROM_HL_DEC:
+                fetchAddress = getHL();
+                setHL(getHL() - 1);
+                break;
+            case SET_ADDR_FROM_BC:
+                fetchAddress = getBC();
+                break;
+            case SET_ADDR_FROM_DE:
+                fetchAddress = getDE();
+                break;
+            case FETCH_BYTE_FROM_ADDR:
+                temp = mem.peek(fetchAddress);
+                break;
+            case STORE_BYTE_AT_ADDRESS:
+                mem.poke(fetchAddress, temp);
+                break;
+            case STORE_A:
+                A = temp;
+                break;
+            case STORE_B:
+                B = temp;
+                break;
+            case STORE_C:
+                C = temp;
+                break;
+            case STORE_D:
+                D = temp;
+                break;
+            case STORE_E:
+                E = temp;
+                break;
+            case STORE_H:
+                H = temp;
+                break;
+            case STORE_L:
+                L = temp;
+                break;
+            case STORE_BC:
+                setBC(temp);
+                break;
+            case STORE_DE:
+                setDE(temp);
+                break;
+            case STORE_HL:
+                setHL(temp);
+                break;
+            case STORE_AF:
+                setAF(temp);
+                break;
+            case STORE_SP:
+                SP = temp;
+                break;
+            case STORE_p16WORD:
+                mem.poke(fetchAddress, getLowByte(temp));
+                mem.poke(fetchAddress + 1, getHighByte(temp));
+                break;
+            case INC_8:
+                temp = temp + 1;
+                if (temp > 0xff)
+                    temp = 0;
+
+                handleZeroFlag(temp & 0xff);
+                unsetFlag(FLAG_ADDSUB);
+
+                if ((temp & 0xF) + 1 > 0xF)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                break;
+            case INC_16:
+                temp = temp + 1;
+                if (temp > 0xffff)
+                    temp = 0;
+                break;
+            case DEC_8:
+                temp = temp - 1;
+                if (temp < 0)
+                    temp = 0xff;
+
+                handleZeroFlag(temp);
+                setFlag(FLAG_ADDSUB);
+                if ((temp & 0xF) - 1 < 0)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                break;
+            case DEC_16:
+                temp = temp - 1;
+                if (temp < 0)
+                    temp = 0xffff;
+                break;
+            case ADD_HL:
+                temp = getHL() + temp;
+
+                if (temp > 0xffff)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+
+                unsetFlag(FLAG_ADDSUB);
+
+                //if ((((getHL() & 0xFFF) + (ac2.val & 0xFFF)) & 0x1000) > 0)
+                if ((((getHL() & 0xFFF) + (temp & 0xFFF)) & 0x1000) > 0)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                break;
+            case ADD:
+                int wrk = A + temp;
+
+                if (wrk > 0xff)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+                handleZeroFlag(wrk & 0xff);
+
+                unsetFlag(FLAG_ADDSUB);
+
+                if (((A & 0xF) + (temp & 0xF)) > 0xF)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                A = wrk & 0xff;
+
+                break;
+            case ADC:
+                wrk = A + temp + (testFlag(FLAG_CARRY) ? 1 : 0);
+
+                handleZeroFlag(wrk & 0xff);
+
+                if (wrk > 0xff)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+
+                unsetFlag(FLAG_ADDSUB);
+
+                if (((A ^ temp ^ wrk) & 0x10) > 0)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                A = wrk & 0xff;
+
+                break;
+            case SUB:
+                wrk = A - temp;
+
+                if (temp > A)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+
+                handleZeroFlag(wrk & 0xff);
+                setFlag(FLAG_ADDSUB);
+
+                if (((A ^ temp ^ wrk) & 0x10) > 0)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                A = wrk & 0xff;
+
+                break;
+            case SBC:
+                wrk = A - ((temp & 0xff) + (testFlag(FLAG_CARRY) ? 1 : 0));
+
+                if ((wrk & 0xFF) > 0) unsetFlag(FLAG_ZERO);
+                else setFlag(FLAG_ZERO);
+                if ((wrk & 0x100) > 0) setFlag(FLAG_CARRY);
+                else unsetFlag(FLAG_CARRY);
+                if (((A ^ temp ^ wrk) & 0x10) != 0) setFlag(FLAG_HALFCARRY);
+                else unsetFlag(FLAG_HALFCARRY);
+
+                setFlag(FLAG_ADDSUB);
+
+                A = wrk & 0xff;
+                break;
+            case AND:
+                wrk = A & temp;
+                A = wrk;
+
+                handleZeroFlag(wrk);
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_CARRY);
+                setFlag(FLAG_HALFCARRY);
+                if (displayInstruction)
+                    System.out.println("and val:" + Utils.toHex2(temp));
+                break;
+            case XOR:
+                wrk = A ^ temp;
+                handleZeroFlag(wrk & 0xff);
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_CARRY);
+                unsetFlag(FLAG_HALFCARRY);
+                A = wrk & 0xff;
+                break;
+            case OR:
+                wrk = A | temp;
+                handleZeroFlag(wrk & 0xff);
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_CARRY);
+                unsetFlag(FLAG_HALFCARRY);
+                A = wrk & 0xff;
+                break;
+            case CP:
+                wrk = A - temp;
+
+                handleZeroFlag(wrk & 0xff);
+
+                setFlag(FLAG_ADDSUB);
+                if (A < temp)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+
+                if ((A & 0xF) < (temp & 0xF))
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                break;
+//            case CPL:
+//                wrk = A ^ 0xFF;
+//                setFlag(FLAG_ADDSUB);
+//                setFlag(FLAG_HALFCARRY);
+//                A = wrk & 0xff;
+//                break;
+            case RLCA: // Rotate left with carry for A
+                int carryOut = ((A & 0x80) > 0) ? 1 : 0;
+
+                if (carryOut == 1) setFlag(FLAG_CARRY);
+                else unsetFlag(FLAG_CARRY);
+
+                temp = (A << 1) + carryOut;
+                unsetFlag(FLAG_ZERO);
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_HALFCARRY);
+                A = temp;
+
+                break;
+            case RRCA:
+                carryOut = ((A & 0x01) > 0) ? 1 : 0;
+                if (carryOut == 1) setFlag(FLAG_CARRY);
+                else unsetFlag(FLAG_CARRY);
+                temp = (A >> 1) + (carryOut << 7);
+                unsetFlag(FLAG_ZERO);
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_HALFCARRY);
+                A = temp;
+                break;
+            case RL:
+                temp = temp << 1;
+                if (testFlag(FLAG_CARRY))
+                    temp |= 1;
+                if (temp > 0xff)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+                temp = temp & 0xff;
+
+                unsetFlag(FLAG_ZERO);
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_HALFCARRY);
+
+                break;
+            case RRA:
+
+                int carryIn = testFlag(FLAG_CARRY) ? 1 : 0;
+                carryOut = ((A & 0x01) > 0) ? 1 : 0;
+
+                A = (A >> 1) + (carryIn << 7);
+
+                if (carryOut == 1)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+
+                unsetFlag(FLAG_ADDSUB);
+                unsetFlag(FLAG_HALFCARRY);
+                unsetFlag(FLAG_ZERO);
+
+                break;
+            case JRNZ:
+                if (!testFlag(FLAG_ZERO)) {
+                    jumpRelative(temp);
+                }
+                break;
+            case JRZ:
+                if (testFlag(FLAG_ZERO)) {
+                    jumpRelative(temp);
+                }
+                break;
+            case JRNC:
+                if (!testFlag(FLAG_CARRY)) {
+                    jumpRelative(temp);
+                }
+                break;
+            case JRC:
+                if (testFlag(FLAG_CARRY)) {
+                    jumpRelative(temp);
+                }
+                break;
+            case JR:
+                jumpRelative(temp);
+
+                break;
+            case JPZ:
+                if (testFlag(FLAG_ZERO)) {
+                    PC = fetchAddress;
+                }
+                break;
+            case JPNZ:
+                if (!testFlag(FLAG_ZERO)) {
+                    PC = fetchAddress;
+                }
+                break;
+            case JPNC:
+                if (!testFlag(FLAG_CARRY)) {
+                    PC = fetchAddress;
+                }
+                break;
+            case JPC:
+                if (testFlag(FLAG_CARRY)) {
+                    PC = fetchAddress;
+                }
+                break;
+            case JP:
+                PC = fetchAddress;
                 break;
             case RET:
                 wrk = popW();
@@ -191,204 +576,15 @@ public class CPU {
                 break;
             case RETNC:
                 if (!testFlag(FLAG_CARRY)) {
-                    wrk = popW();
-                    PC = wrk;
+                    PC = popW();
                 }
                 break;
             case RETC:
                 if (testFlag(FLAG_CARRY)) {
-                    wrk = popW();
-                    PC = wrk;
+                    PC = popW();
                 }
                 break;
-            case JP:
-                PC = ac1.val;
-                break;
-
-            case DI:
-                disableInterrupts();
-                break;
-            case EI:
-                enableInterrupts();
-                break;
-            case INC:
-                wrk = ac1.val + 1;
-                if (wrk > 0xff)
-                    wrk = 0;
-
-                handleZeroFlag(wrk & 0xff);
-                unsetFlag(FLAG_ADDSUB);
-
-                if ((ac1.val & 0xF) + 1 > 0xF)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                mem.poke(ac1.addr, wrk & 0xff);
-
-                break;
-            case INCW:
-                wrk = ac1.val + 1;
-                if (wrk > 0xffff)
-                    wrk = 0;
-                mem.poke(ac1.addr, wrk & 0xffff);
-                break;
-            case DEC:
-                wrk = ac1.val - 1;
-                if (wrk < 0)
-                    wrk = 0xff;
-
-                handleZeroFlag(wrk);
-                setFlag(FLAG_ADDSUB);
-                if ((ac1.val & 0xF) - 1 < 0)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                mem.poke(ac1.addr, wrk & 0xff);
-
-                break;
-            case DECW:
-                wrk = ac1.val - 1;
-                if (wrk < 0)
-                    wrk = 0xffff;
-                mem.poke(ac1.addr, wrk);
-                break;
-            case LDSPHL:
-                // TODO: this is new
-                SP = getHL();
-                // SP = ((H&0xff)<<8)|(L&0xff);
-                break;
-            case LD:
-                wrk = ac2.val;
-                if (displayInstruction)
-                    System.out.println("addr2:" + Utils.toHex4(ac2.addr) + " val2:" + ac2.val);
-                mem.poke(ac1.addr, ac2.val);
-                break;
-            case LDW: // LD Word
-                wrk = ac2.val;
-                if (ac1.mode == ADDRMODE.__nnnn) {
-                    mem.poke(ac1.addr, getLowByte(wrk));
-                    mem.poke(ac1.addr + 1, getHighByte(wrk));
-                }
-                break;
-            case LDD: // Load and decrement?
-                wrk = ac2.val;
-                mem.poke(ac1.addr, ac2.val);
-
-                if (def.getAddressMode1() == ADDRMODE.__HL) {
-                    setHL(getHL() - 1);
-                } else if (def.getAddressMode2() == ADDRMODE.__HL) {
-                    setHL(getHL() - 1);
-                } else {
-                    System.out.println("ERROR LDD");
-                }
-                if (getHL() < 0)
-                    setHL(0xffff);
-
-                break;
-            case LDI: // Load and decrement?
-                wrk = ac2.val;
-                mem.poke(ac1.addr, ac2.val);
-
-                if (def.getAddressMode1() == ADDRMODE.__HL) {
-                    setHL(getHL() + 1);
-                } else if (def.getAddressMode2() == ADDRMODE.__HL) {
-                    setHL(getHL() + 1);
-                } else {
-                    System.out.println("ERROR LDI");
-                }
-
-                if (getHL() > 0xffff)
-                    setHL(0x0);
-
-                break;
-            case XOR:
-                wrk = A ^ ac1.val;
-                handleZeroFlag(wrk & 0xff);
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_CARRY);
-                unsetFlag(FLAG_HALFCARRY);
-                A = wrk & 0xff;
-                break;
-            case OR:
-                wrk = A | ac1.val;
-                handleZeroFlag(wrk & 0xff);
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_CARRY);
-                unsetFlag(FLAG_HALFCARRY);
-                A = wrk & 0xff;
-                break;
-            case AND:
-                wrk = A & ac1.val;
-                A = wrk;
-
-                handleZeroFlag(wrk);
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_CARRY);
-                setFlag(FLAG_HALFCARRY);
-                if (displayInstruction)
-                    System.out.println("and val:" + Utils.toHex2(ac1.val));
-                break;
-            case SUB:
-                wrk = A - ac1.val;
-
-                if (ac1.val > A)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                handleZeroFlag(wrk & 0xff);
-                setFlag(FLAG_ADDSUB);
-
-                if (((A ^ ac1.val ^ wrk) & 0x10) > 0)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                A = wrk & 0xff;
-
-                break;
-            case ADD:
-                wrk = A + ac1.val;
-
-                if (wrk > 0xff)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-                handleZeroFlag(wrk & 0xff);
-
-                unsetFlag(FLAG_ADDSUB);
-
-                if (((A & 0xF) + (ac1.val & 0xF)) > 0xF)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                A = wrk & 0xff;
-
-                break;
-            case ADDSPNN:
-
-                wrk = SP + convertSignedByte(ac1.val & 0xff);
-
-                if (((SP ^ convertSignedByte(ac1.val & 0xff) ^ wrk) & 0x10) > 0)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                if (((SP ^ convertSignedByte(ac1.val & 0xff) ^ wrk) & 0x100) > 0)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                unsetFlag(FLAG_ZERO);
-                unsetFlag(FLAG_ADDSUB);
-
-                SP = wrk;
-
-                break;
-            case DAA:
+            case DAA: // Decimal Adjust Accumulator to get a correct BCD representation after an arithmetic instruction
 
                 int correction = 0;
                 boolean flagN = testFlag(FLAG_ADDSUB);
@@ -403,157 +599,125 @@ public class CPU {
                     setFlag(FLAG_CARRY);
                 }
 
-                wrk = A;
-                wrk += flagN ? -correction : correction;
-                wrk &= 0xFF;
+                temp = A;
+                temp += flagN ? -correction : correction;
+                temp &= 0xFF;
 
                 unsetFlag(FLAG_HALFCARRY);
 
-                handleZeroFlag(wrk);
+                handleZeroFlag(temp);
 
-                A = wrk;
-
-                break;
-            case ADDHL:
-                wrk = getHL() + ac2.val;
-
-                if (wrk > 0xffff)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                unsetFlag(FLAG_ADDSUB);
-
-                if ((((getHL() & 0xFFF) + (ac2.val & 0xFFF)) & 0x1000) > 0)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                setHL(wrk & 0xffff);
+                A = temp;
 
                 break;
-            case ADC:
-                wrk = A + ac1.val + (testFlag(FLAG_CARRY) ? 1 : 0);
-
-                handleZeroFlag(wrk & 0xff);
-
-                if (wrk > 0xff)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                unsetFlag(FLAG_ADDSUB);
-
-                if (((A ^ ac1.val ^ wrk) & 0x10) > 0)
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                A = wrk & 0xff;
-
-                break;
-            case SBC:
-
-                wrk = A - ((ac1.val & 0xff) + (testFlag(FLAG_CARRY) ? 1 : 0));
-
-                if ((wrk & 0xFF) > 0) unsetFlag(FLAG_ZERO);
-                else setFlag(FLAG_ZERO);
-                if ((wrk & 0x100) > 0) setFlag(FLAG_CARRY);
-                else unsetFlag(FLAG_CARRY);
-                if (((A ^ ac1.val ^ wrk) & 0x10) != 0) setFlag(FLAG_HALFCARRY);
-                else unsetFlag(FLAG_HALFCARRY);
-
+            case CPL: // ComPLement accumulator (A = ~A).
+                temp = A ^ 0xFF;
                 setFlag(FLAG_ADDSUB);
-
-                A = wrk & 0xff;
+                setFlag(FLAG_HALFCARRY);
+                A = temp & 0xff;
                 break;
-            case PREFIX:
-                CPUPrefixInstructions.processPrefixCommand(this, ac1.val);
-                break;
-            case SCF:
+            case SCF: // Set carry flag
                 setFlag(FLAG_CARRY);
                 unsetFlag(FLAG_ADDSUB);
                 unsetFlag(FLAG_HALFCARRY);
                 break;
-            case CCF:
+            case CCF: // Clear carry flag
                 unsetFlag(FLAG_ADDSUB);
                 unsetFlag(FLAG_HALFCARRY);
-
                 if ((FL & 0x10) > 0)
                     unsetFlag(FLAG_CARRY);
                 else
                     setFlag(FLAG_CARRY);
-
                 break;
-            case JRNZ:
+            case PUSHW:
+                pushW(temp);
+                break;
+            case POPW:
+                temp = popW();
+                break;
+            case CALL:
+                call(fetchAddress);
+                break;
+            case CALLNZ:
                 if (!testFlag(FLAG_ZERO)) {
-                    jumpRelative(ac1.val);
+                    call(fetchAddress);
                 }
                 break;
-            case JRZ:
+            case CALLZ:
                 if (testFlag(FLAG_ZERO)) {
-                    jumpRelative(ac1.val);
+                    call(fetchAddress);
                 }
                 break;
-            case JRNC:
-                if (!testFlag(FLAG_CARRY)) {
-                    jumpRelative(ac1.val);
-                }
-                break;
-            case JRC:
+            case CALLC:
                 if (testFlag(FLAG_CARRY)) {
-                    jumpRelative(ac1.val);
+                    call(fetchAddress);
                 }
                 break;
-            case JR:
-                jumpRelative(ac1.val);
-
-                break;
-            case JPZ:
-                if (testFlag(FLAG_ZERO)) {
-                    wrk = ac1.val;
-                    PC = wrk;
-                }
-                break;
-            case JPNZ:
-                if (!testFlag(FLAG_ZERO)) {
-                    wrk = ac1.val;
-                    PC = wrk;
-                }
-                break;
-            case JPNC:
+            case CALLNC:
                 if (!testFlag(FLAG_CARRY)) {
-                    wrk = ac1.val;
-                    PC = wrk;
+                    call(fetchAddress);
                 }
                 break;
-            case JPC:
-                if (testFlag(FLAG_CARRY)) {
-                    wrk = ac1.val;
-                    PC = wrk;
-                }
+            case RST_18H:
+                jumpToInterrupt(0x0018);
                 break;
-
-            case LDZPGCA:
-                mem.poke(0xff00 + (C & 0xff), A & 0xff);
-                // mem.RAM[0xff00+(C&0xff)] = A&0xff;
+            case RST_10H:
+                jumpToInterrupt(0x0010);
                 break;
-            case LDZPGNNA:
-                mem.poke(0xff00 + (ac1.val & 0xff), A & 0xff);
+            case RST_20H:
+                jumpToInterrupt(0x0020);
+                break;
+            case RST_30H:
+                jumpToInterrupt(0x0030);
+                break;
+            case RST_38H:
+                jumpToInterrupt(0x0038);
+                break;
+            case RST_08H:
+                jumpToInterrupt(0x0008);
+                break;
+            case RST_28H:
+                jumpToInterrupt(0x0028);
+                break;
+            case RST_00H:
+                jumpToInterrupt(0x0000);
+                break;
+            case LDZPGA: // load zero page from A
+                mem.poke(0xff00 + (temp & 0xff), A & 0xff);
                 // mem.RAM[0xff00+(ac1.val&0xff)] = A&0xff;
                 break;
-            case LDAZPGNN:
-                A = mem.peek(0xff00 + (ac1.val & 0xff)) & 0xff;
-                // A = mem.RAM[(0xff00+(ac1.val&0xff))]&0xff;
-                if (displayInstruction)
-                    System.out.println("zpg addr:" + Utils.toHex4(0xff00 + ac1.val) + " val:" + A);
+            case FETCH_ZPG: // load zero page from A
+                temp = mem.peek(0xff00 + (temp & 0xff));
+                // mem.RAM[0xff00+(ac1.val&0xff)] = A&0xff;
                 break;
-            case LDAZPGC:
-                A = mem.peek(0xff00 + (C & 0xff)) & 0xff;
-                break;
+            case ADDSPNN:
 
+                wrk = SP + convertSignedByte(temp & 0xff);
+
+                if (((SP ^ convertSignedByte(temp & 0xff) ^ wrk) & 0x10) > 0)
+                    setFlag(FLAG_HALFCARRY);
+                else
+                    unsetFlag(FLAG_HALFCARRY);
+
+                if (((SP ^ convertSignedByte(temp & 0xff) ^ wrk) & 0x100) > 0)
+                    setFlag(FLAG_CARRY);
+                else
+                    unsetFlag(FLAG_CARRY);
+
+                unsetFlag(FLAG_ZERO);
+                unsetFlag(FLAG_ADDSUB);
+
+                SP = wrk;
+
+                break;
+            case DI:
+                disableInterrupts();
+                break;
+            case EI:
+                enableInterrupts();
+                break;
             case LDHLSPN:
-                int signedByte = convertSignedByte(ac2.val & 0xff);
+                int signedByte = convertSignedByte(temp & 0xff);
                 int ptr = SP + signedByte;
 
                 wrk = ptr & 0xffff;
@@ -574,159 +738,12 @@ public class CPU {
                 setHL(wrk);
 
                 break;
-            case RR:
-
-                carryIn = testFlag(FLAG_CARRY) ? 1 : 0;
-                carryOut = ((ac1.val & 0x01) > 0) ? 1 : 0;
-
-                wrk = (ac1.val >> 1) + (carryIn << 7);
-
-                if (carryOut == 1)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_HALFCARRY);
-                unsetFlag(FLAG_ZERO);
-
-                mem.poke(ac1.addr, wrk & 0xff);
-
+            case PREFIX_CB:
+                CPUPrefixInstructions.processPrefixCommand(this, temp);
                 break;
-            case RRCA:
-
-                carryOut = ((A & 0x01) > 0) ? 1 : 0;
-
-                if (carryOut == 1) setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                wrk = (A >> 1) + (carryOut << 7);
-
-                unsetFlag(FLAG_ZERO);
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_HALFCARRY);
-
-                mem.poke(ac1.addr, wrk & 0xff);
-                break;
-            case RLA:
-                A = A << 1;
-                if (testFlag(FLAG_CARRY))
-                    A |= 1;
-                if (A > 0xff)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-                A = A & 0xff;
-
-                unsetFlag(FLAG_ZERO);
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_HALFCARRY);
-
-                break;
-            case RLCA:
-
-                carryOut = ((A & 0x80) > 0) ? 1 : 0;
-
-                if (carryOut == 1) setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                wrk = (A << 1) + carryOut;
-
-                unsetFlag(FLAG_ZERO);
-                unsetFlag(FLAG_ADDSUB);
-                unsetFlag(FLAG_HALFCARRY);
-
-                mem.poke(ac1.addr, wrk & 0xff);
-                break;
-            case CALL:
-                call(ac1.val);
-                break;
-            case CALLNZ:
-                if (!testFlag(FLAG_ZERO)) {
-                    call(ac1.val);
-                }
-                break;
-            case CALLZ:
-                if (testFlag(FLAG_ZERO)) {
-                    call(ac1.val);
-                }
-                break;
-            case CALLC:
-                if (testFlag(FLAG_CARRY)) {
-                    call(ac1.val);
-                }
-                break;
-            case CALLNC:
-                if (!testFlag(FLAG_CARRY)) {
-                    call(ac1.val);
-                }
-                break;
-            case PUSHW:
-                pushW(ac1.val);
-                break;
-            case POPW:
-                wrk = popW();
-                mem.poke(ac1.addr, wrk);
-                break;
-
-            case CP:
-                wrk = A - ac1.val;
-
-                handleZeroFlag(wrk & 0xff);
-
-                setFlag(FLAG_ADDSUB);
-                if (A < ac1.val)
-                    setFlag(FLAG_CARRY);
-                else
-                    unsetFlag(FLAG_CARRY);
-
-                if ((A & 0xF) < (ac1.val & 0xF))
-                    setFlag(FLAG_HALFCARRY);
-                else
-                    unsetFlag(FLAG_HALFCARRY);
-
-                break;
-            case CPL:
-                wrk = A ^ 0xFF;
-                setFlag(FLAG_ADDSUB);
-                setFlag(FLAG_HALFCARRY);
-                A = wrk & 0xff;
-                break;
-
-            case RST_18H:
-                jumpToInterrupt(0x0018);
-                break;
-            case RST_10H:
-                jumpToInterrupt(0x0010);
-                break;
-            case RST_20H:
-                jumpToInterrupt(0x0020);
-                break;
-            case RST_30H:
-                jumpToInterrupt(0x0030);
-                break;
-            case RST_38H:
-                jumpToInterrupt(0x0038);
-                break;
-            case RST_8H:
-                jumpToInterrupt(0x0008);
-                break;
-            case RST_28H:
-                jumpToInterrupt(0x0028);
-                break;
-            case RST_00H:
-                jumpToInterrupt(0x0000);
-                break;
-
             default:
-                System.out.println("Unhandled instruction at " + Utils.toHex4(entryPC) + " : "
-                        + Utils.toHex2(currentInstruction) + " tick:" + tickCount);
-                mem.poke(0xffff + 10, 1);
-                break;
+                System.out.println("Unsupported micro op: " + op.name());
         }
-
     }
 
 
@@ -737,6 +754,17 @@ public class CPU {
 
     public void ret() {
         PC = popW();
+    }
+
+    public int popW() {
+        int lb = mem.peek((SP++) & 0xffff);
+        int hb = mem.peek((SP++) & 0xffff);
+        return combineBytes(hb, lb);
+    }
+
+    // Combine two bytes into one 16 bit value.
+    public int combineBytes(int h, int l) {
+        return ((h & 0xff) << 8) | (l & 0xff);
     }
 
     // Set a flag on the interrupt register.
@@ -798,7 +826,6 @@ public class CPU {
             if (dbgMsgOn)
                 System.out.println("Detected interrupt VBLANK ########################################");
             jumpToInterrupt(0x0060);
-            return;
         }
     }
 
@@ -807,96 +834,6 @@ public class CPU {
         PC = addr;
     }
 
-    // Based on the address mode, set up the address container
-    // with data and addresses to be used by the current operation.
-    public void processAddressMode(AddressContainer ac, ADDRMODE mode) {
-        int peeked = 0;
-
-        ac.mode = mode;
-        ac.addr = AddrMap.ADDR_INVALID;
-
-        switch (mode) {
-            case NONE:
-                break;
-            case nn:
-                ac.val = getNextByte();
-                break;
-            case nnnn:
-                ac.val = getNextWord();
-                break;
-            case A:
-                ac.val = A;
-                ac.addr = AddrMap.ADDR_A;
-                break;
-            case B:
-                ac.val = B;
-                ac.addr = AddrMap.ADDR_B;
-                break;
-            case C:
-                ac.val = C;
-                ac.addr = AddrMap.ADDR_C;
-                break;
-            case D:
-                ac.val = D;
-                ac.addr = AddrMap.ADDR_D;
-                break;
-            case E:
-                ac.val = E;
-                ac.addr = AddrMap.ADDR_E;
-                break;
-            case H:
-                ac.val = H;
-                ac.addr = AddrMap.ADDR_H;
-                break;
-            case L:
-                ac.val = L;
-                ac.addr = AddrMap.ADDR_L;
-                break;
-
-            case SP:
-                ac.val = SP;
-                ac.addr = AddrMap.ADDR_SP;
-                break;
-            case HL:
-                ac.val = getHL();
-                ac.addr = AddrMap.ADDR_HL;
-                break;
-            case BC:
-                ac.val = getBC();
-                ac.addr = AddrMap.ADDR_BC;
-                break;
-            case DE:
-                ac.val = getDE();
-                ac.addr = AddrMap.ADDR_DE;
-                break;
-            case AF:
-                ac.val = getAF();
-                ac.addr = AddrMap.ADDR_AF;
-                break;
-            case __HL:
-                ac.val = mem.peek(getHL());
-                ac.addr = getHL();
-                break;
-            case __BC:
-                ac.val = mem.peek(getBC());
-                ac.addr = getBC();
-                break;
-            case __DE:
-                ac.val = mem.peek(getDE());
-                ac.addr = getDE();
-                break;
-            case __nnnn:
-                peeked = getNextWord();
-                ac.val = mem.peek(peeked);
-                ac.addr = peeked;
-                break;
-
-            default:
-                System.out.println("Address mode not recognised in processAddressMode : " + mode.toString());
-                break;
-        }
-
-    }
 
     public void jumpRelative(int val) {
 
@@ -914,30 +851,8 @@ public class CPU {
         if (displayInstruction)
             System.out.println("Jump relative by " + tc + " to " + Utils.toHex4(PC + tc));
 
-//		System.out.println("Jump relative "+
-//				"  val:" + val +
-//				"  signed:" + tc +
-//				"  move:" + move +
-//				"  PC " + Utils.toHex4(PC) +
-//				"  PC+tc " + Utils.toHex4((PC + tc)) +
-//				"  "+Debug.getRegisters(this));
-
         PC = (PC + move) & 0xffff;
 
-    }
-
-
-    // Combine two bytes into one 16 bit value.
-    public int combineBytes(int h, int l) {
-        return ((h & 0xff) << 8) | (l & 0xff);
-    }
-
-    public int getHighByte(int val) {
-        return (val >> 8) & 0xff;
-    }
-
-    public int getLowByte(int val) {
-        return val & 0xff;
     }
 
     public int convertSignedByte(int val) {
@@ -956,11 +871,20 @@ public class CPU {
         this.FL = getLowByte(val) & 0xF0;
     }
 
+    public int getHighByte(int val) {
+        return (val >> 8) & 0xff;
+    }
+
+    public int getLowByte(int val) {
+        return val & 0xff;
+    }
+
     public int getBC() {
         return combineBytes(B, C);
     }
 
     public void setBC(int val) {
+        val = 0xffff & val;
         this.B = getHighByte(val);
         this.C = getLowByte(val);
     }
@@ -983,14 +907,8 @@ public class CPU {
         this.L = getLowByte(val);
     }
 
-    public void setHL(int _h, int _l) {
-        this.H = _h & 0xff;
-        this.L = _l & 0xff;
-    }
-
     public void enableInterrupts() {
         pendingEnableInterrupt = 1;
-        // interruptEnabled=1;
     }
 
     public void disableInterrupts() {
@@ -1013,10 +931,8 @@ public class CPU {
 
     // Get word at PC and move PC on.
     public int getNextByte() {
-        int oprnd = mem.peek(PC++) & 0xff;
-        return oprnd;
+        return mem.peek(PC++) & 0xff;
     }
-
 
     public void setFlag(int flag) {
         FL |= flag;
@@ -1034,11 +950,5 @@ public class CPU {
     public void pushW(int val) {
         mem.poke((--SP) & 0xffff, getHighByte(val));
         mem.poke((--SP) & 0xffff, getLowByte(val));
-    }
-
-    public int popW() {
-        int lb = mem.peek((SP++) & 0xffff);
-        int hb = mem.peek((SP++) & 0xffff);
-        return combineBytes(hb, lb);
     }
 }
