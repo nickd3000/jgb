@@ -6,10 +6,10 @@ public class DebugRomChoser {
         String gameFileName = "";
 
         //gameFileName = "tetris.gb";
-        gameFileName = "mario.gb";
+        //gameFileName = "mario.gb";
         //gameFileName = "drmario.gb";
         //gameFileName = "othello.gb";
-        //gameFileName = "spaceinvaders.gb";
+        gameFileName = "spaceinvaders.gb";
         //gameFileName = "klax.gb";
         // gameFileName = "tennis.gb";
         // gameFileName = "bghost.gb";

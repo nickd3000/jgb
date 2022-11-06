@@ -119,12 +119,15 @@ public class Debug {
         checkRegister8Bit(cpu, cpu.E, "E");
         checkRegister8Bit(cpu, cpu.H, "H");
         checkRegister8Bit(cpu, cpu.L, "L");
+
     }
 
     public static void checkRegister8Bit(CPU cpu, int val, String name) {
         if (val < 0 || val > 0xff) {
             System.out.println("Register overflow: " + name + "=" + val + "  PC=" + Utils.toHex4(cpu.PC) + "  tick:" + cpu.tickCount);
-            cpu.mem.poke(0xffff + 10, 1);
+
+            //cpu.mem.poke(0xffff + 10, 1);
+            System.out.println("Last instruction:"+cpu.getLastInstruction());
         }
     }
 

@@ -3,7 +3,10 @@ package com.physmo.jgb;
 import com.physmo.jgb.microcode.MicroOp;
 import com.physmo.jgb.microcode.Microcode;
 
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CPU {
@@ -25,6 +28,7 @@ public class CPU {
     public HARDWARE_TYPE hardwareType = HARDWARE_TYPE.CGB;
     public INPUT input = null;
     public boolean speedMode = false;
+
     MEM mem = null;
     GPU gpu = null;
 
@@ -42,15 +46,17 @@ public class CPU {
     int fakeVerticalBlank = 0;
     int topOfSTack = 0xFFFE; // used for debugging.
 
-    //AddressContainer ac1 = new AddressContainer();
-    //AddressContainer ac2 = new AddressContainer();
+
     int serialBit = 0;
 
     Microcode microcode = new Microcode();
-    int temp;
-    Map<Integer, Integer> usedNewOp = new HashMap<>();
-    int fetchAddress = 0;
+    int tempRegister = 0;
+    int addressBuffer = 0;
+
+    Map<Integer, Integer> instructionCounts = new HashMap<>();
+
     int printNewOpUseCount = 0;
+    int lastInstruction = 0;
 
     public void attachHardware(MEM mem, INPUT input, GPU gpu) {
         this.mem = mem;
@@ -81,6 +87,7 @@ public class CPU {
         }
 
         Debug.checkRegisters(this);
+
 
         // Handle interrupts before checking current instruction.
         checkInterrupts();
@@ -127,37 +134,60 @@ public class CPU {
         // Inject new microcode stuff
         MicroOp[] ops = microcode.getInstructionCode(currentInstruction);
         if (ops.length > 0 && ops[0] != MicroOp.TODO) {
-            //System.out.println("Microcode: " + microcode.getInstructionName(currentInstruction));
             printNewOpUse(currentInstruction);
             for (MicroOp op : ops) {
                 doMicroOp(op);
             }
         }
+        lastInstruction = currentInstruction;
 
+    }
+
+    public int getLastInstruction() {
+        return lastInstruction;
     }
 
     private void printNewOpUse(int currentInstruction) {
 
-        if (!usedNewOp.containsKey(currentInstruction)) {
-            usedNewOp.put(currentInstruction, 1);
+        if (!instructionCounts.containsKey(currentInstruction)) {
+            instructionCounts.put(currentInstruction, 1);
             String instructionName = microcode.getInstructionName(currentInstruction);
             System.out.println("Microcode: " + instructionName);
         } else {
-            int count = usedNewOp.get(currentInstruction);
-            usedNewOp.put(currentInstruction, count + 1);
+            int count = instructionCounts.get(currentInstruction);
+            instructionCounts.put(currentInstruction, count + 1);
         }
 
-//        printNewOpUseCount++;
-//        if (printNewOpUseCount%50000==0) {
-//            for (Integer integer : usedNewOp.keySet()) {
-//                int val = usedNewOp.get(integer);
-//                System.out.println(" "+microcode.getInstructionName(integer)+"  "+val);
-//            }
-//        }
+        printNewOpUseCount++;
+        if (printNewOpUseCount % 50000 == 0) {
+            printSortedInstructionCounts();
+        }
+    }
+
+    public void printSortedInstructionCounts() {
+        class Pair {
+            public int a;
+            public int b;
+            public Pair(int a, int b) {
+                this.a = a;
+                this.b = b;
+            }
+        }
+
+        List<Pair> sortedList = new ArrayList<>();
+        for (Integer key : instructionCounts.keySet()) {
+            sortedList.add(new Pair(key, instructionCounts.get(key)));
+        }
+
+        sortedList.sort(Comparator.comparingInt(o -> o.b));
+        System.out.println("------------------------------------------------");
+        for (Pair pair : sortedList) {
+            System.out.println(">> " + microcode.getInstructionName(pair.a) + "  " + pair.b);
+        }
+
     }
 
 
-    // int A, B, C, D, E, H, L;
     private void doMicroOp(MicroOp op) {
         switch (op) {
             case HALT:
@@ -167,155 +197,157 @@ public class CPU {
                     PC++;
                 }
                 break;
+            case NOP:
+                break;
             case FETCH_A:
-                temp = A;
+                tempRegister = A;
                 break;
             case FETCH_B:
-                temp = B;
+                tempRegister = B;
                 break;
             case FETCH_C:
-                temp = C;
+                tempRegister = C;
                 break;
             case FETCH_D:
-                temp = D;
+                tempRegister = D;
                 break;
             case FETCH_E:
-                temp = E;
+                tempRegister = E;
                 break;
             case FETCH_H:
-                temp = H;
+                tempRegister = H;
                 break;
             case FETCH_L:
-                temp = L;
+                tempRegister = L;
                 break;
             case FETCH_AF:
-                temp = combineBytes(A, FL);
+                tempRegister = combineBytes(A, FL);
                 break;
             case FETCH_BC:
-                temp = combineBytes(B, C);
+                tempRegister = combineBytes(B, C);
                 break;
             case FETCH_DE:
-                temp = combineBytes(D, E);
+                tempRegister = combineBytes(D, E);
                 break;
             case FETCH_HL:
-                temp = combineBytes(H, L);
+                tempRegister = combineBytes(H, L);
                 break;
             case FETCH_SP:
-                temp = SP;
+                tempRegister = SP;
                 break;
             case FETCH_8:
-                temp = getNextByte();
+                tempRegister = getNextByte();
                 break;
             case FETCH_16:
-                temp = getNextWord();
+                tempRegister = getNextWord();
                 break;
             case FETCH_16_ADDRESS:
-                fetchAddress = getNextWord();
+                addressBuffer = getNextWord();
                 break;
             case SET_ADDR_FROM_HL:
-                fetchAddress = getHL();
+                addressBuffer = getHL();
                 break;
             case SET_ADDR_FROM_HL_INC:
-                fetchAddress = getHL();
+                addressBuffer = getHL();
                 setHL(getHL() + 1);
                 break;
             case SET_ADDR_FROM_HL_DEC:
-                fetchAddress = getHL();
+                addressBuffer = getHL();
                 setHL(getHL() - 1);
                 break;
             case SET_ADDR_FROM_BC:
-                fetchAddress = getBC();
+                addressBuffer = getBC();
                 break;
             case SET_ADDR_FROM_DE:
-                fetchAddress = getDE();
+                addressBuffer = getDE();
                 break;
             case FETCH_BYTE_FROM_ADDR:
-                temp = mem.peek(fetchAddress);
+                tempRegister = mem.peek(addressBuffer);
                 break;
             case STORE_BYTE_AT_ADDRESS:
-                mem.poke(fetchAddress, temp);
+                mem.poke(addressBuffer, tempRegister);
                 break;
             case STORE_A:
-                A = temp;
+                A = tempRegister;
                 break;
             case STORE_B:
-                B = temp;
+                B = tempRegister;
                 break;
             case STORE_C:
-                C = temp;
+                C = tempRegister;
                 break;
             case STORE_D:
-                D = temp;
+                D = tempRegister;
                 break;
             case STORE_E:
-                E = temp;
+                E = tempRegister;
                 break;
             case STORE_H:
-                H = temp;
+                H = tempRegister;
                 break;
             case STORE_L:
-                L = temp;
+                L = tempRegister;
                 break;
             case STORE_BC:
-                setBC(temp);
+                setBC(tempRegister);
                 break;
             case STORE_DE:
-                setDE(temp);
+                setDE(tempRegister);
                 break;
             case STORE_HL:
-                setHL(temp);
+                setHL(tempRegister);
                 break;
             case STORE_AF:
-                setAF(temp);
+                setAF(tempRegister);
                 break;
             case STORE_SP:
-                SP = temp;
+                SP = tempRegister;
                 break;
             case STORE_p16WORD:
-                mem.poke(fetchAddress, getLowByte(temp));
-                mem.poke(fetchAddress + 1, getHighByte(temp));
+                mem.poke(addressBuffer, getLowByte(tempRegister));
+                mem.poke(addressBuffer + 1, getHighByte(tempRegister));
                 break;
             case INC_8:
-                temp = temp + 1;
-                if (temp > 0xff)
-                    temp = 0;
+                tempRegister = tempRegister + 1;
+                if (tempRegister > 0xff)
+                    tempRegister = 0;
 
-                handleZeroFlag(temp & 0xff);
+                handleZeroFlag(tempRegister & 0xff);
                 unsetFlag(FLAG_ADDSUB);
 
-                if ((temp & 0xF) + 1 > 0xF)
+                if ((tempRegister & 0xF) + 1 > 0xF)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
 
                 break;
             case INC_16:
-                temp = temp + 1;
-                if (temp > 0xffff)
-                    temp = 0;
+                tempRegister = tempRegister + 1;
+                if (tempRegister > 0xffff)
+                    tempRegister = 0;
                 break;
             case DEC_8:
-                temp = temp - 1;
-                if (temp < 0)
-                    temp = 0xff;
+                tempRegister = tempRegister - 1;
+                if (tempRegister < 0)
+                    tempRegister = 0xff;
 
-                handleZeroFlag(temp);
+                handleZeroFlag(tempRegister);
                 setFlag(FLAG_ADDSUB);
-                if ((temp & 0xF) - 1 < 0)
+                if ((tempRegister & 0xF) - 1 < 0)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
 
                 break;
             case DEC_16:
-                temp = temp - 1;
-                if (temp < 0)
-                    temp = 0xffff;
+                tempRegister = tempRegister - 1;
+                if (tempRegister < 0)
+                    tempRegister = 0xffff;
                 break;
             case ADD_HL:
-                temp = getHL() + temp;
+                tempRegister = getHL() + tempRegister;
 
-                if (temp > 0xffff)
+                if (tempRegister > 0xffff)
                     setFlag(FLAG_CARRY);
                 else
                     unsetFlag(FLAG_CARRY);
@@ -323,14 +355,14 @@ public class CPU {
                 unsetFlag(FLAG_ADDSUB);
 
                 //if ((((getHL() & 0xFFF) + (ac2.val & 0xFFF)) & 0x1000) > 0)
-                if ((((getHL() & 0xFFF) + (temp & 0xFFF)) & 0x1000) > 0)
+                if ((((getHL() & 0xFFF) + (tempRegister & 0xFFF)) & 0x1000) > 0)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
 
                 break;
             case ADD:
-                int wrk = A + temp;
+                int wrk = A + tempRegister;
 
                 if (wrk > 0xff)
                     setFlag(FLAG_CARRY);
@@ -340,7 +372,7 @@ public class CPU {
 
                 unsetFlag(FLAG_ADDSUB);
 
-                if (((A & 0xF) + (temp & 0xF)) > 0xF)
+                if (((A & 0xF) + (tempRegister & 0xF)) > 0xF)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
@@ -349,7 +381,7 @@ public class CPU {
 
                 break;
             case ADC:
-                wrk = A + temp + (testFlag(FLAG_CARRY) ? 1 : 0);
+                wrk = A + tempRegister + (testFlag(FLAG_CARRY) ? 1 : 0);
 
                 handleZeroFlag(wrk & 0xff);
 
@@ -360,7 +392,7 @@ public class CPU {
 
                 unsetFlag(FLAG_ADDSUB);
 
-                if (((A ^ temp ^ wrk) & 0x10) > 0)
+                if (((A ^ tempRegister ^ wrk) & 0x10) > 0)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
@@ -369,9 +401,9 @@ public class CPU {
 
                 break;
             case SUB:
-                wrk = A - temp;
+                wrk = A - tempRegister;
 
-                if (temp > A)
+                if (tempRegister > A)
                     setFlag(FLAG_CARRY);
                 else
                     unsetFlag(FLAG_CARRY);
@@ -379,7 +411,7 @@ public class CPU {
                 handleZeroFlag(wrk & 0xff);
                 setFlag(FLAG_ADDSUB);
 
-                if (((A ^ temp ^ wrk) & 0x10) > 0)
+                if (((A ^ tempRegister ^ wrk) & 0x10) > 0)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
@@ -388,13 +420,13 @@ public class CPU {
 
                 break;
             case SBC:
-                wrk = A - ((temp & 0xff) + (testFlag(FLAG_CARRY) ? 1 : 0));
+                wrk = A - ((tempRegister & 0xff) + (testFlag(FLAG_CARRY) ? 1 : 0));
 
                 if ((wrk & 0xFF) > 0) unsetFlag(FLAG_ZERO);
                 else setFlag(FLAG_ZERO);
                 if ((wrk & 0x100) > 0) setFlag(FLAG_CARRY);
                 else unsetFlag(FLAG_CARRY);
-                if (((A ^ temp ^ wrk) & 0x10) != 0) setFlag(FLAG_HALFCARRY);
+                if (((A ^ tempRegister ^ wrk) & 0x10) != 0) setFlag(FLAG_HALFCARRY);
                 else unsetFlag(FLAG_HALFCARRY);
 
                 setFlag(FLAG_ADDSUB);
@@ -402,7 +434,7 @@ public class CPU {
                 A = wrk & 0xff;
                 break;
             case AND:
-                wrk = A & temp;
+                wrk = A & tempRegister;
                 A = wrk;
 
                 handleZeroFlag(wrk);
@@ -410,10 +442,10 @@ public class CPU {
                 unsetFlag(FLAG_CARRY);
                 setFlag(FLAG_HALFCARRY);
                 if (displayInstruction)
-                    System.out.println("and val:" + Utils.toHex2(temp));
+                    System.out.println("and val:" + Utils.toHex2(tempRegister));
                 break;
             case XOR:
-                wrk = A ^ temp;
+                wrk = A ^ tempRegister;
                 handleZeroFlag(wrk & 0xff);
                 unsetFlag(FLAG_ADDSUB);
                 unsetFlag(FLAG_CARRY);
@@ -421,7 +453,7 @@ public class CPU {
                 A = wrk & 0xff;
                 break;
             case OR:
-                wrk = A | temp;
+                wrk = A | tempRegister;
                 handleZeroFlag(wrk & 0xff);
                 unsetFlag(FLAG_ADDSUB);
                 unsetFlag(FLAG_CARRY);
@@ -429,17 +461,17 @@ public class CPU {
                 A = wrk & 0xff;
                 break;
             case CP:
-                wrk = A - temp;
+                wrk = A - tempRegister;
 
                 handleZeroFlag(wrk & 0xff);
 
                 setFlag(FLAG_ADDSUB);
-                if (A < temp)
+                if (A < tempRegister)
                     setFlag(FLAG_CARRY);
                 else
                     unsetFlag(FLAG_CARRY);
 
-                if ((A & 0xF) < (temp & 0xF))
+                if ((A & 0xF) < (tempRegister & 0xF))
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
@@ -457,32 +489,32 @@ public class CPU {
                 if (carryOut == 1) setFlag(FLAG_CARRY);
                 else unsetFlag(FLAG_CARRY);
 
-                temp = (A << 1) + carryOut;
+                tempRegister = (A << 1) + carryOut;
                 unsetFlag(FLAG_ZERO);
                 unsetFlag(FLAG_ADDSUB);
                 unsetFlag(FLAG_HALFCARRY);
-                A = temp;
+                A = tempRegister & 0xff;
 
                 break;
             case RRCA:
                 carryOut = ((A & 0x01) > 0) ? 1 : 0;
                 if (carryOut == 1) setFlag(FLAG_CARRY);
                 else unsetFlag(FLAG_CARRY);
-                temp = (A >> 1) + (carryOut << 7);
+                tempRegister = (A >> 1) + (carryOut << 7);
                 unsetFlag(FLAG_ZERO);
                 unsetFlag(FLAG_ADDSUB);
                 unsetFlag(FLAG_HALFCARRY);
-                A = temp;
+                A = tempRegister;
                 break;
             case RL:
-                temp = temp << 1;
+                tempRegister = tempRegister << 1;
                 if (testFlag(FLAG_CARRY))
-                    temp |= 1;
-                if (temp > 0xff)
+                    tempRegister |= 1;
+                if (tempRegister > 0xff)
                     setFlag(FLAG_CARRY);
                 else
                     unsetFlag(FLAG_CARRY);
-                temp = temp & 0xff;
+                tempRegister = tempRegister & 0xff;
 
                 unsetFlag(FLAG_ZERO);
                 unsetFlag(FLAG_ADDSUB);
@@ -508,50 +540,50 @@ public class CPU {
                 break;
             case JRNZ:
                 if (!testFlag(FLAG_ZERO)) {
-                    jumpRelative(temp);
+                    jumpRelative(tempRegister);
                 }
                 break;
             case JRZ:
                 if (testFlag(FLAG_ZERO)) {
-                    jumpRelative(temp);
+                    jumpRelative(tempRegister);
                 }
                 break;
             case JRNC:
                 if (!testFlag(FLAG_CARRY)) {
-                    jumpRelative(temp);
+                    jumpRelative(tempRegister);
                 }
                 break;
             case JRC:
                 if (testFlag(FLAG_CARRY)) {
-                    jumpRelative(temp);
+                    jumpRelative(tempRegister);
                 }
                 break;
             case JR:
-                jumpRelative(temp);
+                jumpRelative(tempRegister);
 
                 break;
             case JPZ:
                 if (testFlag(FLAG_ZERO)) {
-                    PC = fetchAddress;
+                    PC = addressBuffer;
                 }
                 break;
             case JPNZ:
                 if (!testFlag(FLAG_ZERO)) {
-                    PC = fetchAddress;
+                    PC = addressBuffer;
                 }
                 break;
             case JPNC:
                 if (!testFlag(FLAG_CARRY)) {
-                    PC = fetchAddress;
+                    PC = addressBuffer;
                 }
                 break;
             case JPC:
                 if (testFlag(FLAG_CARRY)) {
-                    PC = fetchAddress;
+                    PC = addressBuffer;
                 }
                 break;
             case JP:
-                PC = fetchAddress;
+                PC = addressBuffer;
                 break;
             case RET:
                 wrk = popW();
@@ -599,22 +631,22 @@ public class CPU {
                     setFlag(FLAG_CARRY);
                 }
 
-                temp = A;
-                temp += flagN ? -correction : correction;
-                temp &= 0xFF;
+                tempRegister = A;
+                tempRegister += flagN ? -correction : correction;
+                tempRegister &= 0xFF;
 
                 unsetFlag(FLAG_HALFCARRY);
 
-                handleZeroFlag(temp);
+                handleZeroFlag(tempRegister);
 
-                A = temp;
+                A = tempRegister;
 
                 break;
             case CPL: // ComPLement accumulator (A = ~A).
-                temp = A ^ 0xFF;
+                tempRegister = A ^ 0xFF;
                 setFlag(FLAG_ADDSUB);
                 setFlag(FLAG_HALFCARRY);
-                A = temp & 0xff;
+                A = tempRegister & 0xff;
                 break;
             case SCF: // Set carry flag
                 setFlag(FLAG_CARRY);
@@ -630,32 +662,32 @@ public class CPU {
                     setFlag(FLAG_CARRY);
                 break;
             case PUSHW:
-                pushW(temp);
+                pushW(tempRegister);
                 break;
             case POPW:
-                temp = popW();
+                tempRegister = popW();
                 break;
             case CALL:
-                call(fetchAddress);
+                call(addressBuffer);
                 break;
             case CALLNZ:
                 if (!testFlag(FLAG_ZERO)) {
-                    call(fetchAddress);
+                    call(addressBuffer);
                 }
                 break;
             case CALLZ:
                 if (testFlag(FLAG_ZERO)) {
-                    call(fetchAddress);
+                    call(addressBuffer);
                 }
                 break;
             case CALLC:
                 if (testFlag(FLAG_CARRY)) {
-                    call(fetchAddress);
+                    call(addressBuffer);
                 }
                 break;
             case CALLNC:
                 if (!testFlag(FLAG_CARRY)) {
-                    call(fetchAddress);
+                    call(addressBuffer);
                 }
                 break;
             case RST_18H:
@@ -683,23 +715,23 @@ public class CPU {
                 jumpToInterrupt(0x0000);
                 break;
             case LDZPGA: // load zero page from A
-                mem.poke(0xff00 + (temp & 0xff), A & 0xff);
+                mem.poke(0xff00 + (tempRegister & 0xff), A & 0xff);
                 // mem.RAM[0xff00+(ac1.val&0xff)] = A&0xff;
                 break;
             case FETCH_ZPG: // load zero page from A
-                temp = mem.peek(0xff00 + (temp & 0xff));
+                tempRegister = mem.peek(0xff00 + (tempRegister & 0xff));
                 // mem.RAM[0xff00+(ac1.val&0xff)] = A&0xff;
                 break;
             case ADDSPNN:
 
-                wrk = SP + convertSignedByte(temp & 0xff);
+                wrk = SP + convertSignedByte(tempRegister & 0xff);
 
-                if (((SP ^ convertSignedByte(temp & 0xff) ^ wrk) & 0x10) > 0)
+                if (((SP ^ convertSignedByte(tempRegister & 0xff) ^ wrk) & 0x10) > 0)
                     setFlag(FLAG_HALFCARRY);
                 else
                     unsetFlag(FLAG_HALFCARRY);
 
-                if (((SP ^ convertSignedByte(temp & 0xff) ^ wrk) & 0x100) > 0)
+                if (((SP ^ convertSignedByte(tempRegister & 0xff) ^ wrk) & 0x100) > 0)
                     setFlag(FLAG_CARRY);
                 else
                     unsetFlag(FLAG_CARRY);
@@ -717,7 +749,7 @@ public class CPU {
                 enableInterrupts();
                 break;
             case LDHLSPN:
-                int signedByte = convertSignedByte(temp & 0xff);
+                int signedByte = convertSignedByte(tempRegister & 0xff);
                 int ptr = SP + signedByte;
 
                 wrk = ptr & 0xffff;
@@ -739,7 +771,7 @@ public class CPU {
 
                 break;
             case PREFIX_CB:
-                CPUPrefixInstructions.processPrefixCommand(this, temp);
+                CPUPrefixInstructions.processPrefixCommand(this, tempRegister);
                 break;
             default:
                 System.out.println("Unsupported micro op: " + op.name());

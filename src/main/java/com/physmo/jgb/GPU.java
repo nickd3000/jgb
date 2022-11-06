@@ -37,7 +37,7 @@ public class GPU {
     public final int[] cgbBackgroundPaletteData = new int[64];
     public final int[] cgbSpritePaletteData = new int[64];
     private final Sprite[] sprites = new Sprite[40];
-    private final PALETTE_TYPE paletteType = PALETTE_TYPE.CLASSIC;
+    private final PALETTE_TYPE paletteType = PALETTE_TYPE.SUPER_GAMEBOY;
 
     // TODO: set these up in a method
     private final int[] backgroundPaletteMaster = {
