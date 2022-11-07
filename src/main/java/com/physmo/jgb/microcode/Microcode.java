@@ -9,7 +9,7 @@ import static com.physmo.jgb.microcode.MicroOp.*;
 
 public class Microcode {
 
-    MicroOp[][] n = new MicroOp[500][];
+    MicroOp[][] n = new MicroOp[256][];
     Map<Integer, String> names = new HashMap<>();
 
     public Microcode() {
@@ -276,7 +276,7 @@ public class Microcode {
         define(0xEE, "XOR d8", FETCH_8, XOR);
         define(0xEF, "RST 28H", RST_28H);
 
-        define(0xF0, "LDH A,(a8)", FETCH_8, FETCH_ZPG, STORE_A);
+        define(0xF0, "LDH A,(a8)", FETCH_8, FETCH_ZPG, STORE_A);  // *
         define(0xF1, "POP AF", POPW, STORE_AF);
         define(0xF2, "LD A,(C)", FETCH_C, FETCH_ZPG, STORE_A);
         define(0xF3, "DI", DI);

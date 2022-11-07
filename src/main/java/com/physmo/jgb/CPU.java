@@ -134,7 +134,7 @@ public class CPU {
         // Inject new microcode stuff
         MicroOp[] ops = microcode.getInstructionCode(currentInstruction);
         if (ops.length > 0 && ops[0] != MicroOp.TODO) {
-            printNewOpUse(currentInstruction);
+            //printNewOpUse(currentInstruction);
             for (MicroOp op : ops) {
                 doMicroOp(op);
             }

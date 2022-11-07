@@ -5,38 +5,38 @@ public class DebugRomChoser {
 
         String gameFileName = "";
 
-        //gameFileName = "tetris.gb";
-        //gameFileName = "mario.gb";
-        //gameFileName = "drmario.gb";
-        //gameFileName = "othello.gb";
-        gameFileName = "spaceinvaders.gb";
-        //gameFileName = "klax.gb";
+        // gameFileName = "tetris.gb";
+        gameFileName = "mario.gb";
+        // gameFileName = "drmario.gb";
+        // gameFileName = "othello.gb";
+        // gameFileName = "spaceinvaders.gb";
+        // gameFileName = "klax.gb";
         // gameFileName = "tennis.gb";
         // gameFileName = "bghost.gb";
         // gameFileName = "motocross.gb";
         // gameFileName = "asteroids.gb";
         // gameFileName = "bowling.gb";
-        //gameFileName = "loderunner.gb";
-        //gameFileName = "pipedream.gb";
-        //gameFileName = "alleyway.gb"; // control problem.
+        // gameFileName = "loderunner.gb";
+        // gameFileName = "pipedream.gb";
+        // gameFileName = "alleyway.gb"; // control problem.
 
         // gameFileName = "tesserae.gb";
         // gameFileName = "serpent.gb";
 
-        //gameFileName = "batman.gb";
-        //gameFileName = "rtype.gb";
-        //gameFileName = "pinballfantasies.gb";
-        //gameFileName = "tetrisattack.gb";
+        // gameFileName = "batman.gb";
+        // gameFileName = "rtype.gb";
+        // gameFileName = "pinballfantasies.gb";
+        // gameFileName = "tetrisattack.gb";
         // gameFileName = "qbert.gb";
-        //gameFileName = "pacman.gb";
+        // gameFileName = "pacman.gb";
         // gameFileName = "nemesis2.gb";
-        //gameFileName = "mario2.gb";
-        //gameFileName = "bomberman.gb";
-        //gameFileName = "zelda.gb";
-        //gameFileName = "garfield.gb";
-        //gameFileName = "lemmings.gb";
-        //gameFileName = "hook.gb";
-        //gameFileName = "xenon2.gb";
+        // gameFileName = "mario2.gb";
+        // gameFileName = "bomberman.gb";
+        // gameFileName = "zelda.gb";
+        // gameFileName = "garfield.gb";
+        // gameFileName = "lemmings.gb";
+        // gameFileName = "hook.gb";
+        // gameFileName = "xenon2.gb";
 
         // BAD PALETTES
         //gameFileName = "gargoyle.gb";

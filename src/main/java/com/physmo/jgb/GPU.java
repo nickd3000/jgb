@@ -1,6 +1,6 @@
 package com.physmo.jgb;
 
-import com.physmo.jgb.PaletteGenerator.PALETTE_TYPE;
+
 import com.physmo.minvio.BasicDisplay;
 
 import java.awt.Color;
@@ -37,27 +37,11 @@ public class GPU {
     public final int[] cgbBackgroundPaletteData = new int[64];
     public final int[] cgbSpritePaletteData = new int[64];
     private final Sprite[] sprites = new Sprite[40];
-    private final PALETTE_TYPE paletteType = PALETTE_TYPE.SUPER_GAMEBOY;
-
+    private final PALETTE_TYPE paletteType = PALETTE_TYPE.DMG;
+    private final int[] backgroundPaletteMaster = new int[4];
+    private final int[] sprite1PaletteMaster = new int[4];
     // TODO: set these up in a method
-    private final int[] backgroundPaletteMaster = {
-            PaletteGenerator.get(paletteType, 0),
-            PaletteGenerator.get(paletteType, 1),
-            PaletteGenerator.get(paletteType, 2),
-            PaletteGenerator.get(paletteType, 3)
-    };
-    private final int[] sprite1PaletteMaster = {
-            PaletteGenerator.get(paletteType, 0),
-            PaletteGenerator.get(paletteType, 1),
-            PaletteGenerator.get(paletteType, 2),
-            PaletteGenerator.get(paletteType, 3)
-    };
-    private final int[] sprite2PaletteMaster = {
-            PaletteGenerator.get(paletteType, 0),
-            PaletteGenerator.get(paletteType, 1),
-            PaletteGenerator.get(paletteType, 2),
-            PaletteGenerator.get(paletteType, 3)
-    };
+    private final int[] sprite2PaletteMaster = new int[4];
     private final int[] backgroundPaletteMap = new int[4];
     private final int[] sprite1PaletteMap = new int[4];
     private final int[] sprite2PaletteMap = new int[4];
@@ -65,7 +49,6 @@ public class GPU {
     private final int[] cgbSpriteColors = new int[64];
     int drawBufferWidth = 160;
     int drawBufferHeight = 144;
-
     BufferedImage drawBuffer = new BufferedImage(drawBufferWidth, drawBufferHeight, BufferedImage.TYPE_INT_ARGB);
     private int scale = 3;
     private int clock = 0;
@@ -84,60 +67,39 @@ public class GPU {
             cgbSpritePaletteData[i] = (i * 2) & 0xff;
         }
 
-        int p = 0;
-//		setGBCColorManually(cgbBackgroundPaletteData,p++,0xf0f0f0);
-//		setGBCColorManually(cgbBackgroundPaletteData,p++,0x808080);
-//		setGBCColorManually(cgbBackgroundPaletteData,p++,0x404040);
-//		setGBCColorManually(cgbBackgroundPaletteData,p++,0x202020);
-        double r, g, b;
-        r = 0.7;
-        g = 0.8;
-        b = 0.8;
-        setGBCColorManually2(cgbBackgroundPaletteData, p++, r, g, b, 1);
-        setGBCColorManually2(cgbBackgroundPaletteData, p++, r, g, b, 0.66);
-        setGBCColorManually2(cgbBackgroundPaletteData, p++, r, g, b, 0.33);
-        setGBCColorManually2(cgbBackgroundPaletteData, p++, r, g, b, 0.0);
 
-        r = 0.9;
-        g = 0.7;
-        b = 0.6;
-        p = 0;
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 1);
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 0.66);
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 0.33);
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 0.0);
-        r = 0.6;
-        g = 0.7;
-        b = 0.9;
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 1);
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 0.66);
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 0.33);
-        setGBCColorManually2(cgbSpritePaletteData, p++, r, g, b, 0.0);
-//		#define princessCGBPal0c0 6076 17bc
-//		#define princessCGBPal0c1 8935 22e7
-//		#define princessCGBPal0c2 6596 19c4
-//		#define princessCGBPal0c3 5344 14e0
+        PaletteGenerator.setPalettes(this, PALETTE_TYPE.LIGHT);
     }
 
-    private void setGBCColorManually2(
-            int[] colorList, int index, double r, double g, double b, double v) {
-
-        int rr = (int) ((double) 0x1f * r * v);
-        int gg = (int) ((double) 0x1f * g * v);
-        int bb = (int) ((double) 0x1f * b * v);
-        int combined = ((bb & 0x1f) << 10) | ((gg & 0x1f) << 5) | ((rr & 0x1f));
-        colorList[index * 2] = combined & 0xff;
-        colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
+    public int[] getCgbBackgroundPaletteData() {
+        return cgbBackgroundPaletteData;
     }
 
-    public void setGBCColorManually(int[] colorList, int index, int hexColor) {
-        int r = ((hexColor >> 16) & 0xff) >> 3;
-        int g = ((hexColor >> 8) & 0xff) >> 3;
-        int b = ((hexColor & 0xff)) >> 3;
-        int combined = (r << 10) | (g << 5) | b;
-        colorList[index * 2] = combined & 0xff;
-        colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
+    public int[] getCgbSpritePaletteData() {
+        return cgbSpritePaletteData;
     }
+
+
+    public int[] getBackgroundPaletteMaster() {
+        return backgroundPaletteMaster;
+    }
+
+    public int[] getSprite1PaletteMaster() {
+        return sprite1PaletteMaster;
+    }
+
+    public int[] getSprite2PaletteMaster() {
+        return sprite2PaletteMaster;
+    }
+
+//    public void setGBCColorManually(int[] colorList, int index, int hexColor) {
+//        int r = ((hexColor >> 16) & 0xff) >> 3;
+//        int g = ((hexColor >> 8) & 0xff) >> 3;
+//        int b = ((hexColor & 0xff)) >> 3;
+//        int combined = (r << 10) | (g << 5) | b;
+//        colorList[index * 2] = combined & 0xff;
+//        colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
+//    }
 
     public void debug(CPU cpu, BasicDisplay bd) {
         bd.setDrawColor(Color.GREEN);

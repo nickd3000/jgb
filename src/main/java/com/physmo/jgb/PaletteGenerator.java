@@ -4,44 +4,35 @@ import java.awt.Color;
 
 public class PaletteGenerator {
 
-    public static int get(PALETTE_TYPE type, int index) {
+    public static void setPalettes(GPU gpu, PALETTE_TYPE type) {
 
+        int c1 = 0, c2 = 0, c3 = 0, c4 = 0;
 
         switch (type) {
-            case CLASSIC:
-                if (index == 3)
-                    return buildColor(new Color(0x24, 0x31, 0x37));
-                if (index == 2)
-                    return buildColor(new Color(0x3f, 0x50, 0x3f));
-                if (index == 1)
-                    return buildColor(new Color(0x76, 0x84, 0x48));
-                if (index == 0)
-                    return buildColor(new Color(0xac, 0xb5, 0x6b));
+            case DMG:
+                c1 = buildColor(new Color(0x7a8110));
+                c2 = buildColor(new Color(0x5a7942));
+                c3 = buildColor(new Color(0x385849));
+                c4 = buildColor(new Color(0x294039));
                 break;
-            case SUPER_GAMEBOY:
-                if (index == 3)
-                    return buildColor(new Color(0x33, 0x1e, 0x50));
-                if (index == 2)
-                    return buildColor(new Color(0xa6, 0x37, 0x25));
-                if (index == 1)
-                    return buildColor(new Color(0xd6, 0x8e, 0x49));
-                if (index == 0)
-                    return buildColor(new Color(0xf7, 0xe7, 0xc6));
+            case POCKET:
+                c1 = buildColor(new Color(0xc5cba5));
+                c2 = buildColor(new Color(0x8c926a));
+                c3 = buildColor(new Color(0x4a5139));
+                c4 = buildColor(new Color(0x181818));
                 break;
-            case NEWISH:
-                if (index == 0)
-                    return buildColor(new Color(0x1e, 0x50, 0x33));
-                if (index == 1)
-                    return buildColor(new Color(0x37, 0x25, 0xa6));
-                if (index == 2)
-                    return buildColor(new Color(0x8e, 0x49, 0xd6));
-                if (index == 3)
-                    return buildColor(new Color(0xe7, 0xc6, 0xf7));
+            case LIGHT:
+                c1 = buildColor(new Color(0x00b284));
+                c2 = buildColor(new Color(0x009a73));
+                c3 = buildColor(new Color(0x006849));
+                c4 = buildColor(new Color(0x005139));
                 break;
-
         }
 
-        return 0;
+
+        setGPUPalette(gpu.getCgbBackgroundPaletteData(), c1, c2, c3, c4, false);
+        setGPUPalette(gpu.getCgbSpritePaletteData(), c1, c2, c3, c4, false);
+        setGPUPalette(gpu.getCgbSpritePaletteData(), c1, c2, c3, c4, true);
     }
 
     public static int buildColor(Color c) {
@@ -53,7 +44,27 @@ public class PaletteGenerator {
                 ((c.getBlue() & 0xff));
     }
 
-    enum PALETTE_TYPE {
-        CLASSIC, SUPER_GAMEBOY, NEWISH
+    public static void setGPUPalette(int[] palette, int c1, int c2, int c3, int c4, boolean sprites2) {
+        int shift = 0;
+        if (sprites2) shift = 4;
+        setGBCColorManually(palette, shift + 0, c1);
+        setGBCColorManually(palette, shift + 1, c2);
+        setGBCColorManually(palette, shift + 2, c3);
+        setGBCColorManually(palette, shift + 3, c4);
+
     }
+
+    private static void setGBCColorManually(int[] colorList, int index, int rgb) {
+        // 5 bit components
+        int r = (rgb >> 16) & 0xff;
+        int g = (rgb >> 8) & 0xff;
+        int b = (rgb) & 0xff;
+        int rr = r >> 3;
+        int gg = g >> 3;
+        int bb = b >> 3;
+        int combined = ((bb & 0x1f) << 10) | ((gg & 0x1f) << 5) | ((rr & 0x1f));
+        colorList[index * 2] = combined & 0xff;
+        colorList[(index * 2) + 1] = (combined >> 8) & 0xff;
+    }
+
 }
